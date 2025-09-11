@@ -1,4 +1,4 @@
-package com.example.demo.model;
+﻿package com.clinic.queue.model;
 
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -66,3 +66,4 @@ public class User {
         return Long.hashCode(userId);
     }
 }
+

@@ -1,4 +1,4 @@
-﻿package com.example.demo.config;
+﻿package com.clinic.queue.config;
 
 import java.util.List;
 
@@ -40,3 +40,4 @@ public class SecurityConfig {
         return source;
     }
 }
+
