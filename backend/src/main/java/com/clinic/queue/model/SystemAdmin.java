@@ -1,28 +1,41 @@
 package com.clinic.queue.model;
 
+import com.clinic.queue.config.DatabaseConfig;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 public class SystemAdmin extends User {
 
-    public SystemAdmin(long userId, String name, String email, String contact, char[] passwordHash) {
-        super(userId, name, email, contact, passwordHash);
+    public SystemAdmin(long userId, String name, String email, String contact, String rawPassword, long adminId) {
+        super(userId, name, email, contact, rawPassword);
+        this.adminId = adminId;
+    }
+
+    public long getAdminId() {
+        return adminId;
+    }
+
+    public void setAdminId(long adminId) {
+        this.adminId = adminId;
     }
 
     public boolean createUserAccount(User user) {
-        // TODO: implement
-        return true;
+        
+            return true;
+
     }
 
-    public boolean updateUserAccount(long userId, User updatedUser) {
-        // TODO: implement
+    public boolean updateUserAccount(String userId, User updatedUser) {
         return false;
     }
 
-    public boolean deleteUserAccount(long userId) {
-        // TODO: implement
+    public boolean deleteUserAccount(String userId) {
         return false;
     }
 
-    public boolean assignRole(long userId, String role) {
-        // TODO: implement
+    public boolean assignRole(String userId, String role) {
         return false;
     }
 
@@ -30,32 +43,26 @@ public class SystemAdmin extends User {
     //     return false;
     // }
 
-    public boolean configureDoctorSchedule(long doctorId, Schedule schedule) {
-        // TODO: implement
+    public boolean configureDoctorSchedule(String doctorId, Schedule schedule) {
         return false;
     }
 
-    public boolean setAppointmentSlotInterval(long clinicId, int intervalMinutes) {
-        // TODO: implement
+    public boolean setAppointmentSlotInterval(String clinicId, int intervalMinutes) {
         return false;
     }
 
-    public boolean setOperatingHours(long clinicId, String operatingHours) {
-        // TODO: implement
+    public boolean setOperatingHours(String clinicId, String operatingHours) {
         return false;
     }
 
     public void backupData() {
-        // TODO: implement
     }
 
     public void restoreData() {
-        // TODO: implement
     }
 
-    public SystemStats viewUsageStats() {
-        // TODO: implement
-        return null;
-    }
+    // public SystemStats viewUsageStats() {
+    //     return null;
+    // }
     
 }
