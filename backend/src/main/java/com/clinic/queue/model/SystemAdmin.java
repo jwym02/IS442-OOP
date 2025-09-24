@@ -1,14 +1,30 @@
 package com.clinic.queue.model;
 
+import com.clinic.queue.config.DatabaseConfig;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 public class SystemAdmin extends User {
 
     public SystemAdmin(long userId, String name, String email, String contact, String rawPassword, long adminId) {
         super(userId, name, email, contact, rawPassword);
+        this.adminId = adminId;
+    }
+
+    public long getAdminId() {
+        return adminId;
+    }
+
+    public void setAdminId(long adminId) {
+        this.adminId = adminId;
     }
 
     public boolean createUserAccount(User user) {
         
-        return true;
+            return true;
+
     }
 
     public boolean updateUserAccount(String userId, User updatedUser) {
