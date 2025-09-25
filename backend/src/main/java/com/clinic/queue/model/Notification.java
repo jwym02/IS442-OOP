@@ -1,4 +1,4 @@
-package com.clinic.queue.model;
+﻿package com.clinic.queue.model;
 
 import java.time.LocalDateTime;
 
@@ -52,3 +52,4 @@ public class Notification {
         // TODO: implement
     }
 }
+
