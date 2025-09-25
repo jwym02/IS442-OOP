@@ -1,4 +1,4 @@
-package com.clinic.queue.service;
+﻿package com.clinic.queue.service;
 
 import java.nio.CharBuffer;
 import java.util.Arrays;
