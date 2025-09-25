@@ -50,4 +50,3 @@ public class Notification {
         // TODO: implement
     }
 }
-

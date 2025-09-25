@@ -1,5 +1,4 @@
 package com.clinic.queue.model;
-
 import java.time.LocalDateTime;
 
 public class MedicalRecord {
