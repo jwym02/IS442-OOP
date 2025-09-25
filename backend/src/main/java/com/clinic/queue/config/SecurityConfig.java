@@ -24,6 +24,12 @@ public class SecurityConfig {
             this.corsConfigurationSource = corsConfigurationSource;
         }
 
+    private final CorsConfigurationSource corsConfigurationSource;
+
+    public SecurityConfig(CorsConfigurationSource corsConfigurationSource) {
+            this.corsConfigurationSource = corsConfigurationSource;
+        }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
