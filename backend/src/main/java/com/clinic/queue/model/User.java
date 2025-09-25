@@ -1,4 +1,4 @@
-package com.clinic.queue.model;
+﻿package com.clinic.queue.model;
 
 import org.mindrot.jbcrypt.BCrypt;
 
