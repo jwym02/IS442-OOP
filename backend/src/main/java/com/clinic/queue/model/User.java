@@ -1,31 +1,20 @@
 ﻿package com.clinic.queue.model;
 
-import org.mindrot.jbcrypt.BCrypt;
-
-public class User {
+public abstract class User {
     // Attributes
     private long userId;
     private String name;
     private String email;
     private String contact;
-    private String passwordHash;
+    private char[] passwordHash;
 
     // Constructor
-    public User(long userId, String name, String email, String contact, String rawPassword) {
+    public User(long userId, String name, String email, String contact, char[] passwordHash) {
         this.userId = userId;
         this.name = name;
         this.email = email;
         this.contact = contact;
-        setPassword(rawPassword); // Password hash
-    }
-
-    // Password handling
-    public void setPassword(String rawPassword) {
-        this.passwordHash = BCrypt.hashpw(rawPassword, BCrypt.gensalt());
-    }
-
-    public boolean checkPassword(String rawPassword) {
-        return BCrypt.checkpw(rawPassword, this.passwordHash);
+        this.passwordHash = passwordHash;
     }
 
     // Getters and Setters
@@ -57,8 +46,11 @@ public class User {
         this.contact = contact; 
     }
 
-    public String getPasswordHash() { 
+    public char[] getPasswordHash() { 
         return passwordHash; 
+    }
+    public void setPasswordHash(char[] passwordHash) {
+        this.passwordHash = passwordHash;
     }
 
     @Override

@@ -2,24 +2,27 @@ package com.clinic.queue.model;
 
 public class SystemAdmin extends User {
 
-    public SystemAdmin(long userId, String name, String email, String contact, String rawPassword, long adminId) {
-        super(userId, name, email, contact, rawPassword);
+    public SystemAdmin(long userId, String name, String email, String contact, char[] passwordHash) {
+        super(userId, name, email, contact, passwordHash);
     }
 
     public boolean createUserAccount(User user) {
-        
+        // TODO: implement
         return true;
     }
 
-    public boolean updateUserAccount(String userId, User updatedUser) {
+    public boolean updateUserAccount(long userId, User updatedUser) {
+        // TODO: implement
         return false;
     }
 
-    public boolean deleteUserAccount(String userId) {
+    public boolean deleteUserAccount(long userId) {
+        // TODO: implement
         return false;
     }
 
-    public boolean assignRole(String userId, String role) {
+    public boolean assignRole(long userId, String role) {
+        // TODO: implement
         return false;
     }
 
@@ -27,26 +30,32 @@ public class SystemAdmin extends User {
     //     return false;
     // }
 
-    public boolean configureDoctorSchedule(String doctorId, Schedule schedule) {
+    public boolean configureDoctorSchedule(long doctorId, Schedule schedule) {
+        // TODO: implement
         return false;
     }
 
-    public boolean setAppointmentSlotInterval(String clinicId, int intervalMinutes) {
+    public boolean setAppointmentSlotInterval(long clinicId, int intervalMinutes) {
+        // TODO: implement
         return false;
     }
 
-    public boolean setOperatingHours(String clinicId, String operatingHours) {
+    public boolean setOperatingHours(long clinicId, String operatingHours) {
+        // TODO: implement
         return false;
     }
 
     public void backupData() {
+        // TODO: implement
     }
 
     public void restoreData() {
+        // TODO: implement
     }
 
-    // public SystemStats viewUsageStats() {
-    //     return null;
-    // }
+    public SystemStats viewUsageStats() {
+        // TODO: implement
+        return null;
+    }
     
 }

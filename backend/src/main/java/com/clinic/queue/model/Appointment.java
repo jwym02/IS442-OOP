@@ -5,9 +5,9 @@ import java.time.LocalDateTime;
 public class Appointment {
     private long appointmentId;
     private LocalDateTime dateTime;
-    private Status status;
+    private AppointmentStatus status;
 
-    public enum Status { CONFIRMED, CANCELLED, RESCHEDULED }
+    public enum AppointmentStatus { CONFIRMED, CANCELLED, RESCHEDULED }
 
     public long getAppointmentId() {
         return appointmentId;
@@ -25,11 +25,11 @@ public class Appointment {
         this.dateTime = dateTime;
     }
 
-    public Status getStatus() {
+    public AppointmentStatus getStatus() {
         return status;
     }
 
-    public void setStatus(Status status) {
+    public void setStatus(AppointmentStatus status) {
         this.status = status;
     }
 

@@ -5,7 +5,7 @@ import com.clinic.queue.model.User;
 public class AuthService {
     public Boolean login(String email, char[] password) {
         // TODO: implement
-        return null;
+        return verifyPassword(password, new char[]{});
     }
 
     public void logout(User user) {
@@ -14,7 +14,7 @@ public class AuthService {
 
     private Boolean verifyPassword(char[] password, char[] hashedPassword) {
         // TODO: implement
-        return null;
+        return false;
     }
 }
 
