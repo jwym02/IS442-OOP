@@ -1,5 +1,7 @@
 ﻿package com.clinic.queue.model;
 
+import java.util.Arrays;
+
 public abstract class User {
     // Attributes
     private long userId;
@@ -14,43 +16,46 @@ public abstract class User {
         this.name = name;
         this.email = email;
         this.contact = contact;
-        this.passwordHash = passwordHash;
+        setPasswordHash(passwordHash);
     }
 
     // Getters and Setters
-    public long getUserId() { 
-        return userId; 
+    public long getUserId() {
+        return userId;
     }
-    public void setUserId(long userId) { 
-        this.userId = userId; 
-    }
-
-    public String getName() { 
-        return name; 
-    }
-    public void setName(String name) { 
-        this.name = name; 
+    public void setUserId(long userId) {
+        this.userId = userId;
     }
 
-    public String getEmail() { 
-        return email; 
+    public String getName() {
+        return name;
     }
-    public void setEmail(String email) { 
-        this.email = email; 
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public String getContact() { 
+    public String getEmail() {
+        return email;
+    }
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getContact() {
         return contact;
     }
-    public void setContact(String contact) { 
-        this.contact = contact; 
+    public void setContact(String contact) {
+        this.contact = contact;
     }
 
-    public char[] getPasswordHash() { 
-        return passwordHash; 
+    public char[] getPasswordHash() {
+        return passwordHash != null ? Arrays.copyOf(passwordHash, passwordHash.length) : new char[0];
     }
     public void setPasswordHash(char[] passwordHash) {
-        this.passwordHash = passwordHash;
+        if (this.passwordHash != null) {
+            Arrays.fill(this.passwordHash, '\0');
+        }
+        this.passwordHash = passwordHash != null ? Arrays.copyOf(passwordHash, passwordHash.length) : new char[0];
     }
 
     @Override
