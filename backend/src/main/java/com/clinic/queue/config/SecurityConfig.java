@@ -1,4 +1,4 @@
-﻿package com.clinic.queue.config;
+package com.clinic.queue.config;
 
 import java.util.List;
 
