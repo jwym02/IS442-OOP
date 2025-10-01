@@ -1,4 +1,4 @@
-﻿package com.clinic.queue.model;
+package com.clinic.queue.model;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -36,4 +36,3 @@ public class Schedule {
         return false;
     }
 }
-
