@@ -100,7 +100,44 @@ export default function UserManagement() {
                 <td>{u.contact}</td>
                 <td>{getRole(u.id)}</td>
                 <td>
-                  <button className="btn btn-xs btn-warning mr-2">Edit</button>
+                  <button className="btn btn-xs btn-warning mr-2" onClick={()=>document.getElementById(`edit-${u.id}`).showModal()}>Edit</button>
+                  {/* Edit Modal */}
+                  <dialog id={`edit-${u.id}` }className="modal">
+                    <div className="modal-box">
+                      <form method="dialog">
+                        <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+                      </form>
+                      <h3 className="font-bold text-lg mb-4">Edit {u.id}</h3>
+                      <form action="" className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                          <label htmlFor="name" className="w-16">Name</label>
+                          <input id="name" type="text" defaultValue={u.name} class="input" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label htmlFor="email" className="w-16">Email</label>
+                          <input id="email" type="text" defaultValue={u.email} class="input" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label htmlFor="contact" className="w-16">Contact</label>
+                          <input id="contact" type="text" defaultValue={u.contact} class="input" />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label htmlFor="role" className="w-16">Role</label>
+                          <select id="role" defaultValue="Role" className="select">
+                            <option disabled={true}>Pick a color</option>
+                            <option>Patient</option>
+                            <option>Doctor</option>
+                            <option>Admin</option>
+                            <option>Staff</option>
+                          </select>
+                        </div>
+                        <div className="flex justify-between mt-4">
+                          <button class="btn btn-ghost">Reset</button>
+                          <button className="btn btn-primary">Edit</button>
+                        </div>
+                      </form>
+                    </div>
+                  </dialog>
                   <button className="btn btn-xs btn-error">Delete</button>
                 </td>
               </tr>
