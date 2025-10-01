@@ -1,4 +1,4 @@
-﻿package com.clinic.queue.service;
+package com.clinic.queue.service;
 
 import com.clinic.queue.model.User;
 
