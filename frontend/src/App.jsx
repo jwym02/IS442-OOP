@@ -1,35 +1,61 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useContext } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
-function App() {
-  const [count, setCount] = useState(0)
+import Navbar from "./components/Navbar";
+import Signup from "./pages/signup";
+import Login from "./pages/login";
+import AdminHome from "./pages/admin/adminHome";
+import Dashboard from "./components/systemAdmin/dashboard";
+import UserManagement from "./components/systemAdmin/userManagement";
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+import "./App.css";
+import { AuthProvider, AuthContext } from "./context/AuthContext";
+
+function ProtectedRoute({ children, role }) {
+  const { user } = useContext(AuthContext);
+  if (!user) return <Navigate to="/login" replace />;
+  if (role && user.role !== role) return <Navigate to={`/${user.role}/home`} replace />;
+  return children;
 }
 
-export default App
+export default function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <Navbar />
+        <Routes>
+          {/* Public */}
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/login" element={<Login />} />
+
+          {/* Patient routes */}
+          <Route path="/patient/*" element={
+            <ProtectedRoute role="patient">
+            </ProtectedRoute>
+          }/>
+
+          {/* Staff routes */}
+          <Route path="/staff/*" element={
+            <ProtectedRoute role="staff">
+            </ProtectedRoute>
+          }/>
+
+          {/* Admin routes */}
+          <Route path="/admin/*" element={
+            <ProtectedRoute role="admin">
+              <AdminHome />
+            </ProtectedRoute>
+          }>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="user-management" element={<UserManagement />} />
+          </Route>
+
+          {/* Default redirect */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+
+        </Routes>
+      </Router>
+    </AuthProvider>
+  );
+}
