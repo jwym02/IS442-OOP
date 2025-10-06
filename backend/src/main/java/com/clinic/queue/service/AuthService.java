@@ -1,6 +1,6 @@
 package com.clinic.queue.service;
 
-import com.clinic.queue.model.User;
+import com.clinic.queue.entity.User;
 
 public class AuthService {
     public Boolean login(String email, char[] password) {

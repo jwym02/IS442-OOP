@@ -1,7 +1,5 @@
 package com.clinic.queue.service;
 
-import com.clinic.queue.supabase.SupabaseService;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.*;
