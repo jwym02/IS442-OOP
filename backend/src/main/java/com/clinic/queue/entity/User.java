@@ -1,22 +1,41 @@
-package com.clinic.queue.model;
+package com.clinic.queue.entity;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 
 import java.util.Arrays;
 
-public abstract class User {
+@Entity
+public class User {
     // Attributes
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long userId;
     private String name;
     private String email;
     private String contact;
     private char[] passwordHash;
 
-    // Constructor
-    public User(long userId, String name, String email, String contact, char[] passwordHash) {
-        this.userId = userId;
-        this.name = name;
-        this.email = email;
-        this.contact = contact;
-        setPasswordHash(passwordHash);
+    // not needed?
+    // // Constructor
+    // public User(long userId, String name, String email, String contact, String rawPassword) {
+    //     this.userId = userId;
+    //     this.name = name;
+    //     this.email = email;
+    //     this.contact = contact;
+    //     setPassword(rawPassword); // Password hash
+    // }
+
+    // Password handling
+    // TODO: Move to service?
+    public void setPassword(String rawPassword) {
+        this.passwordHash = BCrypt.hashpw(rawPassword, BCrypt.gensalt());
+    }
+
+    public boolean checkPassword(String rawPassword) {
+        return BCrypt.checkpw(rawPassword, this.passwordHash);
     }
 
     // Getters and Setters

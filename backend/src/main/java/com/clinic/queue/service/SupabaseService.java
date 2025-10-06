@@ -1,4 +1,4 @@
-package com.clinic.queue.supabase;
+package com.clinic.queue.service;
 
 import java.util.Map;
 import org.springframework.stereotype.Service;
