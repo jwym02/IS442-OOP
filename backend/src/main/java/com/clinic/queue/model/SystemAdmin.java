@@ -40,6 +40,7 @@ public class SystemAdmin extends User {
     }
 
     public void backupData() {
+        System.out.println("Hello");
     }
 
     public void restoreData() {
