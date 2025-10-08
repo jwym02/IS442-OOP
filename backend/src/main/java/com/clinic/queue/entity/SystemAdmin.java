@@ -1,6 +1,4 @@
-package com.clinic.queue.model;
-
-import com.clinic.queue.entity.*;
+package com.clinic.queue.entity;
 
 public class SystemAdmin extends User {
 
