@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.springframework.cglib.core.Local;
 
-public class Patient {
+public class Patient extends User {
     private final List<MedicalRecord> medicalRecords = new ArrayList<>();
     private final List<Appointment> appointments = new ArrayList<>();
     private final List<QueueEntry> queueEntries = new ArrayList<>();

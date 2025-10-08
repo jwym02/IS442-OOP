@@ -1,5 +1,7 @@
 package com.clinic.queue.entity;
 
+import java.util.UUID;
+
 import org.mindrot.jbcrypt.BCrypt;
 
 import jakarta.persistence.*;
@@ -9,8 +11,8 @@ import jakarta.persistence.*;
 public abstract class User {
     // Attributes
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    protected long userId;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    protected UUID userId;
     private String name;
     private String email;
     private String contact;
@@ -28,11 +30,8 @@ public abstract class User {
     }
 
     // Getters and Setters
-    public long getUserId() { 
+    public UUID getUserId() { 
         return userId; 
-    }
-    public void setUserId(long userId) { 
-        this.userId = userId; 
     }
 
     public String getName() { 
@@ -60,9 +59,9 @@ public abstract class User {
         return passwordHash; 
     }
 
-    @Override
-    public int hashCode() {
-        return Long.hashCode(userId);
-    }
+    // @Override
+    // public int hashCode() {
+    //     return Long.hashCode(userId);
+    // }
 }
 
