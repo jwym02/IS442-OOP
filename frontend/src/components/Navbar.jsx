@@ -13,10 +13,7 @@ export default function Navbar() {
         <div className="flex gap-3 items-center">
             <img src="/logo.png" alt="" className="w-14 mx-auto bg-white rounded-xl p-2" />
             <NavLink
-            to={`/${user.role}/home`}
-            className={({ isActive }) =>
-                isActive ? "font-bold text-primary" : "font-bold"
-            }
+            to={`/${user.role}/dashboard`}
             >
             <span className="capitalize">{user.role} Portal</span>
         </NavLink>
