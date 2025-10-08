@@ -200,6 +200,10 @@ export default function UserManagement() {
           </button>
         </div>
       </div>
+
+      <button className="btn btn-info w-50" onClick={handleBackup}>
+        Backup Data
+      </button>
     </div>
   );
 }
