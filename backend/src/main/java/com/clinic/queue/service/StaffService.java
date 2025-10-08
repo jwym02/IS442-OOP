@@ -3,22 +3,22 @@ package com.clinic.queue.service;
 import org.springframework.security.core.*;
 import org.springframework.stereotype.Service;
 
-import com.clinic.queue.entity.User;
+import com.clinic.queue.entity.Staff;
 import com.clinic.queue.repository.UserRepository;
 
 @Service
-public class UserService {
+public class StaffService {
     
     private final UserRepository userRepository;
 
-    public UserService(UserRepository userRepository) {
+    public StaffService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
     
     public void registerUser(long userId, String name, String email,
                              String contact, String passwordHash) {
         // Password hashing, validation, saving, and email sending
-        // User newUser = new User();
+        Staff newStaff = new Staff();
         // newUser.setUserId(userId);;
         // newUser.setName(name);
         // newUser.setEmail(email);

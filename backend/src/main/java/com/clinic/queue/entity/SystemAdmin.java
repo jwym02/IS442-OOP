@@ -7,7 +7,7 @@ public class SystemAdmin extends User {
     }
     
     public SystemAdmin(long userId, String name, String email, String contact, String password) {
-        super(userId, name, email, contact, password);
+        // super(userId, name, email, contact, password);
     }
 
     // public boolean createUserAccount(User user) {

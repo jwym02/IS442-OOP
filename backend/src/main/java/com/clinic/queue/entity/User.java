@@ -10,7 +10,7 @@ public abstract class User {
     // Attributes
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long userId;
+    protected long userId;
     private String name;
     private String email;
     private String contact;
