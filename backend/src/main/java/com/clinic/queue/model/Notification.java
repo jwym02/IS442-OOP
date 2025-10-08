@@ -1,6 +1,8 @@
-﻿package com.clinic.queue.model;
+package com.clinic.queue.model;
 
 import java.time.LocalDateTime;
+
+import com.clinic.queue.entity.User;
 
 public class Notification {
     private long notificationId;
@@ -50,4 +52,3 @@ public class Notification {
         // TODO: implement
     }
 }
-

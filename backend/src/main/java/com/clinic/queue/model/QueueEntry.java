@@ -1,10 +1,10 @@
-﻿package com.clinic.queue.model;
+package com.clinic.queue.model;
 
 public class QueueEntry {
     private int queueNumber;
-    private Status status;
+    private QueueStatus status;
 
-    public enum Status { WAITING, CHECKED_IN, NO_SHOW, COMPLETED }
+    public enum QueueStatus { WAITING, CHECKED_IN, NO_SHOW, COMPLETED }
 
     public int getQueueNumber() {
         return queueNumber;
@@ -14,15 +14,15 @@ public class QueueEntry {
         this.queueNumber = queueNumber;
     }
 
-    public Status getStatus() {
+    public QueueStatus getStatus() {
         return status;
     }
 
-    public void setStatus(Status status) {
+    public void setStatus(QueueStatus status) {
         this.status = status;
     }
 
-    public void updateStatus(String newStatus) {
+    public void updateStatus(QueueStatus newStatus) {
         // TODO: implement
     }
 

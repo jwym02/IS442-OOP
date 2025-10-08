@@ -1,13 +1,17 @@
-﻿package com.clinic.queue.model;
+package com.clinic.queue.model;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 
 public class Appointment {
+    private static final DateTimeFormatter DETAILS_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
     private long appointmentId;
     private LocalDateTime dateTime;
-    private Status status;
+    private AppointmentStatus status;
 
-    public enum Status { CONFIRMED, CANCELLED, RESCHEDULED }
+    public enum AppointmentStatus { CONFIRMED, CANCELLED, RESCHEDULED }
 
     public long getAppointmentId() {
         return appointmentId;
@@ -25,29 +29,38 @@ public class Appointment {
         this.dateTime = dateTime;
     }
 
-    public Status getStatus() {
+    public AppointmentStatus getStatus() {
         return status;
     }
 
-    public void setStatus(Status status) {
+    public void setStatus(AppointmentStatus status) {
         this.status = status;
     }
 
     public void confirm() {
-        // TODO: implement
+        if (dateTime == null) {
+            throw new IllegalStateException("Cannot confirm an appointment without a scheduled date/time.");
+        }
+        status = AppointmentStatus.CONFIRMED;
     }
 
     public void cancel() {
-        // TODO: implement
+        status = AppointmentStatus.CANCELLED;
     }
 
     public void reschedule(LocalDateTime newDateTime) {
-        // TODO: implement
+        Objects.requireNonNull(newDateTime, "newDateTime");
+        if (status == AppointmentStatus.CANCELLED) {
+            throw new IllegalStateException("Cancelled appointments cannot be rescheduled.");
+        }
+        dateTime = newDateTime;
+        status = AppointmentStatus.RESCHEDULED;
     }
 
     public String getDetails() {
-        // TODO: implement
-        return null;
+        String formattedDate = dateTime != null ? dateTime.format(DETAILS_FORMATTER) : "unscheduled";
+        String statusLabel = status != null ? status.name() : "UNKNOWN";
+        return String.format("Appointment #%d on %s (%s)", appointmentId, formattedDate, statusLabel);
     }
 }
 
