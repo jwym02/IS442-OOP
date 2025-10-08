@@ -58,10 +58,5 @@ public abstract class User {
     public String getPasswordHash() { 
         return passwordHash; 
     }
-
-    // @Override
-    // public int hashCode() {
-    //     return Long.hashCode(userId);
-    // }
 }
 
