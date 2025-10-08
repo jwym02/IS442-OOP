@@ -4,6 +4,10 @@ import { useOutletContext } from "react-router-dom";
 export default function UserManagement() {
   // get users from Outlet context
   const { users = [] } = useOutletContext();
+  
+  for (let i = 0; i < users.length; i++) {
+    console.log(users[i])
+  }
 
   const [activeRole, setActiveRole] = useState("all");
   const [pageSize, setPageSize] = useState(10);
@@ -37,7 +41,7 @@ export default function UserManagement() {
 
   const handleBackup = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/admin/backup", {
+      const response = await fetch("http://localhost:8080/api/admins/backup", {
         method: "POST",
       });
       const text = await response.text();
