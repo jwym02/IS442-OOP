@@ -1,0 +1,841 @@
+openapi: 3.1.0
+info:
+  title: Clinic Queue & Appointment System API
+  version: 0.2.0
+  description: >
+    <to discuss>
+servers:
+  - url: h<localhost for now>
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Clinic:
+      type: object
+      properties:
+        clinicId: { type: integer, format: int64 }
+        clinicName: { type: string }
+        operatingHours: { type: string, description: "idk" }
+        doctors:
+          type: array
+          items: { $ref: "#/components/schemas/Doctor" }
+      required: [clinicId, clinicName, operatingHours]
+    # ClinicUpdateRequest:
+    #   type: object
+    #   properties:
+    #     clinicName: { type: string }
+    #     operatingHours: { type: string }
+    #   additionalProperties: false
+    Doctor:
+      type: object
+      properties:
+        userId: { type: integer, format: int64 }
+        name: { type: string }
+        role: { type: string}
+        assignedClinic: { $ref: "#/components/schemas/Clinic"}
+        specialty: { type: string }
+        schedule: { $ref: "#/components/schemas/Schedule" }
+    Schedule:
+      type: object
+      properties:
+        scheduleId: { type: integer, format: int64 }
+        availableSlots:
+          type: array
+          items: { type: string, format: date-time }
+      required: [scheduleId, availableSlots]
+    # ScheduleUpdateRequest:
+    #   type: object
+    #   properties:
+    #     addSlots:
+    #       type: array
+    #       items: { type: string, format: date-time }
+    #     removeSlots:
+    #       type: array
+    #       items: { type: string, format: date-time }
+    #   additionalProperties: false
+    Appointment:
+      type: object
+      properties:
+        appointmentId: { type: integer, format: int64 }
+        patientId: { type: integer, format: int64 } # i think these 4 fields are needed
+        doctorId: { type: integer, format: int64 }
+        clinicId: { type: integer, format: int64 }
+        dateTime: { type: string, format: date-time }
+        status: { $ref: "#/components/schemas/AppointmentStatus" }
+      required: [appointmentId, patientId, doctorId, clinicId, dateTime, status]
+    # AppointmentCreateRequest:
+    #   type: object
+    #   properties:
+    #     doctorId: { type: integer, format: int64 }
+    #     clinicId: { type: integer, format: int64 }
+    #     dateTime: { type: string, format: date-time }
+    #   required: [doctorId, clinicId, dateTime]
+    #   additionalProperties: false
+    # AppointmentRescheduleRequest:
+    #   type: object
+    #   properties:
+    #     newDateTime: { type: string, format: date-time }
+    #   required: [newDateTime]
+    #   additionalProperties: false
+    AppointmentStatus:
+      type: string
+      enum: [PENDING, CONFIRMED, CANCELLED, COMPLETED, NO_SHOW, RESCHEDULED]
+    QueueEntry:
+      type: object
+      properties:
+        queueNumber: { type: integer }
+        appointmentId: { type: integer, format: int64 }
+        status: { $ref: "#/components/schemas/QueueStatus" }
+        createdAt: { type: string, format: date-time }
+      required: [queueNumber, clinicId, status, createdAt]
+    QueueStatus:
+      type: string
+      enum: [WAITING, CALLED, IN_SERVICE, SKIPPED, COMPLETED, PAUSED]
+    Notification:
+      type: object
+      properties:
+        notificationId: { type: integer, format: int64 }
+        message: { type: string }
+        notificationType: { $ref: "#/components/schemas/NotificationType" }
+        sentTime: { type: string, format: date-time }
+        # userId: { type: integer, format: int64 } -> consider if want in
+      required: [notificationId, message, notificationType, sentTime, userId]
+    NotificationType:
+      type: string
+      enum: [APPT_REMINDER, QUEUE_UPDATE, SYSTEM_ALERT]
+    MedicalRecord:
+      type: object
+      properties:
+        recordId: { type: integer, format: int64 }
+        patientId: { type: integer, format: int64 } # new, need patient
+        treatmentSummary: { type: string }
+        appointmentDate: { type: string, format: date-time }
+      required: [recordId, patientId, treatmentSummary, appointmentDate]
+    Patient:
+      type: object
+      properties:
+        patientId: { type: integer, format: int64 }
+        name: { type: string }
+        email: { type: string, format: email }
+        phone: { type: string }
+        contact: {type: string}
+      required: [patientId, name, email, phone, contact]
+    ClinicStaff:
+      type: object
+      properties:
+        staffId: { type: integer, format: int64 }
+        role: { type: string }
+        assignedClinicId: { type: integer, format: int64 }
+        name: { type: string }
+        email: { type: string, format: email }
+        phone: { type: string }
+        contact: {type: string}
+      required: [staffId, role, assignedClinicId, name, email, phone, contact]
+    User:
+      type: object
+      properties:
+        userId: { type: integer, format: int64 }
+        name: { type: string }
+        email: { type: string, format: email }
+        phone: { type: string }
+        contact: {type: string}
+      required: [userId, name, email, phone, contact]
+    SystemStats:
+      type: object
+      properties:
+        totalAppointments: { type: integer }
+        cancellations: { type: integer }
+        completedAppointments: { type: integer }
+        totalUsers: { type: integer }
+        activeClinics: { type: integer }
+        queueStatistics:
+          type: object
+          additionalProperties:
+            type: integer
+          description: "Map of queue state -> count"
+        reportGeneratedAt: { type: string, format: date-time }
+      required:
+        - totalAppointments
+        - cancellations
+        - completedAppointments
+        - totalUsers
+        - activeClinics
+        - queueStatistics
+        - reportGeneratedAt
+    # Auth models
+    LoginRequest:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+      required: [email, password]
+      additionalProperties: false
+    LoginResponse:
+      type: object
+      properties:
+        token: { type: string, description: "JWT access token" }
+        user: { $ref: "#/components/schemas/User" }
+      required: [token, user]
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code: { type: string }
+            message: { type: string }
+            details: { type: object }
+paths:
+  # ---------- AuthService ----------
+  /auth/login:
+    post:
+      summary: Login with email & password
+      security: []  # public
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        '200':
+          description: Authenticated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginResponse" }
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+  /auth/logout:
+    post:
+      summary: Logout current user
+      responses:
+        '204': { description: Logged out }
+  # ---------- Clinics ----------
+  /clinics:
+    get:
+      summary: List clinics
+      parameters:
+        - in: query
+          name: name
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+        - in: query
+          name: offset
+          schema: { type: integer, minimum: 0, default: 0 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Clinic" }
+                  total: { type: integer }
+    post:
+      summary: Create clinic (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/Clinic"
+              required: [clinicName, operatingHours]
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Clinic" }
+  /clinics/{clinicId}:
+    parameters:
+      - in: path
+        name: clinicId
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      summary: Get clinic by id
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Clinic" } } } }
+        '404': { description: Not Found }
+    patch:
+      summary: Update clinic details (configureClinicDetails)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ClinicUpdateRequest" }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: "#/components/schemas/Clinic" }}}}
+    delete:
+      summary: Delete clinic (admin)
+      responses:
+        '204': { description: No Content }
+  /clinics/{clinicId}/queue/status:
+    get:
+      summary: Get queue status for clinic (getQueueStatus)
+      parameters:
+        - in: path
+          name: clinicId
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  clinicId: { type: integer, format: int64 }
+                  status: { type: string }
+  /clinics/{clinicId}/schedules:
+    get:
+      summary: Get doctors' schedules for clinic
+      parameters:
+        - in: path
+          name: clinicId
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  clinicId: { type: integer, format: int64 }
+                  doctors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        doctor: { $ref: "#/components/schemas/DoctorSummary" }
+                        schedule: { $ref: "#/components/schemas/Schedule" }
+  # ---------- Doctors ----------
+  /doctors:
+    get:
+      summary: List doctors
+      parameters:
+        - in: query
+          name: specialty
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Doctor" }
+    post:
+      summary: Create doctor (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Doctor" }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Doctor" }}}}
+  /doctors/{doctorId}:
+    parameters:
+      - in: path
+        name: doctorId
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      summary: Get doctor by id
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Doctor" }}}}
+  /doctors/{doctorId}/schedule:
+    get:
+      summary: View appointments/schedule for date (viewAppointments via date filter)
+      parameters:
+        - in: path
+          name: doctorId
+          required: true
+          schema: { type: integer, format: int64 }
+        - in: query
+          name: date
+          required: false
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Schedule" }
+    put:
+      summary: Update doctor schedule (updateSchedule/configureDoctorSchedule)
+      parameters:
+        - in: path
+          name: doctorId
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ScheduleUpdateRequest" }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: "#/components/schemas/Schedule" }}}}
+  # ---------- Patients & Appointments ----------
+  /patients:
+    post:
+      summary: Create patient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                email: { type: string, format: email }
+                phone: { type: string }
+              required: [name]
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Patient" }}}}
+  /patients/{patientId}:
+    parameters:
+      - in: path
+        name: patientId
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      summary: Get patient
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Patient" }}}}
+  /patients/{patientId}/appointments:
+    get:
+      summary: List patient appointments
+      parameters:
+        - in: path
+          name: patientId
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Appointment" }
+    post:
+      summary: Book appointment (bookAppointment)
+      parameters:
+        - in: path
+          name: patientId
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AppointmentCreateRequest" }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Appointment" }}}}
+  /appointments/{appointmentId}:
+    parameters:
+      - in: path
+        name: appointmentId
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      summary: Get appointment
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Appointment" }}}}
+    patch:
+      summary: Update appointment (confirm/cancel/reschedule)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [confirm, cancel]
+                reschedule:
+                  $ref: "#/components/schemas/AppointmentRescheduleRequest"
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: "#/components/schemas/Appointment" }}}}
+    delete:
+      summary: Cancel appointment
+      responses:
+        '204': { description: No Content }
+  /appointments/{appointmentId}/check-in:
+    post:
+      summary: Patient check-in, returns queue entry
+      parameters:
+        - in: path
+          name: appointmentId
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/QueueEntry" }}}}
+  /patients/{patientId}/medical-records:
+    get:
+      summary: View medical history (viewMedicalHistory)
+      parameters:
+        - in: path
+          name: patientId
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/MedicalRecord" }
+  /patients/{patientId}/queue/status:
+    get:
+      summary: Patient view of queue status
+      parameters:
+        - in: path
+          name: patientId
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  text: { type: string }
+  # ---------- Queue & ClinicStaff ----------
+  /staff/{staffId}/queue/start:
+    post:
+      summary: Start queue for assigned clinic
+      parameters:
+        - in: path
+          name: staffId
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '204': { description: Started }
+  /staff/{staffId}/queue/pause:
+    post:
+      summary: Pause queue
+      parameters:
+        - in: path
+          name: staffId
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '204': { description: Paused }
+  /staff/{staffId}/queue/next:
+    post:
+      summary: Call next queue number
+      parameters:
+        - in: path
+          name: staffId
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/QueueEntry" }}}}
+  /staff/{staffId}/queue/{queueNumber}/status:
+    patch:
+      summary: Mark patient queue status
+      parameters:
+        - in: path
+          name: staffId
+          required: true
+          schema: { type: integer, format: int64 }
+        - in: path
+          name: queueNumber
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: { $ref: "#/components/schemas/QueueStatus" }
+              required: [status]
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: "#/components/schemas/QueueEntry" }}}}
+  /staff/{staffId}/queue/{queueNumber}/fast-track:
+    post:
+      summary: Fast-track a patient
+      parameters:
+        - in: path
+          name: staffId
+          required: true
+          schema: { type: integer, format: int64 }
+        - in: path
+          name: queueNumber
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/QueueEntry" }}}}
+  /staff/{staffId}/walk-in-appointments:
+    post:
+      summary: Add walk-in appointment
+      parameters:
+        - in: path
+          name: staffId
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                patientId: { type: integer, format: int64 }
+                doctorId: { type: integer, format: int64 }
+                dateTime: { type: string, format: date-time }
+              required: [patientId, doctorId, dateTime]
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/Appointment" }}}}
+  /staff/{staffId}/appointments/{appointmentId}:
+    patch:
+      summary: Cancel or reschedule appointment on behalf (manage/cancelOrRescheduleAppointment)
+      parameters:
+        - in: path
+          name: staffId
+          required: true
+          schema: { type: integer, format: int64 }
+        - in: path
+          name: appointmentId
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [cancel, reschedule]
+                newDateTime: { type: string, format: date-time }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Appointment" }}}}
+  /staff/{staffId}/reports/daily:
+    get:
+      summary: Generate daily report
+      parameters:
+        - in: path
+          name: staffId
+          required: true
+          schema: { type: integer, format: int64 }
+        - in: query
+          name: date
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema: { type: string }
+  # ---------- Notifications ----------
+  /notifications:
+    post:
+      summary: Send a notification immediately
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId: { type: integer, format: int64 }
+                message: { type: string }
+                notificationType: { $ref: "#/components/schemas/NotificationType" }
+              required: [userId, message, notificationType]
+      responses:
+        '202': { description: Accepted, content: { application/json: { schema: { $ref: "#/components/schemas/Notification" }}}}
+  /notifications/schedule:
+    post:
+      summary: Schedule a notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId: { type: integer, format: int64 }
+                message: { type: string }
+                notificationType: { $ref: "#/components/schemas/NotificationType" }
+                time: { type: string, format: date-time }
+              required: [userId, message, notificationType, time]
+      responses:
+        '201': { description: Scheduled, content: { application/json: { schema: { $ref: "#/components/schemas/Notification" }}}}
+  # ---------- Administration & SystemStats ----------
+  /admin/users:
+    post:
+      summary: Create user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/User" }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: "#/components/schemas/User" }}}}
+  /admin/users/{userId}:
+    parameters:
+      - in: path
+        name: userId
+        required: true
+        schema: { type: integer, format: int64 }
+    put:
+      summary: Update user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/User" }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/User" }}}}
+    delete:
+      summary: Delete user account
+      responses:
+        '204': { description: No Content }
+  /admin/users/{userId}/role:
+    post:
+      summary: Assign role
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role: { type: string }
+              required: [role]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/User" }}}}
+  /admin/clinics/{clinicId}/operating-hours:
+    post:
+      summary: Set operating hours
+      parameters:
+        - in: path
+          name: clinicId
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                operatingHours: { type: string }
+              required: [operatingHours]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/Clinic" }}}}
+  /admin/clinics/{clinicId}/slot-interval:
+    post:
+      summary: Set appointment slot interval minutes
+      parameters:
+        - in: path
+          name: clinicId
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                intervalMinutes: { type: integer, minimum: 5, maximum: 120 }
+              required: [intervalMinutes]
+      responses:
+        '204': { description: Updated }
+  /admin/backup:
+    post:
+      summary: Trigger backup
+      responses:
+        '202': { description: Backup started }
+  /admin/restore:
+    post:
+      summary: Trigger restore
+      responses:
+        '202': { description: Restore started }
+  /admin/stats:
+    get:
+      summary: View usage statistics (refreshStats implicitly)
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/SystemStats" }}}}
+  /admin/stats/completion-rate:
+    get:
+      summary: Get appointment completion rate
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  completionRate: { type: number, format: double, description: "0..1" }
+  /admin/stats/cancellation-rate:
+    get:
+      summary: Get cancellation rate
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cancellationRate: { type: number, format: double, description: "0..1" }
+  /admin/stats/queue-summary:
+    get:
+      summary: Get queue summary (stringified summary per UML)
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema: { type: string }
+  /admin/stats/export:
+    get:
+      summary: Export system report
+      parameters:
+        - in: query
+          name: format
+          required: true
+          schema:
+            type: string
+            enum: [csv, pdf, json]
+      responses:
+        '200':
+          description: Export delivered
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }

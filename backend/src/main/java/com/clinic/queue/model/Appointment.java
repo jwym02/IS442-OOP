@@ -6,7 +6,7 @@ public class Appointment {
     private long appointmentId;
     private LocalDateTime dateTime;
     private Status status;
-
+    
     public enum Status { CONFIRMED, CANCELLED, RESCHEDULED }
 
     public long getAppointmentId() {
