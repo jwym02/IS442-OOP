@@ -1,11 +1,15 @@
+<<<<<<<< HEAD:backend/src/main/java/com/clinic/queue/model/User.java
+package com.clinic.queue.model;
+========
 package com.clinic.queue.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+>>>>>>>> origin/main:backend/src/main/java/com/clinic/queue/entity/User.java
 
-import java.util.Arrays;
+import org.mindrot.jbcrypt.BCrypt;
 
 @Entity
 public class User {
@@ -16,7 +20,7 @@ public class User {
     private String name;
     private String email;
     private String contact;
-    private char[] passwordHash;
+    private String passwordHash;
 
     // not needed?
     // // Constructor
@@ -39,42 +43,36 @@ public class User {
     }
 
     // Getters and Setters
-    public long getUserId() {
-        return userId;
+    public long getUserId() { 
+        return userId; 
     }
-    public void setUserId(long userId) {
-        this.userId = userId;
-    }
-
-    public String getName() {
-        return name;
-    }
-    public void setName(String name) {
-        this.name = name;
+    public void setUserId(long userId) { 
+        this.userId = userId; 
     }
 
-    public String getEmail() {
-        return email;
+    public String getName() { 
+        return name; 
     }
-    public void setEmail(String email) {
-        this.email = email;
+    public void setName(String name) { 
+        this.name = name; 
     }
 
-    public String getContact() {
+    public String getEmail() { 
+        return email; 
+    }
+    public void setEmail(String email) { 
+        this.email = email; 
+    }
+
+    public String getContact() { 
         return contact;
     }
-    public void setContact(String contact) {
-        this.contact = contact;
+    public void setContact(String contact) { 
+        this.contact = contact; 
     }
 
-    public char[] getPasswordHash() {
-        return passwordHash != null ? Arrays.copyOf(passwordHash, passwordHash.length) : new char[0];
-    }
-    public void setPasswordHash(char[] passwordHash) {
-        if (this.passwordHash != null) {
-            Arrays.fill(this.passwordHash, '\0');
-        }
-        this.passwordHash = passwordHash != null ? Arrays.copyOf(passwordHash, passwordHash.length) : new char[0];
+    public String getPasswordHash() { 
+        return passwordHash; 
     }
 
     @Override

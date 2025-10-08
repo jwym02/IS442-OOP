@@ -35,6 +35,19 @@ export default function UserManagement() {
     setCurrentPage(1);
   };
 
+  const handleBackup = async () => {
+    try {
+      const response = await fetch("http://localhost:8080/api/admin/backup", {
+        method: "POST",
+      });
+      const text = await response.text();
+      alert(text);
+    } catch (error) {
+      console.error("Error triggering backup:", error);
+      alert("Backup failed. See console for details.");
+    }
+  };
+
   return (
     <div className="card shadow-xl p-4">
       <div className="flex justify-between mb-3">
@@ -100,30 +113,66 @@ export default function UserManagement() {
                 <td>{u.contact}</td>
                 <td>{getRole(u.id)}</td>
                 <td>
-                  <button className="btn btn-xs btn-warning mr-2" onClick={()=>document.getElementById(`edit-${u.id}`).showModal()}>Edit</button>
+                  <button
+                    className="btn btn-xs btn-warning mr-2"
+                    onClick={() =>
+                      document.getElementById(`edit-${u.id}`).showModal()
+                    }
+                  >
+                    Edit
+                  </button>
                   {/* Edit Modal */}
-                  <dialog id={`edit-${u.id}` }className="modal">
+                  <dialog id={`edit-${u.id}`} className="modal">
                     <div className="modal-box">
                       <form method="dialog">
-                        <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+                        <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+                          ✕
+                        </button>
                       </form>
                       <h3 className="font-bold text-lg mb-4">Edit {u.id}</h3>
                       <form action="" className="flex flex-col gap-2">
                         <div className="flex items-center gap-2">
-                          <label htmlFor="name" className="w-16">Name</label>
-                          <input id="name" type="text" defaultValue={u.name} class="input" />
+                          <label htmlFor="name" className="w-16">
+                            Name
+                          </label>
+                          <input
+                            id="name"
+                            type="text"
+                            defaultValue={u.name}
+                            class="input"
+                          />
                         </div>
                         <div className="flex items-center gap-2">
-                          <label htmlFor="email" className="w-16">Email</label>
-                          <input id="email" type="text" defaultValue={u.email} class="input" />
+                          <label htmlFor="email" className="w-16">
+                            Email
+                          </label>
+                          <input
+                            id="email"
+                            type="text"
+                            defaultValue={u.email}
+                            class="input"
+                          />
                         </div>
                         <div className="flex items-center gap-2">
-                          <label htmlFor="contact" className="w-16">Contact</label>
-                          <input id="contact" type="text" defaultValue={u.contact} class="input" />
+                          <label htmlFor="contact" className="w-16">
+                            Contact
+                          </label>
+                          <input
+                            id="contact"
+                            type="text"
+                            defaultValue={u.contact}
+                            class="input"
+                          />
                         </div>
                         <div className="flex items-center gap-2">
-                          <label htmlFor="role" className="w-16">Role</label>
-                          <select id="role" defaultValue="Role" className="select">
+                          <label htmlFor="role" className="w-16">
+                            Role
+                          </label>
+                          <select
+                            id="role"
+                            defaultValue="Role"
+                            className="select"
+                          >
                             <option disabled={true}>Pick a color</option>
                             <option>Patient</option>
                             <option>Doctor</option>
@@ -187,6 +236,10 @@ export default function UserManagement() {
           </button>
         </div>
       </div>
+
+      <button className="btn btn-info w-50" onClick={handleBackup}>
+        Backup Data
+      </button>
     </div>
   );
 }
