@@ -14,7 +14,7 @@ import com.clinic.queue.model.SystemAdmin;
 @CrossOrigin(origins = "http://localhost:5173") // change to your frontend port
 public class SystemAdminController {
 
-    private final SystemAdmin admin = new SystemAdmin(1L, "Admin", "admin@example.com", "12345678", "password", 1L);
+    private final SystemAdmin admin = new SystemAdmin(1L, "Admin", "admin@example.com", "12345678", "password");
 
     @PostMapping("/backup")
     public ResponseEntity<String> backupData() {
@@ -27,14 +27,14 @@ public class SystemAdminController {
         }
     }
 
-    @PostMapping("/restore")
-    public ResponseEntity<String> restoreData() {
-        try {
-            admin.restoreData();
-            return ResponseEntity.ok("Restore completed successfully");
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Restore failed: " + e.getMessage());
-        }
-    }
+    // @PostMapping("/restore")
+    // public ResponseEntity<String> restoreData() {
+    //     try {
+    //         admin.restoreData();
+    //         return ResponseEntity.ok("Restore completed successfully");
+    //     } catch (Exception e) {
+    //         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+    //                 .body("Restore failed: " + e.getMessage());
+    //     }
+    // }
 }

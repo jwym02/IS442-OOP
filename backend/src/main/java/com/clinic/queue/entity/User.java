@@ -1,11 +1,11 @@
 package com.clinic.queue.entity;
 
+import org.mindrot.jbcrypt.BCrypt;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-
-import org.mindrot.jbcrypt.BCrypt;
 
 @Entity
 public class User {
@@ -18,15 +18,19 @@ public class User {
     private String contact;
     private String passwordHash;
 
-    // not needed?
+    public User() {
+        super();
+    }
+    
     // // Constructor
-    // public User(long userId, String name, String email, String contact, String rawPassword) {
-    //     this.userId = userId;
-    //     this.name = name;
-    //     this.email = email;
-    //     this.contact = contact;
-    //     setPassword(rawPassword); // Password hash
-    // }
+    public User(long userId, String name, String email, String contact, String rawPassword) {
+        this.userId = userId;
+        this.name = name;
+
+        this.email = email;
+        this.contact = contact;
+        setPassword(rawPassword); // Password hash
+    }
 
     // Password handling
     // TODO: Move to service?

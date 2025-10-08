@@ -4,9 +4,13 @@ import com.clinic.queue.entity.*;
 
 public class SystemAdmin extends User {
 
-    // public SystemAdmin(long userId, String name, String email, String contact, String rawPassword, long adminId) {
-    //     super(userId, name, email, contact, rawPassword);
-    // }
+    public SystemAdmin() {
+        super();
+    }
+    
+    public SystemAdmin(long userId, String name, String email, String contact, String password) {
+        super(userId, name, email, contact, password);
+    }
 
     // public boolean createUserAccount(User user) {
         
