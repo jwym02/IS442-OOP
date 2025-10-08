@@ -54,6 +54,7 @@ buildNumber.properties
 # https://github.com/takari/maven-wrapper#usage-without-binary-jar
 .mvn/wrapper/maven-wrapper.jar
 .env
+
 # Editor directories and files
 .vscode/
 !.vscode/extensions.json
@@ -64,4 +65,3 @@ buildNumber.properties
 *.njsproj
 *.sln
 *.sw?
-.env
