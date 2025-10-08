@@ -29,9 +29,9 @@ public class SystemAdmin extends User {
     // //     return false;
     // // }
 
-    // public boolean configureDoctorSchedule(String doctorId, Schedule schedule) {
-    //     return false;
-    // }
+    public void backupData() {
+        System.out.println("Hello");
+    }
 
     // public boolean setAppointmentSlotInterval(String clinicId, int intervalMinutes) {
     //     return false;

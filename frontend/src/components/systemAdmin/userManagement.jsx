@@ -35,6 +35,19 @@ export default function UserManagement() {
     setCurrentPage(1);
   };
 
+  const handleBackup = async () => {
+    try {
+      const response = await fetch("http://localhost:8080/api/admin/backup", {
+        method: "POST",
+      });
+      const text = await response.text();
+      alert(text);
+    } catch (error) {
+      console.error("Error triggering backup:", error);
+      alert("Backup failed. See console for details.");
+    }
+  };
+
   return (
     <div className="card shadow-xl p-4">
       <div className="flex justify-between mb-3">
@@ -187,6 +200,10 @@ export default function UserManagement() {
           </button>
         </div>
       </div>
+
+      <button className="btn btn-info w-50" onClick={handleBackup}>
+        Backup Data
+      </button>
     </div>
   );
 }
