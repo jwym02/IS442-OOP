@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.clinic.queue.model.SystemAdmin;
+import com.clinic.queue.entity.SystemAdmin;
 
 @RestController
 @RequestMapping("/api/admin")

@@ -1,4 +1,4 @@
-package com.clinic.queue.model;
+package com.clinic.queue.entity;
 
 public class QueueEntry {
     private int queueNumber;
