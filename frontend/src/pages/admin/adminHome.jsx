@@ -7,7 +7,7 @@ export default function AdminHome() {
   useEffect(() => {
     async function fetchUsers() {
       try {
-        const response = await fetch("http://localhost:8080/api/admins");
+        const response = await fetch("http://localhost:8080/api/admin");
         const data = await response.json();
         setUsers(data);
       } catch (error) {

@@ -25,6 +25,4 @@ public class Staff extends User {
         this.assignedClinic = assignedClinic;
     }
 
-    
-
 }

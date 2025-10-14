@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.clinic.queue.service.AdminService;
 
 @RestController
-@RequestMapping("/api/admins")
+@RequestMapping("/api/admin")
 @CrossOrigin(origins = "http://localhost:5173") // your frontend port
 public class AdminController {
 

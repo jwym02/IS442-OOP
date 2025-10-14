@@ -13,10 +13,6 @@ public class StaffRepository {
         this.supabase = supabase;
     }
 
-    /** Fetch all rows from users table */
-    public String getAllUsers() {
-        return supabase.fetchData(TABLE);
-    }
-
+    // TODO: CRUD
 
 }

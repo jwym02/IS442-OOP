@@ -11,7 +11,7 @@ import com.clinic.queue.service.StaffService;
 
 
 @RestController
-@RequestMapping("/api/admins")
+@RequestMapping("/api/staff")
 @CrossOrigin(origins = "http://localhost:5173") // your frontend port
 public class StaffController {
 

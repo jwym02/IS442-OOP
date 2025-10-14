@@ -6,7 +6,7 @@ import com.clinic.queue.service.SupabaseService;
 
 @Repository
 public class AdminRepository {
-    private static final String TABLE = "users";
+    private static final String TABLE = "user";
     private final SupabaseService supabase;
 
     public AdminRepository(SupabaseService supabase) {

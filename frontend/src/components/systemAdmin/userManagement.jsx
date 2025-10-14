@@ -41,7 +41,7 @@ export default function UserManagement() {
 
   const handleBackup = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/admins/backup", {
+      const response = await fetch("http://localhost:8080/api/admin/backup", {
         method: "POST",
       });
       const text = await response.text();
