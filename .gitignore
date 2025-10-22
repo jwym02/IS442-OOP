@@ -1,5 +1,3 @@
-.env
-
 # Compiled class file
 *.class
 
@@ -12,7 +10,7 @@
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
-# Package Files
+# Package Files #
 *.jar
 *.war
 *.nar
@@ -21,47 +19,37 @@
 *.tar.gz
 *.rar
 
-# Virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
 
-# Merged from nested .gitignore
-# Logs
-logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
 
-# Node / Frontend
-node_modules/
-dist/
-dist-ssr/
-*.local
-.vite/
+# Spring Boot
+.springBeans
+.factorypath
 
-# Java / Spring Boot Backend
-backend/target/
-pom.xml.tag
-pom.xml.releaseBackup
-pom.xml.versionsBackup
-pom.xml.next
-release.properties
-dependency-reduced-pom.xml
-buildNumber.properties
-.mvn/timing.properties
-# https://github.com/takari/maven-wrapper#usage-without-binary-jar
-.mvn/wrapper/maven-wrapper.jar
-.env
-
-# Editor directories and files
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
 .vscode/
-!.vscode/extensions.json
-.idea
+.settings/
+.classpath
+.project
+bin/
+out/
+
+# macOS
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+
+# Project specifics
+/backend/target/
+/frontend/node_modules/
+/frontend/dist/
