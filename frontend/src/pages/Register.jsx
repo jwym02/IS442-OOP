@@ -28,7 +28,8 @@ export default function Register() {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h1>SingHealth Clinic System</h1>
+        <img src="/logo.png" alt="" className="w-20 mx-auto bg-white rounded-xl p-4" /> 
+        <h1 class="font-bold">SingHealth Clinic System</h1>
         <h2>Register as Patient</h2>
 
         {error && <div className="error-message">{error}</div>}
