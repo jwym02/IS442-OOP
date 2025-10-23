@@ -1,21 +1,21 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Calendar, Lock, Mail, Phone, UserPlus } from "lucide-react";
-import { useAuth } from "../context/useAuth";
-import { AuthLayout } from "../components/auth/AuthLayout";
-import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Calendar, Lock, Mail, Phone, UserPlus } from 'lucide-react';
+import { useAuth } from '../context/useAuth';
+import { AuthLayout } from '../components/auth/AuthLayout';
+import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
 
 export default function Register() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [birthDate, setBirthDate] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [birthDate, setBirthDate] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   const navigate = useNavigate();
   const { register } = useAuth();
@@ -23,7 +23,7 @@ export default function Register() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (busy) return;
-    setError("");
+    setError('');
     setBusy(true);
 
     const payload = { email, password, name, phone, birthDate };
@@ -31,10 +31,10 @@ export default function Register() {
     setBusy(false);
 
     if (result.success) {
-      navigate("/dashboard");
+      navigate('/dashboard');
       return;
     }
-    setError(result.error || "Registration failed. Please review the details and try again.");
+    setError(result.error || 'Registration failed. Please review the details and try again.');
   };
 
   return (
@@ -43,7 +43,7 @@ export default function Register() {
       description="Tell us a little about yourself so we can confirm your identity and personalise your care."
       footer={
         <span>
-          Already registered?{" "}
+          Already registered?{' '}
           <Link to="/login" className="font-semibold text-primary hover:underline">
             Back to login
           </Link>
@@ -143,7 +143,7 @@ export default function Register() {
 
         <Button type="submit" className="w-full" disabled={busy}>
           <UserPlus className="mr-2 h-4 w-4" />
-          {busy ? "Creating your account..." : "Create account"}
+          {busy ? 'Creating your account...' : 'Create account'}
         </Button>
       </form>
     </AuthLayout>
