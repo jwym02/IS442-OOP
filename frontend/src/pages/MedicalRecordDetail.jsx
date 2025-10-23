@@ -1,7 +1,16 @@
-import { useEffect, useState } from 'react';
-import { useParams, useLocation, Link } from 'react-router-dom';
-import { patientAPI } from '../services/api';
-import { useToast } from '../context/useToast';
+import { useEffect, useState } from "react";
+import { Link, useLocation, useParams } from "react-router-dom";
+import { ArrowLeft, FileText } from "lucide-react";
+import { patientAPI } from "../services/api";
+import { useToast } from "../context/useToast";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Button } from "../components/ui/button";
 
 export default function MedicalRecordDetail() {
   const { id } = useParams();
@@ -39,55 +48,97 @@ export default function MedicalRecordDetail() {
     fetch();
   }, [id, location.state, show, record]);
 
-  if (loading) return <p>Loading medical record...</p>;
-  if (!record)
+  if (loading) {
     return (
-      <div>
-        <p>Medical record not found.</p>
-        <Link to="/dashboard">Back to dashboard</Link>
-      </div>
+      <Card className="mx-auto max-w-3xl border-dashed border-slate-200 bg-white/80 shadow-none">
+        <CardContent className="flex h-48 items-center justify-center text-sm text-muted-foreground">
+          Loading medical record...
+        </CardContent>
+      </Card>
     );
+  }
+
+  if (!record) {
+    return (
+      <Card className="mx-auto max-w-2xl">
+        <CardHeader>
+          <CardTitle>Medical record not found</CardTitle>
+          <CardDescription>
+            We couldn&apos;t locate the record you were looking for. It might have been archived or
+            removed.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button asChild variant="outline" className="gap-2">
+            <Link to="/dashboard">
+              <ArrowLeft className="h-4 w-4" />
+              Back to dashboard
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <div>
-      <h2>Medical Record Detail</h2>
-      <div className="card">
-        <p>
-          <strong>Date:</strong>{' '}
-          {record.recordDate ? new Date(record.recordDate).toLocaleString() : 'N/A'}
-        </p>
-        {record.clinicName && (
-          <p>
-            <strong>Clinic:</strong> {record.clinicName}
-          </p>
-        )}
-        {record.doctorName && (
-          <p>
-            <strong>Doctor:</strong> {record.doctorName}
-          </p>
-        )}
-        {record.diagnosis && (
-          <p>
-            <strong>Diagnosis:</strong> {record.diagnosis}
-          </p>
-        )}
-        {record.treatment && (
-          <p>
-            <strong>Treatment:</strong> {record.treatment}
-          </p>
-        )}
-        {record.notes && (
-          <div>
-            <h4>Doctor's Notes</h4>
-            <pre style={{ whiteSpace: 'pre-wrap' }}>{record.notes}</pre>
-          </div>
-        )}
-        <div style={{ marginTop: 12 }}>
-          <Link to="/dashboard" className="btn btn-secondary">
-            Back
-          </Link>
+    <Card className="mx-auto max-w-3xl">
+      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <CardTitle className="flex items-center gap-2 text-2xl">
+            <FileText className="h-5 w-5 text-primary" />
+            Medical record detail
+          </CardTitle>
+          <CardDescription>
+            {record.recordDate
+              ? `Updated on ${new Date(record.recordDate).toLocaleString()}`
+              : "Recorded date unavailable"}
+          </CardDescription>
         </div>
-      </div>
-    </div>
+        <Button asChild variant="outline" className="gap-2">
+          <Link to="/dashboard">
+            <ArrowLeft className="h-4 w-4" />
+            Back to dashboard
+          </Link>
+        </Button>
+      </CardHeader>
+      <CardContent className="space-y-4 text-sm text-slate-700">
+        {record.clinicName ? (
+          <div>
+            <p className="text-xs uppercase text-muted-foreground">Clinic</p>
+            <p className="text-base font-medium text-slate-900">{record.clinicName}</p>
+          </div>
+        ) : null}
+
+        {record.doctorName ? (
+          <div>
+            <p className="text-xs uppercase text-muted-foreground">Doctor</p>
+            <p className="text-base font-medium text-slate-900">{record.doctorName}</p>
+          </div>
+        ) : null}
+
+        {record.diagnosis ? (
+          <div>
+            <p className="text-xs uppercase text-muted-foreground">Diagnosis</p>
+            <p className="text-base font-medium text-slate-900">{record.diagnosis}</p>
+          </div>
+        ) : null}
+
+        {record.treatment ? (
+          <div>
+            <p className="text-xs uppercase text-muted-foreground">Treatment</p>
+            <p className="text-base font-medium text-slate-900">{record.treatment}</p>
+          </div>
+        ) : null}
+
+        {record.notes ? (
+          <div>
+            <p className="text-xs uppercase text-muted-foreground">Doctor&apos;s notes</p>
+            <pre className="mt-2 whitespace-pre-wrap rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-relaxed text-slate-700">
+              {record.notes}
+            </pre>
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { adminAPI, clinicAPI, doctorAPI, statsAPI } from '../../services/api';
 import { useToast } from '../../context/useToast';
 
@@ -32,21 +32,7 @@ export default function AdminDashboard() {
   const [doctorEdits, setDoctorEdits] = useState({});
   const [savingDoctorId, setSavingDoctorId] = useState(null);
 
-  useEffect(() => {
-    refreshAll();
-  }, []);
-
-  useEffect(() => {
-    setDoctorEdits((prev) => {
-      const next = {};
-      doctors.forEach((doctor) => {
-        next[doctor.id] = prev[doctor.id] ?? doctor.slotIntervalMinutes ?? '';
-      });
-      return next;
-    });
-  }, [doctors]);
-
-  const refreshAll = async () => {
+  const refreshAll = useCallback(async () => {
     try {
       const [clinicRes, doctorRes, statsRes, userRes] = await Promise.all([
         clinicAPI.getAll(),
@@ -61,7 +47,21 @@ export default function AdminDashboard() {
     } catch (error) {
       show(error?.userMessage || 'Unable to load administrator data.', 'error');
     }
-  };
+  }, [show]);
+
+  useEffect(() => {
+    refreshAll();
+  }, [refreshAll]);
+
+  useEffect(() => {
+    setDoctorEdits((prev) => {
+      const next = {};
+      doctors.forEach((doctor) => {
+        next[doctor.id] = prev[doctor.id] ?? doctor.slotIntervalMinutes ?? '';
+      });
+      return next;
+    });
+  }, [doctors]);
 
   const resetUserForm = () => {
     setUserForm({
