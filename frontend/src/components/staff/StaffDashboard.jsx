@@ -115,6 +115,21 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
     }
   };
 
+  const handleCheckIn = async (appointmentId) => {
+    try {
+      await queueAPI.checkIn(appointmentId);
+      show('Patient checked in and added to queue.', 'success');
+      refreshQueueEntries();
+      refreshQueueStatus();
+      refreshAppointments();
+    } catch (error) {
+      show(
+        error?.userMessage || error.response?.data?.message || 'Unable to check in patient.',
+        'error'
+      );
+    }
+  };
+
   const handleQueueAction = async (action) => {
     try {
       if (action === 'start') await queueAPI.staffStart(clinicId);
@@ -269,6 +284,21 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
     return list;
   }, [appointments, filterClinic, filterDoctor, filterDate]);
 
+  const isSameDay = (a, b) => {
+    const da = new Date(a);
+    return (
+      da.getFullYear() === b.getFullYear() &&
+      da.getMonth() === b.getMonth() &&
+      da.getDate() === b.getDate()
+    );
+  };
+
+  // Hide served items from the active queue list in UI
+  const visibleQueueEntries = useMemo(
+    () => (queueEntries || []).filter((e) => e.status !== 'SERVED'),
+    [queueEntries]
+  );
+
   // load walk-in slots when doctor or date changes
   useEffect(() => {
     const loadWalkInSlots = async () => {
@@ -385,11 +415,11 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
 
           <div className="card">
             <h3>Queue Entries</h3>
-            {queueEntries.length === 0 ? (
+            {visibleQueueEntries.length === 0 ? (
               <p style={{ color: '#666' }}>No patients have checked in yet.</p>
             ) : (
               <div className="list">
-                {queueEntries.map((entry) => (
+                {visibleQueueEntries.map((entry) => (
                   <div key={entry.queueNumber} className="list-item">
                     <div>
                       <strong>Queue #{entry.queueNumber}</strong>
@@ -507,18 +537,31 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                   </div>
                   {isStaff && (
                     <div className="actions">
-                      <button
-                        className="btn btn-warning"
-                        onClick={() => startReschedule(appointment)}
-                      >
-                        Reschedule
-                      </button>
-                      <button
-                        className="btn btn-danger"
-                        onClick={() => handleStaffCancel(appointment.id)}
-                      >
-                        Cancel
-                      </button>
+                      {appointment.status === 'SCHEDULED' &&
+                        isSameDay(appointment.dateTime, new Date()) && (
+                          <button
+                            className="btn btn-success"
+                            onClick={() => handleCheckIn(appointment.id)}
+                          >
+                            Check-in
+                          </button>
+                        )}
+                      {appointment.status !== 'COMPLETED' && appointment.status !== 'CANCELLED' && (
+                        <>
+                          <button
+                            className="btn btn-warning"
+                            onClick={() => startReschedule(appointment)}
+                          >
+                            Reschedule
+                          </button>
+                          <button
+                            className="btn btn-danger"
+                            onClick={() => handleStaffCancel(appointment.id)}
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>

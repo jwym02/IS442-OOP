@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './context/AuthContext.jsx';
 import { ToastProvider } from './context/ToastContext.jsx';
 
-import Login from './pages/Login';
+import Login from './pages/login.jsx';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import MedicalRecordDetail from './pages/MedicalRecordDetail.jsx';
