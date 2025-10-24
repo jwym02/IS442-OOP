@@ -57,13 +57,13 @@ export default function Dashboard() {
     <AppShell user={user} onLogout={logout}>
       {views.length ? (
         <Tabs defaultValue={defaultView} className="space-y-6">
-          <TabsList>
+          {/* <TabsList>
             {views.map((view) => (
               <TabsTrigger key={view.key} value={view.key}>
                 {view.label}
               </TabsTrigger>
             ))}
-          </TabsList>
+          </TabsList> */}
           {views.map((view) => (
             <TabsContent key={view.key} value={view.key}>
               {view.component}
