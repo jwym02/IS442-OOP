@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -117,7 +118,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
         setAppointments(res.data || []);
       }
     } catch (error) {
-      show(error?.userMessage || 'Unable to refresh appointments.', 'error');
+      show('Unable to refresh appointments.', 'error');
     }
   };
 
@@ -127,7 +128,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       setQueueStatus(res.data || null);
     } catch (error) {
       show(
-        error?.userMessage || error.response?.data?.message || 'Unable to refresh queue status.',
+        'Unable to refresh queue status.',
         'error'
       );
     }
@@ -142,7 +143,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       setQueueEntries(res.data || []);
     } catch (error) {
       show(
-        error?.userMessage || error.response?.data?.message || 'Unable to refresh queue entries.',
+        'Unable to refresh queue entries.',
         'error'
       );
     }
@@ -154,7 +155,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       const res = await queueAPI.staffDailyReport(clinicId);
       setDailyReport(res.data || null);
     } catch (error) {
-      show(error?.userMessage || 'Unable to refresh report.', 'error');
+      show('Unable to refresh report.', 'error');
     }
   };
 
@@ -168,7 +169,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       refreshDailyReport();
     } catch (error) {
       show(
-        error?.userMessage || error.response?.data?.message || 'Unable to check in patient.',
+        'Unable to check in patient.',
         'error'
       );
     }
@@ -184,10 +185,14 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       refreshQueueEntries();
       refreshAppointments();
     } catch (error) {
-      show(
-        error?.userMessage || error.response?.data?.message || 'Unable to update queue.',
-        'error'
-      );
+      if (action == 'next') {
+        show('No patients in queue', 'error')
+      } else {
+        show(
+          'Unable to update queue',
+          'error'
+        );
+      }
     }
   };
 
@@ -201,7 +206,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       refreshDailyReport();
     } catch (error) {
       show(
-        error?.userMessage || error.response?.data?.message || 'Unable to update queue status.',
+        'Unable to update queue status.',
         'error'
       );
     }
@@ -214,7 +219,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       refreshQueueEntries();
       refreshQueueStatus();
     } catch (error) {
-      show(error?.userMessage || error.response?.data?.message || 'Unable to fast-track.', 'error');
+      show('Unable to fast-track.', 'error');
     }
   };
 
@@ -242,7 +247,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       refreshDailyReport();
     } catch (error) {
       show(
-        error?.userMessage || error.response?.data?.message || 'Unable to register walk-in.',
+        'Unable to register walk-in.',
         'error'
       );
     }
@@ -256,7 +261,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       refreshDailyReport();
     } catch (error) {
       show(
-        error?.userMessage || error.response?.data?.message || 'Unable to cancel appointment.',
+        'Unable to cancel appointment.',
         'error'
       );
     }
@@ -292,7 +297,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       refreshDailyReport();
     } catch (error) {
       show(
-        error?.userMessage || error.response?.data?.message || 'Unable to reschedule appointment.',
+        'Unable to reschedule appointment.',
         'error'
       );
     }
@@ -1505,6 +1510,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
 }
 
 // Stat Card Component
+// eslint-disable-next-line no-unused-vars
 function StatCard({ title, value, icon: Icon, color }) {
   const colorClasses = {
     blue: 'bg-blue-50 text-blue-600 border-blue-200',

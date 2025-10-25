@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   BarChart3,
@@ -84,7 +85,7 @@ export default function AdminDashboard() {
       setSystemStats(statsRes.data || null);
       setUsers(userRes.data || []);
     } catch (error) {
-      show(error?.userMessage || 'Unable to load administrator data.', 'error');
+      show('Unable to load administrator data.', 'error');
     }
   }, [show]);
 
@@ -134,7 +135,7 @@ export default function AdminDashboard() {
       resetUserForm();
       refreshAll();
     } catch (error) {
-      show(error?.userMessage || error.response?.data?.message || 'Unable to save user.', 'error');
+      show('Unable to save user.', 'error');
     }
   };
 
@@ -162,7 +163,7 @@ export default function AdminDashboard() {
       refreshAll();
     } catch (error) {
       show(
-        error?.userMessage || error.response?.data?.message || 'Unable to delete user.',
+        'Unable to delete user.',
         'error'
       );
     }
@@ -184,7 +185,7 @@ export default function AdminDashboard() {
       refreshAll();
     } catch (error) {
       show(
-        error?.userMessage || error.response?.data?.message || 'Unable to assign role.',
+        'Unable to assign role.',
         'error'
       );
     }
@@ -256,7 +257,7 @@ export default function AdminDashboard() {
       refreshAll();
     } catch (error) {
       show(
-        error?.userMessage || error.response?.data?.message || 'Unable to update clinic.',
+        'Unable to update clinic.',
         'error'
       );
     } finally {
@@ -285,7 +286,7 @@ export default function AdminDashboard() {
       refreshAll();
     } catch (error) {
       show(
-        error?.userMessage || error.response?.data?.message || 'Unable to update doctor schedule.',
+        'Unable to update doctor schedule.',
         'error'
       );
     } finally {

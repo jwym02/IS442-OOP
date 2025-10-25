@@ -1,4 +1,5 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿/* eslint-disable no-unused-vars */
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   AlertCircle,
@@ -71,7 +72,7 @@ export default function PatientDashboard({ patientId, userName }) {
         setDoctors(doctorRes.data || []);
         setMedicalRecords(recordsRes.data || []);
       } catch (error) {
-        show(error?.response?.data?.message || "Unable to load patient dashboard data.", "error");
+        show("Unable to load patient dashboard data.", "error");
       } finally {
         setLoading(false);
       }
@@ -92,7 +93,7 @@ export default function PatientDashboard({ patientId, userName }) {
       const res = await appointmentAPI.listForPatient(patientId);
       setAppointments(res.data || []);
     } catch (error) {
-      show(error?.userMessage || "Unable to refresh appointments.", "error");
+      show("Unable to refresh appointments.", "error");
     }
   };
 
@@ -152,7 +153,7 @@ export default function PatientDashboard({ patientId, userName }) {
         }
       } catch (error) {
         show(
-          error?.userMessage || error?.response?.data?.message || "Unable to load available slots.",
+          "Unable to load available slots.",
           "error"
         );
         setTimeSlots([]);
@@ -226,9 +227,7 @@ export default function PatientDashboard({ patientId, userName }) {
         }
       } catch (error) {
         show(
-          error?.userMessage ||
-            error?.response?.data?.message ||
-            "Unable to load reschedule availability.",
+          "Unable to load reschedule availability.",
           "error"
         );
         setRescheduleTimeSlots([]);
@@ -254,7 +253,7 @@ export default function PatientDashboard({ patientId, userName }) {
       const res = await patientAPI.medicalRecords(patientId);
       setMedicalRecords(res.data || []);
     } catch (error) {
-      show(error?.response?.data?.message || "Unable to load medical history.", "error");
+      show("Unable to load medical history.", "error");
     } finally {
       setMedicalLoading(false);
     }
@@ -281,7 +280,7 @@ export default function PatientDashboard({ patientId, userName }) {
       setSelectedSlot("");
     } catch (error) {
       show(
-        error?.userMessage || error?.response?.data?.message || "Unable to book appointment.",
+        "Unable to book appointment.",
         "error"
       );
     }
@@ -306,7 +305,7 @@ export default function PatientDashboard({ patientId, userName }) {
       refreshAppointments();
     } catch (error) {
       show(
-        error?.userMessage || error.response?.data?.message || "Unable to cancel appointment.",
+        "Unable to cancel appointment.",
         "error"
       );
     }
@@ -369,9 +368,7 @@ export default function PatientDashboard({ patientId, userName }) {
       refreshAppointments();
     } catch (error) {
       show(
-        error?.userMessage ||
-          error?.response?.data?.message ||
-          "Unable to reschedule appointment.",
+        "Unable to reschedule appointment.",
         "error"
       );
     }
@@ -384,7 +381,7 @@ export default function PatientDashboard({ patientId, userName }) {
     } catch (error) {
       setQueueStatus(null);
       show(
-        error?.userMessage || error.response?.data?.message || "No active queue status found.",
+        "No active queue status found.",
         "info"
       );
     }
@@ -1347,6 +1344,7 @@ export default function PatientDashboard({ patientId, userName }) {
 }
 
 // Stat Card Component
+// eslint-disable-next-line no-unused-vars
 function StatCard({ title, value, icon: Icon, color }) {
   const colorClasses = {
     blue: "bg-blue-50 text-blue-600 border-blue-200",

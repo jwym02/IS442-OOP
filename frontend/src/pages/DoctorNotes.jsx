@@ -1,4 +1,5 @@
-﻿import { useContext, useEffect, useMemo, useState } from "react";
+﻿/* eslint-disable no-unused-vars */
+import { useContext, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ClipboardList,
@@ -59,7 +60,7 @@ export default function DoctorNotes() {
         );
         setAppointments(filtered);
       } catch (error) {
-        show(error?.userMessage || "Unable to load appointments.", "error");
+        show("Unable to load appointments.", "error");
       } finally {
         setLoading(false);
       }
@@ -134,7 +135,7 @@ export default function DoctorNotes() {
         )
       );
     } catch (error) {
-      show(error?.userMessage || "Unable to save notes.", "error");
+      show("Unable to save notes.", "error");
     } finally {
       setSubmitting(false);
     }
@@ -151,7 +152,7 @@ export default function DoctorNotes() {
         )
       );
     } catch (error) {
-      show(error?.userMessage || "Unable to refresh appointments.", "error");
+      show("Unable to refresh appointments.", "error");
     } finally {
       setLoading(false);
     }
