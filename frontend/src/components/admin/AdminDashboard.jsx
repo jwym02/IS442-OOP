@@ -350,6 +350,21 @@ export default function AdminDashboard() {
   }, [clinics]);
 
   const getClinicName = (clinicId) => clinicMap.get(clinicId)?.name || `Clinic #${clinicId}`;
+  
+  const parsedQueueStats = useMemo(() => {
+    try {
+      if (!systemStats?.queueStatistics) return { served: 0, called: 0, waiting: 0 };
+      const match = systemStats.queueStatistics.match(/SERVED=(\d+), CALLED=(\d+), WAITING=(\d+)/);
+      if (!match) return { served: 0, called: 0, waiting: 0 };
+      return {
+        served: Number(match[1]),
+        called: Number(match[2]),
+        waiting: Number(match[3]),
+      };
+    } catch (err) {
+      return { served: 0, called: 0, waiting: 0 };
+    }
+  }, [systemStats]);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -489,14 +504,25 @@ export default function AdminDashboard() {
                       </div>
                       <div className="flex items-center justify-between p-4 rounded-lg border border-slate-200 bg-slate-50">
                         <div className="flex items-center gap-3">
-                          <AlertCircle className="h-5 w-5 text-orange-600" />
-                          <span className="text-sm font-medium text-slate-900">
+                          <div className="flex items-center justify-center h-5 w-5 rounded-full bg-orange-50 text-orange-600">
+                            <AlertCircle className="h-5 w-5" />
+                          </div>
+                          <span className="text-base font-semibold text-slate-800">
                             Queue Statistics
                           </span>
                         </div>
-                        <span className="text-lg font-bold text-slate-900">
-                          {systemStats.queueStatistics || '—'}
-                        </span>
+
+                        <div className="flex gap-3 text-sm font-semibold text-slate-800">
+                          <span className="px-3 py-1 rounded-full bg-green-100 text-green-700">
+                            Served: {parsedQueueStats.served || 0}
+                          </span>
+                          <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700">
+                            Called: {parsedQueueStats.called || 0}
+                          </span>
+                          <span className="px-3 py-1 rounded-full bg-yellow-100 text-yellow-700">
+                            Waiting: {parsedQueueStats.waiting || 0}
+                          </span>
+                        </div>
                       </div>
                       <div className="flex items-center justify-between p-4 rounded-lg border border-slate-200 bg-slate-50">
                         <div className="flex items-center gap-3">
@@ -1059,7 +1085,7 @@ export default function AdminDashboard() {
                             <TableHead>Doctor Name</TableHead>
                             <TableHead>Assigned Clinic</TableHead>
                             <TableHead>Current Slot Interval</TableHead>
-                            <TableHead className="text-right">Update Schedule</TableHead>
+                            <TableHead className="">Update Schedule</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -1080,7 +1106,7 @@ export default function AdminDashboard() {
                                   : 'Not set'}
                               </TableCell>
                               <TableCell className="text-right">
-                                <div className="flex justify-end gap-2">
+                                <div className="flex gap-2">
                                   <Input
                                     type="number"
                                     min="5"
