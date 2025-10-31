@@ -21,13 +21,7 @@ import {
 import { adminAPI, clinicAPI, doctorAPI, statsAPI } from '../../services/api';
 import { useToast } from '../../context/useToast';
 import { Button } from '../ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '../ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -85,7 +79,7 @@ export default function AdminDashboard() {
       setSystemStats(statsRes.data || null);
       setUsers(userRes.data || []);
     } catch (error) {
-      show('Unable to load administrator data.', 'error');
+      show(error?.userMessage || 'Unable to load administrator data.', 'error');
     }
   }, [show]);
 
@@ -135,7 +129,7 @@ export default function AdminDashboard() {
       resetUserForm();
       refreshAll();
     } catch (error) {
-      show('Unable to save user.', 'error');
+      show(error?.userMessage || 'Unable to save user.', 'error');
     }
   };
 
@@ -154,7 +148,9 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+    if (
+      !window.confirm('Are you sure you want to delete this user? This action cannot be undone.')
+    ) {
       return;
     }
     try {
@@ -162,10 +158,7 @@ export default function AdminDashboard() {
       show('User deleted.', 'success');
       refreshAll();
     } catch (error) {
-      show(
-        'Unable to delete user.',
-        'error'
-      );
+      show(error?.userMessage || 'Unable to delete user.', 'error');
     }
   };
 
@@ -184,10 +177,7 @@ export default function AdminDashboard() {
       show('Role assigned.', 'success');
       refreshAll();
     } catch (error) {
-      show(
-        'Unable to assign role.',
-        'error'
-      );
+      show(error?.userMessage || 'Unable to assign role.', 'error');
     }
   };
 
@@ -256,10 +246,7 @@ export default function AdminDashboard() {
       resetClinicForm();
       refreshAll();
     } catch (error) {
-      show(
-        'Unable to update clinic.',
-        'error'
-      );
+      show(error?.userMessage || 'Unable to update clinic.', 'error');
     } finally {
       setSavingClinic(false);
     }
@@ -285,10 +272,7 @@ export default function AdminDashboard() {
       show('Doctor schedule updated.', 'success');
       refreshAll();
     } catch (error) {
-      show(
-        'Unable to update doctor schedule.',
-        'error'
-      );
+      show(error?.userMessage || 'Unable to update doctor schedule.', 'error');
     } finally {
       setSavingDoctorId(null);
     }
@@ -350,7 +334,7 @@ export default function AdminDashboard() {
   }, [clinics]);
 
   const getClinicName = (clinicId) => clinicMap.get(clinicId)?.name || `Clinic #${clinicId}`;
-  
+
   const parsedQueueStats = useMemo(() => {
     try {
       if (!systemStats?.queueStatistics) return { served: 0, called: 0, waiting: 0 };
@@ -784,7 +768,9 @@ export default function AdminDashboard() {
                   <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center">
                     <Users className="mx-auto h-12 w-12 text-slate-400 mb-4" />
                     <p className="text-sm text-slate-600">
-                      {userSearchTerm ? 'No users found matching your search' : 'No users registered yet'}
+                      {userSearchTerm
+                        ? 'No users found matching your search'
+                        : 'No users registered yet'}
                     </p>
                   </div>
                 ) : (
@@ -804,19 +790,18 @@ export default function AdminDashboard() {
                         <TableBody>
                           {paginatedUsers.map((user) => (
                             <TableRow key={user.id}>
-                              <TableCell className="font-medium">
-                                {user.name || 'N/A'}
-                              </TableCell>
-                              <TableCell className="text-sm text-slate-600">
-                                {user.email}
-                              </TableCell>
+                              <TableCell className="font-medium">{user.name || 'N/A'}</TableCell>
+                              <TableCell className="text-sm text-slate-600">{user.email}</TableCell>
                               <TableCell>
                                 <div className="flex flex-wrap gap-1">
                                   {user.roles?.map((role, idx) => (
                                     <Badge
                                       key={idx}
                                       variant="outline"
-                                      className={cn('text-xs capitalize border', getRoleBadgeColor(role))}
+                                      className={cn(
+                                        'text-xs capitalize border',
+                                        getRoleBadgeColor(role)
+                                      )}
                                     >
                                       {role.replace(/_/g, ' ').toLowerCase()}
                                     </Badge>
@@ -897,9 +882,7 @@ export default function AdminDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>Clinic Configuration</CardTitle>
-                    <CardDescription>
-                      Total: {clinics.length} clinics
-                    </CardDescription>
+                    <CardDescription>Total: {clinics.length} clinics</CardDescription>
                   </div>
                 </div>
               </CardHeader>
@@ -1067,7 +1050,8 @@ export default function AdminDashboard() {
               <CardHeader>
                 <CardTitle>Doctor Schedule Management</CardTitle>
                 <CardDescription>
-                  Configure appointment slot intervals for each doctor (Total: {doctors.length} doctors)
+                  Configure appointment slot intervals for each doctor (Total: {doctors.length}{' '}
+                  doctors)
                 </CardDescription>
               </CardHeader>
               <CardContent>

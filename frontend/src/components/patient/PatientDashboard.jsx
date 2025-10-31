@@ -1,6 +1,6 @@
 ﻿/* eslint-disable no-unused-vars */
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   AlertCircle,
   CalendarDays,
@@ -14,36 +14,30 @@ import {
   Stethoscope,
   Users,
   ActivitySquare,
-} from "lucide-react";
-import { appointmentAPI, clinicAPI, doctorAPI, patientAPI, queueAPI } from "../../services/api";
-import { useToast } from "../../context/useToast";
-import { Button } from "../ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "../ui/card";
-import { Badge } from "../ui/badge";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Select } from "../ui/select";
-import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
-import { cn } from "../../lib/utils";
+} from 'lucide-react';
+import { appointmentAPI, clinicAPI, doctorAPI, patientAPI, queueAPI } from '../../services/api';
+import { useToast } from '../../context/useToast';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Select } from '../ui/select';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { cn } from '../../lib/utils';
 
 export default function PatientDashboard({ patientId, userName }) {
   const { show } = useToast();
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState('overview');
   const [appointments, setAppointments] = useState([]);
   const [clinics, setClinics] = useState([]);
   const [doctors, setDoctors] = useState([]);
-  const [selectedClinic, setSelectedClinic] = useState("");
-  const [selectedDoctor, setSelectedDoctor] = useState("");
+  const [selectedClinic, setSelectedClinic] = useState('');
+  const [selectedDoctor, setSelectedDoctor] = useState('');
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [timeSlots, setTimeSlots] = useState([]);
-  const [selectedSlot, setSelectedSlot] = useState("");
+  const [selectedSlot, setSelectedSlot] = useState('');
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [queueStatus, setQueueStatus] = useState(null);
   const [checkedInAppointmentId, setCheckedInAppointmentId] = useState(null);
@@ -51,11 +45,11 @@ export default function PatientDashboard({ patientId, userName }) {
   const [medicalLoading, setMedicalLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [rescheduleTarget, setRescheduleTarget] = useState(null);
-  const [rescheduleClinic, setRescheduleClinic] = useState("");
-  const [rescheduleDoctor, setRescheduleDoctor] = useState("");
-  const [rescheduleSelectedDate, setRescheduleSelectedDate] = useState("");
+  const [rescheduleClinic, setRescheduleClinic] = useState('');
+  const [rescheduleDoctor, setRescheduleDoctor] = useState('');
+  const [rescheduleSelectedDate, setRescheduleSelectedDate] = useState('');
   const [rescheduleTimeSlots, setRescheduleTimeSlots] = useState([]);
-  const [rescheduleSelectedSlot, setRescheduleSelectedSlot] = useState("");
+  const [rescheduleSelectedSlot, setRescheduleSelectedSlot] = useState('');
   const [rescheduleSlotsLoading, setRescheduleSlotsLoading] = useState(false);
 
   useEffect(() => {
@@ -72,7 +66,12 @@ export default function PatientDashboard({ patientId, userName }) {
         setDoctors(doctorRes.data || []);
         setMedicalRecords(recordsRes.data || []);
       } catch (error) {
-        show("Unable to load patient dashboard data.", "error");
+        show(
+          error?.userMessage ||
+            error.response?.data?.message ||
+            'Unable to load patient dashboard data.',
+          'error'
+        );
       } finally {
         setLoading(false);
       }
@@ -93,7 +92,10 @@ export default function PatientDashboard({ patientId, userName }) {
       const res = await appointmentAPI.listForPatient(patientId);
       setAppointments(res.data || []);
     } catch (error) {
-      show("Unable to refresh appointments.", "error");
+      show(
+        error?.userMessage || error.response?.data?.message || 'Unable to refresh appointments.',
+        'error'
+      );
     }
   };
 
@@ -114,11 +116,11 @@ export default function PatientDashboard({ patientId, userName }) {
         );
 
         const clinic = clinics.find((c) => c.id === Number(selectedClinic));
-        const openTime = clinic?.openTime || "09:00:00";
-        const closeTime = clinic?.closeTime || "17:00:00";
+        const openTime = clinic?.openTime || '09:00:00';
+        const closeTime = clinic?.closeTime || '17:00:00';
 
         const parseTime = (timeValue) => {
-          const parts = timeValue.split(":");
+          const parts = timeValue.split(':');
           return { hh: Number(parts[0]), mm: Number(parts[1]) };
         };
 
@@ -127,18 +129,22 @@ export default function PatientDashboard({ patientId, userName }) {
 
         const slots = [];
         const start = new Date(
-          `${selectedDate}T${String(open.hh).padStart(2, "0")}:${String(open.mm).padStart(
+          `${selectedDate}T${String(open.hh).padStart(2, '0')}:${String(open.mm).padStart(
             2,
-            "0"
+            '0'
           )}:00`
         );
         const end = new Date(
-          `${selectedDate}T${String(close.hh).padStart(2, "0")}:${String(close.mm).padStart(
+          `${selectedDate}T${String(close.hh).padStart(2, '0')}:${String(close.mm).padStart(
             2,
-            "0"
+            '0'
           )}:00`
         );
-        for (let timeCursor = new Date(start); timeCursor < end; timeCursor.setMinutes(timeCursor.getMinutes() + slotInterval)) {
+        for (
+          let timeCursor = new Date(start);
+          timeCursor < end;
+          timeCursor.setMinutes(timeCursor.getMinutes() + slotInterval)
+        ) {
           const isoLocal = new Date(timeCursor.getTime() - timeCursor.getTimezoneOffset() * 60000)
             .toISOString()
             .slice(0, 16);
@@ -149,12 +155,12 @@ export default function PatientDashboard({ patientId, userName }) {
         }
         setTimeSlots(slots);
         if (!slots.includes(selectedSlot)) {
-          setSelectedSlot("");
+          setSelectedSlot('');
         }
       } catch (error) {
         show(
-          "Unable to load available slots.",
-          "error"
+          error?.userMessage || error.response?.data?.message || 'Unable to load available slots.',
+          'error'
         );
         setTimeSlots([]);
       } finally {
@@ -185,11 +191,11 @@ export default function PatientDashboard({ patientId, userName }) {
         );
 
         const clinic = clinics.find((c) => c.id === Number(rescheduleClinic));
-        const openTime = clinic?.openTime || "09:00:00";
-        const closeTime = clinic?.closeTime || "17:00:00";
+        const openTime = clinic?.openTime || '09:00:00';
+        const closeTime = clinic?.closeTime || '17:00:00';
 
         const parseTime = (timeValue) => {
-          const parts = timeValue.split(":");
+          const parts = timeValue.split(':');
           return { hh: Number(parts[0]), mm: Number(parts[1]) };
         };
 
@@ -198,15 +204,15 @@ export default function PatientDashboard({ patientId, userName }) {
 
         const slots = [];
         const start = new Date(
-          `${rescheduleSelectedDate}T${String(open.hh).padStart(2, "0")}:${String(open.mm).padStart(
+          `${rescheduleSelectedDate}T${String(open.hh).padStart(2, '0')}:${String(open.mm).padStart(
             2,
-            "0"
+            '0'
           )}:00`
         );
         const end = new Date(
-          `${rescheduleSelectedDate}T${String(close.hh).padStart(2, "0")}:${String(
+          `${rescheduleSelectedDate}T${String(close.hh).padStart(2, '0')}:${String(
             close.mm
-          ).padStart(2, "0")}:00`
+          ).padStart(2, '0')}:00`
         );
         for (
           let timeCursor = new Date(start);
@@ -223,12 +229,14 @@ export default function PatientDashboard({ patientId, userName }) {
         }
         setRescheduleTimeSlots(slots);
         if (!slots.includes(rescheduleSelectedSlot)) {
-          setRescheduleSelectedSlot("");
+          setRescheduleSelectedSlot('');
         }
       } catch (error) {
         show(
-          "Unable to load reschedule availability.",
-          "error"
+          error?.userMessage ||
+            error.response?.data?.message ||
+            'Unable to load reschedule availability.',
+          'error'
         );
         setRescheduleTimeSlots([]);
       } finally {
@@ -253,7 +261,10 @@ export default function PatientDashboard({ patientId, userName }) {
       const res = await patientAPI.medicalRecords(patientId);
       setMedicalRecords(res.data || []);
     } catch (error) {
-      show("Unable to load medical history.", "error");
+      show(
+        error?.userMessage || error.response?.data?.message || 'Unable to load medical history.',
+        'error'
+      );
     } finally {
       setMedicalLoading(false);
     }
@@ -262,7 +273,7 @@ export default function PatientDashboard({ patientId, userName }) {
   const handleBookAppointment = async (event) => {
     event.preventDefault();
     if (!selectedClinic || !selectedDoctor || !selectedSlot) {
-      show("Please complete all booking details.", "error");
+      show('Please complete all booking details.', 'error');
       return;
     }
     try {
@@ -273,15 +284,15 @@ export default function PatientDashboard({ patientId, userName }) {
         doctorId: Number(selectedDoctor),
         dateTime: iso,
       });
-      show("Appointment booked successfully.", "success");
+      show('Appointment booked successfully.', 'success');
       refreshAppointments();
-      setSelectedClinic("");
-      setSelectedDoctor("");
-      setSelectedSlot("");
+      setSelectedClinic('');
+      setSelectedDoctor('');
+      setSelectedSlot('');
     } catch (error) {
       show(
-        "Unable to book appointment.",
-        "error"
+        error?.userMessage || error.response?.data?.message || 'Unable to book appointment.',
+        'error'
       );
     }
   };
@@ -289,24 +300,24 @@ export default function PatientDashboard({ patientId, userName }) {
   const handleCheckIn = async (appointmentId) => {
     try {
       await queueAPI.checkIn(appointmentId);
-      show("Checked in successfully. Track your queue status below.", "success");
+      show('Checked in successfully. Track your queue status below.', 'success');
       setCheckedInAppointmentId(appointmentId);
       await fetchQueueStatus();
       refreshAppointments();
     } catch (error) {
-      show(error?.userMessage || error.response?.data?.message || "Unable to check in.", "error");
+      show(error?.userMessage || error.response?.data?.message || 'Unable to check in.', 'error');
     }
   };
 
   const handleCancelAppointment = async (appointmentId) => {
     try {
       await appointmentAPI.cancel(appointmentId);
-      show("Appointment cancelled.", "success");
+      show('Appointment cancelled.', 'success');
       refreshAppointments();
     } catch (error) {
       show(
-        "Unable to cancel appointment.",
-        "error"
+        error?.userMessage || error.response?.data?.message || 'Unable to cancel appointment.',
+        'error'
       );
     }
   };
@@ -316,7 +327,7 @@ export default function PatientDashboard({ patientId, userName }) {
     const appointmentDate = new Date(appointment.dateTime);
     const msDiff = appointmentDate.getTime() - now.getTime();
     if (msDiff < 24 * 60 * 60 * 1000) {
-      show("Rescheduling is allowed only more than 24 hours before the appointment.", "error");
+      show('Rescheduling is allowed only more than 24 hours before the appointment.', 'error');
       return;
     }
 
@@ -330,10 +341,10 @@ export default function PatientDashboard({ patientId, userName }) {
 
   const cancelReschedule = () => {
     setRescheduleTarget(null);
-    setRescheduleClinic("");
-    setRescheduleDoctor("");
-    setRescheduleSelectedDate("");
-    setRescheduleSelectedSlot("");
+    setRescheduleClinic('');
+    setRescheduleDoctor('');
+    setRescheduleSelectedDate('');
+    setRescheduleSelectedSlot('');
   };
 
   const handleRescheduleSubmit = async (event) => {
@@ -345,7 +356,7 @@ export default function PatientDashboard({ patientId, userName }) {
       !rescheduleSelectedDate ||
       !rescheduleSelectedSlot
     ) {
-      show("Please fill in the new appointment details.", "error");
+      show('Please fill in the new appointment details.', 'error');
       return;
     }
     try {
@@ -353,7 +364,7 @@ export default function PatientDashboard({ patientId, userName }) {
       const appointmentDate = new Date(rescheduleTarget.dateTime);
       const msDiff = appointmentDate.getTime() - now.getTime();
       if (msDiff < 24 * 60 * 60 * 1000) {
-        show("Rescheduling is allowed only more than 24 hours before the appointment.", "error");
+        show('Rescheduling is allowed only more than 24 hours before the appointment.', 'error');
         return;
       }
       const combined = new Date(`${rescheduleSelectedDate}T${rescheduleSelectedSlot}:00`);
@@ -363,13 +374,13 @@ export default function PatientDashboard({ patientId, userName }) {
         doctorId: Number(rescheduleDoctor),
         dateTime: iso,
       });
-      show("Appointment rescheduled.", "success");
+      show('Appointment rescheduled.', 'success');
       cancelReschedule();
       refreshAppointments();
     } catch (error) {
       show(
-        "Unable to reschedule appointment.",
-        "error"
+        error?.userMessage || error.response?.data?.message || 'Unable to reschedule appointment.',
+        'error'
       );
     }
   };
@@ -381,8 +392,8 @@ export default function PatientDashboard({ patientId, userName }) {
     } catch (error) {
       setQueueStatus(null);
       show(
-        "No active queue status found.",
-        "info"
+        error?.userMessage || error.response?.data?.message || 'No active queue status found.',
+        'info'
       );
     }
   };
@@ -395,18 +406,18 @@ export default function PatientDashboard({ patientId, userName }) {
   };
 
   const mapQueueStatusLabel = (status) => {
-    if (!status) return "UNKNOWN";
+    if (!status) return 'UNKNOWN';
     switch (String(status).toUpperCase()) {
-      case "WAITING":
-        return "Waiting";
-      case "CALLED":
-        return "Called";
-      case "IN_SERVICE":
-        return "In Service";
-      case "DONE":
-        return "Done";
-      case "CANCELLED":
-        return "Cancelled";
+      case 'WAITING':
+        return 'Waiting';
+      case 'CALLED':
+        return 'Called';
+      case 'IN_SERVICE':
+        return 'In Service';
+      case 'DONE':
+        return 'Done';
+      case 'CANCELLED':
+        return 'Cancelled';
       default:
         return String(status);
     }
@@ -419,13 +430,13 @@ export default function PatientDashboard({ patientId, userName }) {
 
   const upcomingAppointments = useMemo(() => {
     return (appointments || [])
-      .filter((appointment) => appointment.status !== "COMPLETED")
+      .filter((appointment) => appointment.status !== 'COMPLETED')
       .sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
   }, [appointments]);
 
   const pastAppointments = useMemo(() => {
     return (appointments || [])
-      .filter((appointment) => appointment.status === "COMPLETED")
+      .filter((appointment) => appointment.status === 'COMPLETED')
       .sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
   }, [appointments]);
 
@@ -443,44 +454,42 @@ export default function PatientDashboard({ patientId, userName }) {
     return map;
   }, [doctors]);
 
-  const getClinicName = (clinicId) =>
-    clinicMap.get(clinicId)?.name || `Clinic #${clinicId}`;
+  const getClinicName = (clinicId) => clinicMap.get(clinicId)?.name || `Clinic #${clinicId}`;
 
   const getClinicLocation = (clinicId) => {
     const clinic = clinicMap.get(clinicId);
     return clinic?.address || clinic?.location || null;
   };
 
-  const getDoctorName = (doctorId) =>
-    doctorMap.get(doctorId)?.fullName || `Doctor #${doctorId}`;
+  const getDoctorName = (doctorId) => doctorMap.get(doctorId)?.fullName || `Doctor #${doctorId}`;
 
   const appointmentStatusStyles = {
-    SCHEDULED: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    CHECKED_IN: "border-sky-200 bg-sky-50 text-sky-700",
-    IN_SERVICE: "border-sky-200 bg-sky-50 text-sky-700",
-    COMPLETED: "border-slate-200 bg-slate-100 text-slate-600",
-    CANCELLED: "border-rose-200 bg-rose-50 text-rose-700",
-    NO_SHOW: "border-rose-200 bg-rose-50 text-rose-700",
+    SCHEDULED: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    CHECKED_IN: 'border-sky-200 bg-sky-50 text-sky-700',
+    IN_SERVICE: 'border-sky-200 bg-sky-50 text-sky-700',
+    COMPLETED: 'border-slate-200 bg-slate-100 text-slate-600',
+    CANCELLED: 'border-rose-200 bg-rose-50 text-rose-700',
+    NO_SHOW: 'border-rose-200 bg-rose-50 text-rose-700',
   };
 
   const formatDateTime = (value) => {
-    if (!value) return "—";
+    if (!value) return '—';
     return new Date(value).toLocaleString(undefined, {
-      dateStyle: "medium",
-      timeStyle: "short",
+      dateStyle: 'medium',
+      timeStyle: 'short',
     });
   };
 
   const formatDate = (value) => {
-    if (!value) return "—";
-    return new Date(value).toLocaleDateString(undefined, { dateStyle: "medium" });
+    if (!value) return '—';
+    return new Date(value).toLocaleDateString(undefined, { dateStyle: 'medium' });
   };
 
   const formatTime = (value) => {
-    if (!value) return "—";
+    if (!value) return '—';
     return new Date(value).toLocaleTimeString(undefined, {
-      hour: "2-digit",
-      minute: "2-digit",
+      hour: '2-digit',
+      minute: '2-digit',
     });
   };
 
@@ -497,13 +506,13 @@ export default function PatientDashboard({ patientId, userName }) {
   }, [medicalRecords]);
 
   const renderAppointmentActions = (appointment, { compact = false } = {}) => {
-    const isScheduled = appointment.status === "SCHEDULED";
+    const isScheduled = appointment.status === 'SCHEDULED';
     const isCheckedIn =
-      appointment.status === "CHECKED_IN" || appointment.id === checkedInAppointmentId;
-    const size = compact ? "sm" : "default";
+      appointment.status === 'CHECKED_IN' || appointment.id === checkedInAppointmentId;
+    const size = compact ? 'sm' : 'default';
 
     return (
-      <div className={cn("flex flex-wrap gap-2", compact ? "mt-3" : "mt-4")}>
+      <div className={cn('flex flex-wrap gap-2', compact ? 'mt-3' : 'mt-4')}>
         {isScheduled ? (
           <>
             <Button size={size} className="gap-2" onClick={() => handleCheckIn(appointment.id)}>
@@ -530,12 +539,7 @@ export default function PatientDashboard({ patientId, userName }) {
           </>
         ) : null}
         {isCheckedIn ? (
-          <Button
-            size={size}
-            variant="secondary"
-            className="gap-2"
-            onClick={fetchQueueStatus}
-          >
+          <Button size={size} variant="secondary" className="gap-2" onClick={fetchQueueStatus}>
             <RefreshCw className="h-4 w-4" />
             Refresh queue
           </Button>
@@ -564,7 +568,7 @@ export default function PatientDashboard({ patientId, userName }) {
             <div>
               <h1 className="text-2xl font-bold text-slate-900">Patient Portal</h1>
               <p className="text-sm text-slate-600 mt-1">
-                Welcome back{userName ? `, ${userName}` : ""}
+                Welcome back{userName ? `, ${userName}` : ''}
               </p>
             </div>
             <Button
@@ -585,10 +589,10 @@ export default function PatientDashboard({ patientId, userName }) {
         <div className="px-6">
           <nav className="flex space-x-8 -mb-px">
             {[
-              { id: "overview", label: "Overview", icon: ActivitySquare },
-              { id: "appointments", label: "Appointments", icon: CalendarDays },
-              { id: "queue", label: "Queue Status", icon: Users },
-              { id: "medical-history", label: "Medical History", icon: FileText },
+              { id: 'overview', label: 'Overview', icon: ActivitySquare },
+              { id: 'appointments', label: 'Appointments', icon: CalendarDays },
+              { id: 'queue', label: 'Queue Status', icon: Users },
+              { id: 'medical-history', label: 'Medical History', icon: FileText },
             ].map((tab) => {
               const Icon = tab.icon;
               return (
@@ -599,8 +603,8 @@ export default function PatientDashboard({ patientId, userName }) {
                     flex items-center px-1 py-4 border-b-2 font-medium text-sm transition-colors
                     ${
                       activeTab === tab.id
-                        ? "border-blue-500 text-blue-600"
-                        : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
                     }
                   `}
                 >
@@ -616,7 +620,7 @@ export default function PatientDashboard({ patientId, userName }) {
       {/* Content */}
       <div className="px-6 py-8">
         {/* Overview Tab */}
-        {activeTab === "overview" && (
+        {activeTab === 'overview' && (
           <div className="space-y-6">
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -654,12 +658,12 @@ export default function PatientDashboard({ patientId, userName }) {
                     <Badge
                       variant="outline"
                       className={cn(
-                        "capitalize border",
+                        'capitalize border',
                         appointmentStatusStyles[nextAppointment.status] ||
-                          "border-slate-200 bg-slate-100 text-slate-600"
+                          'border-slate-200 bg-slate-100 text-slate-600'
                       )}
                     >
-                      {nextAppointment.status.replace(/_/g, " ").toLowerCase()}
+                      {nextAppointment.status.replace(/_/g, ' ').toLowerCase()}
                     </Badge>
                   )}
                 </div>
@@ -717,8 +721,10 @@ export default function PatientDashboard({ patientId, userName }) {
                 ) : (
                   <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center">
                     <CalendarDays className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-                    <p className="text-sm text-slate-600 mb-4">No upcoming appointments scheduled</p>
-                    <Button onClick={() => setActiveTab("appointments")} className="gap-2">
+                    <p className="text-sm text-slate-600 mb-4">
+                      No upcoming appointments scheduled
+                    </p>
+                    <Button onClick={() => setActiveTab('appointments')} className="gap-2">
                       <PlusCircle className="h-4 w-4" />
                       Book an Appointment
                     </Button>
@@ -733,13 +739,11 @@ export default function PatientDashboard({ patientId, userName }) {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>Recent Medical Records</CardTitle>
-                    <CardDescription>Quick access to your latest health information</CardDescription>
+                    <CardDescription>
+                      Quick access to your latest health information
+                    </CardDescription>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setActiveTab("medical-history")}
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => setActiveTab('medical-history')}>
                     View All
                   </Button>
                 </div>
@@ -760,7 +764,9 @@ export default function PatientDashboard({ patientId, userName }) {
                               {record.title || `Record #${record.id}`}
                             </p>
                             <p className="text-xs text-slate-500 mt-1">
-                              {formatDate(record.updatedAt || record.createdAt || record.recordDate)}
+                              {formatDate(
+                                record.updatedAt || record.createdAt || record.recordDate
+                              )}
                             </p>
                           </div>
                           <FileText className="h-4 w-4 text-blue-600 opacity-0 transition group-hover:opacity-100" />
@@ -780,15 +786,13 @@ export default function PatientDashboard({ patientId, userName }) {
         )}
 
         {/* Appointments Tab */}
-        {activeTab === "appointments" && (
+        {activeTab === 'appointments' && (
           <div className="space-y-6">
             {/* Book Appointment Form */}
             <Card>
               <CardHeader>
                 <CardTitle>Book New Appointment</CardTitle>
-                <CardDescription>
-                  Select a clinic, doctor, and preferred time slot
-                </CardDescription>
+                <CardDescription>Select a clinic, doctor, and preferred time slot</CardDescription>
               </CardHeader>
               <CardContent>
                 <form className="space-y-6" onSubmit={handleBookAppointment}>
@@ -800,7 +804,7 @@ export default function PatientDashboard({ patientId, userName }) {
                         value={selectedClinic}
                         onChange={(event) => {
                           setSelectedClinic(event.target.value);
-                          setSelectedDoctor("");
+                          setSelectedDoctor('');
                         }}
                         required
                       >
@@ -895,7 +899,7 @@ export default function PatientDashboard({ patientId, userName }) {
                           value={rescheduleClinic}
                           onChange={(event) => {
                             setRescheduleClinic(event.target.value);
-                            setRescheduleDoctor("");
+                            setRescheduleDoctor('');
                           }}
                           required
                         >
@@ -967,11 +971,7 @@ export default function PatientDashboard({ patientId, userName }) {
                         <CheckCircle2 className="h-4 w-4" />
                         Save Changes
                       </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={cancelReschedule}
-                      >
+                      <Button type="button" variant="outline" onClick={cancelReschedule}>
                         Cancel
                       </Button>
                     </div>
@@ -1010,7 +1010,8 @@ export default function PatientDashboard({ patientId, userName }) {
                               {formatDateTime(appointment.dateTime)}
                             </p>
                             <p className="text-sm text-slate-600">
-                              {getClinicName(appointment.clinicId)} · {getDoctorName(appointment.doctorId)}
+                              {getClinicName(appointment.clinicId)} ·{' '}
+                              {getDoctorName(appointment.doctorId)}
                             </p>
                             {getClinicLocation(appointment.clinicId) && (
                               <p className="text-xs text-slate-500">
@@ -1021,12 +1022,12 @@ export default function PatientDashboard({ patientId, userName }) {
                           <Badge
                             variant="outline"
                             className={cn(
-                              "capitalize border self-start",
+                              'capitalize border self-start',
                               appointmentStatusStyles[appointment.status] ||
-                                "border-slate-200 bg-slate-100 text-slate-600"
+                                'border-slate-200 bg-slate-100 text-slate-600'
                             )}
                           >
-                            {appointment.status.replace(/_/g, " ").toLowerCase()}
+                            {appointment.status.replace(/_/g, ' ').toLowerCase()}
                           </Badge>
                         </div>
                         {renderAppointmentActions(appointment, { compact: true })}
@@ -1046,9 +1047,7 @@ export default function PatientDashboard({ patientId, userName }) {
             <Card>
               <CardHeader>
                 <CardTitle>Past Appointments</CardTitle>
-                <CardDescription>
-                  Total: {pastAppointments.length} completed visits
-                </CardDescription>
+                <CardDescription>Total: {pastAppointments.length} completed visits</CardDescription>
               </CardHeader>
               <CardContent>
                 {pastAppointments.length > 0 ? (
@@ -1077,11 +1076,11 @@ export default function PatientDashboard({ patientId, userName }) {
                                 <Badge
                                   variant="outline"
                                   className={cn(
-                                    "capitalize border",
+                                    'capitalize border',
                                     appointmentStatusStyles[appointment.status]
                                   )}
                                 >
-                                  {appointment.status.replace(/_/g, " ").toLowerCase()}
+                                  {appointment.status.replace(/_/g, ' ').toLowerCase()}
                                 </Badge>
                               </TableCell>
                               <TableCell className="text-right">
@@ -1115,7 +1114,7 @@ export default function PatientDashboard({ patientId, userName }) {
         )}
 
         {/* Queue Status Tab */}
-        {activeTab === "queue" && (
+        {activeTab === 'queue' && (
           <div className="space-y-6">
             <Card>
               <CardHeader>
@@ -1151,7 +1150,7 @@ export default function PatientDashboard({ patientId, userName }) {
                             Your Queue Number
                           </p>
                           <p className="text-4xl font-bold text-blue-600">
-                            {queueStatus.queueNumber ?? "—"}
+                            {queueStatus.queueNumber ?? '—'}
                           </p>
                         </div>
                         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -1159,7 +1158,7 @@ export default function PatientDashboard({ patientId, userName }) {
                             Now Serving
                           </p>
                           <p className="text-4xl font-bold text-green-600">
-                            {queueStatus.currentNumber ?? "—"}
+                            {queueStatus.currentNumber ?? '—'}
                           </p>
                         </div>
                         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -1167,7 +1166,7 @@ export default function PatientDashboard({ patientId, userName }) {
                             Numbers Away
                           </p>
                           <p className="text-4xl font-bold text-orange-600">
-                            {queueStatus.numbersAway ?? "—"}
+                            {queueStatus.numbersAway ?? '—'}
                           </p>
                         </div>
                         <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -1178,7 +1177,7 @@ export default function PatientDashboard({ patientId, userName }) {
                             {mapQueueStatusLabel(queueStatus.status)}
                           </p>
                           <p className="text-xs text-slate-500 mt-2">
-                            State: {queueStatus.state ?? "—"}
+                            State: {queueStatus.state ?? '—'}
                           </p>
                         </div>
                       </div>
@@ -1196,14 +1195,12 @@ export default function PatientDashboard({ patientId, userName }) {
                 ) : (
                   <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-16 text-center">
                     <Users className="mx-auto h-16 w-16 text-slate-400 mb-4" />
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                      Not Checked In
-                    </h3>
+                    <h3 className="text-lg font-semibold text-slate-900 mb-2">Not Checked In</h3>
                     <p className="text-sm text-slate-600 mb-6 max-w-md mx-auto">
-                      You need to check in for an upcoming appointment to see your queue status.
-                      Go to the Appointments tab and check in when you arrive at the clinic.
+                      You need to check in for an upcoming appointment to see your queue status. Go
+                      to the Appointments tab and check in when you arrive at the clinic.
                     </p>
-                    <Button onClick={() => setActiveTab("appointments")} className="gap-2">
+                    <Button onClick={() => setActiveTab('appointments')} className="gap-2">
                       <CalendarDays className="h-4 w-4" />
                       View Appointments
                     </Button>
@@ -1238,8 +1235,8 @@ export default function PatientDashboard({ patientId, userName }) {
                     <div>
                       <p className="font-medium text-slate-900">Track Your Position</p>
                       <p className="text-sm text-slate-600">
-                        Monitor real-time updates showing how many patients are ahead of you and
-                        the current number being served.
+                        Monitor real-time updates showing how many patients are ahead of you and the
+                        current number being served.
                       </p>
                     </div>
                   </div>
@@ -1262,7 +1259,7 @@ export default function PatientDashboard({ patientId, userName }) {
         )}
 
         {/* Medical History Tab */}
-        {activeTab === "medical-history" && (
+        {activeTab === 'medical-history' && (
           <div className="space-y-6">
             <Card>
               <CardHeader>
@@ -1347,10 +1344,10 @@ export default function PatientDashboard({ patientId, userName }) {
 // eslint-disable-next-line no-unused-vars
 function StatCard({ title, value, icon: Icon, color }) {
   const colorClasses = {
-    blue: "bg-blue-50 text-blue-600 border-blue-200",
-    green: "bg-green-50 text-green-600 border-green-200",
-    purple: "bg-purple-50 text-purple-600 border-purple-200",
-    orange: "bg-orange-50 text-orange-600 border-orange-200",
+    blue: 'bg-blue-50 text-blue-600 border-blue-200',
+    green: 'bg-green-50 text-green-600 border-green-200',
+    purple: 'bg-purple-50 text-purple-600 border-purple-200',
+    orange: 'bg-orange-50 text-orange-600 border-orange-200',
   };
 
   return (

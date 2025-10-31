@@ -180,6 +180,9 @@ public class QueueService {
                 created.setQueueDate(today);
                 return created;
             });
+            if (session.getState() == QueueState.ACTIVE) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Queue session already started");
+            }
         session.start();
         queueSessionRepository.save(session);
     }
@@ -188,6 +191,10 @@ public class QueueService {
     public void pause(Long clinicId) {
         QueueSession session = queueSessionRepository.findByClinicIdAndQueueDate(clinicId, LocalDate.now())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Queue session not started"));
+        if (session.getState() == QueueState.PAUSED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Queue session already paused");
+        }
+
         session.pause();
         queueSessionRepository.save(session);
     }

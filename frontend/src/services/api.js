@@ -33,11 +33,11 @@ apiClient.interceptors.response.use(
       ) {
         // ProblemDetail format: { type, title, status, detail }
         const pd = resp.data || {};
-        error.userMessage = pd.detail || pd.title || 'An error occurred';
+        error.userMessage = pd.title || 'An error occurred';
       } else if (resp && resp.data) {
         // fallback to common patterns
         error.userMessage =
-          resp.data.detail || resp.data.message || resp.data.title || error.message;
+          resp.data.message || resp.data.title || error.message;
       } else {
         error.userMessage = error.message;
       }

@@ -23,13 +23,7 @@ import {
 import { appointmentAPI, clinicAPI, doctorAPI, queueAPI } from '../../services/api';
 import { useToast } from '../../context/useToast';
 import { Button } from '../ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '../ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -118,7 +112,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
         setAppointments(res.data || []);
       }
     } catch (error) {
-      show('Unable to refresh appointments.', 'error');
+      show(error?.userMessage || 'Unable to refresh appointments.', 'error');
     }
   };
 
@@ -127,10 +121,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       const res = await queueAPI.staffQueueStatus(clinicId);
       setQueueStatus(res.data || null);
     } catch (error) {
-      show(
-        'Unable to refresh queue status.',
-        'error'
-      );
+      show(error?.userMessage || 'Unable to refresh queue status.', 'error');
     }
   };
 
@@ -142,10 +133,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       const res = await queueAPI.staffQueueEntries(clinicId);
       setQueueEntries(res.data || []);
     } catch (error) {
-      show(
-        'Unable to refresh queue entries.',
-        'error'
-      );
+      show(error?.userMessage || 'Unable to refresh queue entries.', 'error');
     }
   };
 
@@ -155,7 +143,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       const res = await queueAPI.staffDailyReport(clinicId);
       setDailyReport(res.data || null);
     } catch (error) {
-      show('Unable to refresh report.', 'error');
+      show(error?.userMessage || 'Unable to refresh report.', 'error');
     }
   };
 
@@ -168,10 +156,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       refreshAppointments();
       refreshDailyReport();
     } catch (error) {
-      show(
-        'Unable to check in patient.',
-        'error'
-      );
+      show(error?.userMessage || 'Unable to check in patient.', 'error');
     }
   };
 
@@ -186,12 +171,9 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       refreshAppointments();
     } catch (error) {
       if (action == 'next') {
-        show('No patients in queue', 'error')
+        show(error?.userMessage || 'No patients in queue', 'error');
       } else {
-        show(
-          'Unable to update queue',
-          'error'
-        );
+        show(error?.userMessage || 'Unable to update queue', 'error');
       }
     }
   };
@@ -205,10 +187,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       refreshAppointments();
       refreshDailyReport();
     } catch (error) {
-      show(
-        'Unable to update queue status.',
-        'error'
-      );
+      show(error?.userMessage || 'Unable to update queue status.', 'error');
     }
   };
 
@@ -219,14 +198,14 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       refreshQueueEntries();
       refreshQueueStatus();
     } catch (error) {
-      show('Unable to fast-track.', 'error');
+      show(error?.userMessage || 'Unable to fast-track.', 'error');
     }
   };
 
   const handleWalkInSubmit = async (event) => {
     event.preventDefault();
     if (!walkInPatientId || !walkInDoctorId || !walkInSelectedDate || !walkInSelectedSlot) {
-      show('Please provide patient, doctor, and appointment time.', 'error');
+      show(error?.userMessage || 'Please provide patient, doctor, and appointment time.', 'error');
       return;
     }
     try {
@@ -246,10 +225,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       refreshAppointments();
       refreshDailyReport();
     } catch (error) {
-      show(
-        'Unable to register walk-in.',
-        'error'
-      );
+      show(error?.userMessage || 'Unable to register walk-in.', 'error');
     }
   };
 
@@ -260,10 +236,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       refreshAppointments();
       refreshDailyReport();
     } catch (error) {
-      show(
-        'Unable to cancel appointment.',
-        'error'
-      );
+      show(error?.userMessage || 'Unable to cancel appointment.', 'error');
     }
   };
 
@@ -282,7 +255,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
   const handleRescheduleSubmit = async (event) => {
     event.preventDefault();
     if (!rescheduleTarget || !rescheduleDoctorId || !rescheduleDateTime) {
-      show('Please choose the new doctor and timeslot.', 'error');
+      show(error?.userMessage || 'Please choose the new doctor and timeslot.', 'error');
       return;
     }
     try {
@@ -296,10 +269,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       refreshAppointments();
       refreshDailyReport();
     } catch (error) {
-      show(
-        'Unable to reschedule appointment.',
-        'error'
-      );
+      show(error?.userMessage || 'Unable to reschedule appointment.', 'error');
     }
   };
 
@@ -658,11 +628,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                       <SkipForward className="h-4 w-4" />
                       Call Next
                     </Button>
-                    <Button
-                      onClick={refreshQueueStatus}
-                      variant="ghost"
-                      className="gap-2"
-                    >
+                    <Button onClick={refreshQueueStatus} variant="ghost" className="gap-2">
                       <RefreshCw className="h-4 w-4" />
                       Refresh
                     </Button>
@@ -783,9 +749,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                               <p className="text-sm font-medium text-slate-900">
                                 Patient #{entry.patientId}
                               </p>
-                              <p className="text-xs text-slate-500">
-                                Doctor #{entry.doctorId}
-                              </p>
+                              <p className="text-xs text-slate-500">Doctor #{entry.doctorId}</p>
                             </div>
                           </div>
                           <Badge
@@ -821,9 +785,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
               <Card className="border-blue-200 bg-blue-50/50">
                 <CardHeader>
                   <CardTitle>Reschedule Appointment #{rescheduleTarget.id}</CardTitle>
-                  <CardDescription>
-                    Update doctor or time slot for this appointment
-                  </CardDescription>
+                  <CardDescription>Update doctor or time slot for this appointment</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form className="space-y-6" onSubmit={handleRescheduleSubmit}>
@@ -876,9 +838,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>
-                      {isDoctor ? 'Your Appointments' : 'All Appointments'}
-                    </CardTitle>
+                    <CardTitle>{isDoctor ? 'Your Appointments' : 'All Appointments'}</CardTitle>
                     <CardDescription>
                       Total: {filteredAppointments.length} appointments
                     </CardDescription>
@@ -1147,9 +1107,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                               <p className="text-sm font-semibold text-slate-900">
                                 Patient #{entry.patientId}
                               </p>
-                              <p className="text-sm text-slate-600">
-                                Doctor #{entry.doctorId}
-                              </p>
+                              <p className="text-sm text-slate-600">Doctor #{entry.doctorId}</p>
                             </div>
                           </div>
                           <Badge
@@ -1194,9 +1152,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                               <Button
                                 size="sm"
                                 className="gap-2 bg-green-600 hover:bg-green-700"
-                                onClick={() =>
-                                  handleQueueStatusUpdate(entry.queueNumber, 'SERVED')
-                                }
+                                onClick={() => handleQueueStatusUpdate(entry.queueNumber, 'SERVED')}
                               >
                                 <CheckCircle2 className="h-4 w-4" />
                                 Mark Served
@@ -1230,9 +1186,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
             <Card>
               <CardHeader>
                 <CardTitle>Register Walk-in Patient</CardTitle>
-                <CardDescription>
-                  Manually add a walk-in appointment to the system
-                </CardDescription>
+                <CardDescription>Manually add a walk-in appointment to the system</CardDescription>
               </CardHeader>
               <CardContent>
                 <form className="space-y-6" onSubmit={handleWalkInSubmit}>
@@ -1419,9 +1373,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
 
                       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
                         <div className="flex items-center justify-between mb-2">
-                          <p className="text-xs uppercase tracking-wide text-slate-500">
-                            No Shows
-                          </p>
+                          <p className="text-xs uppercase tracking-wide text-slate-500">No Shows</p>
                           <AlertCircle className="h-5 w-5 text-orange-600" />
                         </div>
                         <p className="text-3xl font-bold text-slate-900">
