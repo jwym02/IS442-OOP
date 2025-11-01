@@ -55,7 +55,7 @@ public class QueueService {
     @Transactional
     public QueueEntryResponse checkIn(Long appointmentId) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Appointment not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Appointment not found"));
 
         LocalDate today = LocalDate.now();
         if (!appointment.getDateTime().toLocalDate().equals(today)) {
@@ -66,7 +66,7 @@ public class QueueService {
         }
 
         QueueSession session = queueSessionRepository.findByClinicIdAndQueueDate(appointment.getClinicId(), today)
-            .orElse(null);
+                .orElse(null);
         if (session != null && session.getState() == QueueState.PAUSED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Queue is currently paused");
         }
@@ -94,22 +94,21 @@ public class QueueService {
         LocalDate today = LocalDate.now();
         List<Appointment> appointments = appointmentRepository.findByPatientIdAndDateTimeBetween(
                 patientId, today.atStartOfDay(), today.plusDays(1).atStartOfDay()
-            );
+        );
         if (appointments.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No appointment today for patient");
         }
 
-        // Only consider appointments that are checked-in — queue status should be tied to a checked-in appointment
+        // Only consider appointments that are checked-in — queue status tied to checked-in appointment
         List<Appointment> checkedIn = appointments.stream()
-            .filter(a -> a.getStatus() == AppointmentStatus.CHECKED_IN)
-            .collect(Collectors.toList());
+                .filter(a -> a.getStatus() == AppointmentStatus.CHECKED_IN)
+                .collect(Collectors.toList());
 
         if (checkedIn.isEmpty()) {
-            // patient has no active checked-in appointment for today
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No active checked-in appointment for patient");
         }
 
-        // From checked-in appointments, find the one with an associated queue entry (prefer priority statuses)
+        // Find checked-in appointment with a queue entry, preferring priority queue statuses
         Appointment appointment = null;
         QueueEntry myEntry = null;
 
@@ -121,13 +120,12 @@ public class QueueService {
                     appointment = appt;
                     myEntry = entry;
                 } else {
-                    // prefer entries with waiting/fast-tracked/called
                     boolean preferred = entry.getStatus() == QueueStatus.WAITING
-                        || entry.getStatus() == QueueStatus.FAST_TRACKED
-                        || entry.getStatus() == QueueStatus.CALLED;
+                            || entry.getStatus() == QueueStatus.FAST_TRACKED
+                            || entry.getStatus() == QueueStatus.CALLED;
                     boolean currentlyPreferred = myEntry.getStatus() == QueueStatus.WAITING
-                        || myEntry.getStatus() == QueueStatus.FAST_TRACKED
-                        || myEntry.getStatus() == QueueStatus.CALLED;
+                            || myEntry.getStatus() == QueueStatus.FAST_TRACKED
+                            || myEntry.getStatus() == QueueStatus.CALLED;
                     if (preferred && !currentlyPreferred) {
                         appointment = appt;
                         myEntry = entry;
@@ -142,18 +140,17 @@ public class QueueService {
         }
 
         if (appointment == null || myEntry == null) {
-            // No queue entry associated with checked-in appointments
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No active checked-in appointment with a queue entry for patient");
         }
 
         List<QueueEntry> entries = queueEntryRepository
-            .findByClinicIdAndQueueDateOrderByQueueNumberAsc(appointment.getClinicId(), today);
+                .findByClinicIdAndQueueDateOrderByQueueNumberAsc(appointment.getClinicId(), today);
 
         int currentNumber = entries.stream()
-            .filter(entry -> EnumSet.of(QueueStatus.CALLED, QueueStatus.SERVED).contains(entry.getStatus()))
-            .mapToInt(QueueEntry::getQueueNumber)
-            .max()
-            .orElse(0);
+                .filter(entry -> EnumSet.of(QueueStatus.CALLED, QueueStatus.SERVED).contains(entry.getStatus()))
+                .mapToInt(QueueEntry::getQueueNumber)
+                .max()
+                .orElse(0);
 
         QueueStatusResponse response = new QueueStatusResponse();
         response.setClinicId(appointment.getClinicId());
@@ -166,7 +163,7 @@ public class QueueService {
         response.setNumbersAway(numbersAway);
 
         queueSessionRepository.findByClinicIdAndQueueDate(appointment.getClinicId(), today)
-            .ifPresent(session -> response.setState(session.getState().name()));
+                .ifPresent(session -> response.setState(session.getState().name()));
         return response;
     }
 
@@ -174,15 +171,15 @@ public class QueueService {
     public void start(Long clinicId) {
         LocalDate today = LocalDate.now();
         QueueSession session = queueSessionRepository.findByClinicIdAndQueueDate(clinicId, today)
-            .orElseGet(() -> {
-                QueueSession created = new QueueSession();
-                created.setClinicId(clinicId);
-                created.setQueueDate(today);
-                return created;
-            });
-            if (session.getState() == QueueState.ACTIVE) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Queue session already started");
-            }
+                .orElseGet(() -> {
+                    QueueSession created = new QueueSession();
+                    created.setClinicId(clinicId);
+                    created.setQueueDate(today);
+                    return created;
+                });
+        if (session.getState() == QueueState.ACTIVE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Queue session already started");
+        }
         session.start();
         queueSessionRepository.save(session);
     }
@@ -190,11 +187,10 @@ public class QueueService {
     @Transactional
     public void pause(Long clinicId) {
         QueueSession session = queueSessionRepository.findByClinicIdAndQueueDate(clinicId, LocalDate.now())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Queue session not started"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Queue session not started"));
         if (session.getState() == QueueState.PAUSED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Queue session already paused");
         }
-
         session.pause();
         queueSessionRepository.save(session);
     }
@@ -203,7 +199,7 @@ public class QueueService {
     public AppointmentResponse callNext(Long clinicId) {
         LocalDate today = LocalDate.now();
         QueueSession session = queueSessionRepository.findByClinicIdAndQueueDate(clinicId, today)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Queue not started"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Queue not started"));
 
         if (session.getState() != QueueState.ACTIVE) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Queue is paused");
@@ -236,7 +232,7 @@ public class QueueService {
 
         QueueEntry entry = queueEntryRepository.findByClinicIdAndQueueDateAndQueueNumber(
                 clinicId, LocalDate.now(), queueNumber.intValue())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Queue entry not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Queue entry not found"));
         entry.updateStatus(newStatus);
         queueEntryRepository.save(entry);
 
@@ -245,12 +241,12 @@ public class QueueService {
                 switch (newStatus) {
                     case SERVED -> {
                         appointment.setStatus(AppointmentStatus.COMPLETED);
-                        // create a medical record entry if none exists
                         medicalRecordService.createFromAppointmentIfMissing(appointment);
                     }
                     case CANCELLED -> appointment.setStatus(AppointmentStatus.CANCELLED);
                     case SKIPPED -> appointment.setStatus(AppointmentStatus.NO_SHOW);
-                    default -> { }
+                    default -> {
+                    }
                 }
                 appointmentRepository.save(appointment);
             });
@@ -261,7 +257,7 @@ public class QueueService {
     public void fastTrack(Long clinicId, Long queueNumber) {
         QueueEntry entry = queueEntryRepository.findByClinicIdAndQueueDateAndQueueNumber(
                 clinicId, LocalDate.now(), queueNumber.intValue())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Queue entry not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Queue entry not found"));
         entry.fastTrack();
         queueEntryRepository.save(entry);
     }
@@ -271,20 +267,20 @@ public class QueueService {
         LocalDate today = LocalDate.now();
         List<QueueEntry> entries = queueEntryRepository.findByClinicIdAndQueueDateOrderByQueueNumberAsc(clinicId, today);
         int current = entries.stream()
-            .filter(entry -> EnumSet.of(QueueStatus.CALLED, QueueStatus.SERVED).contains(entry.getStatus()))
-            .mapToInt(QueueEntry::getQueueNumber)
-            .max()
-            .orElse(0);
+                .filter(entry -> EnumSet.of(QueueStatus.CALLED, QueueStatus.SERVED).contains(entry.getStatus()))
+                .mapToInt(QueueEntry::getQueueNumber)
+                .max()
+                .orElse(0);
         long waiting = entries.stream()
-            .filter(QueueEntry::isWaiting)
-            .count();
+                .filter(QueueEntry::isWaiting)
+                .count();
 
         ClinicQueueStatusResponse response = new ClinicQueueStatusResponse();
         response.setClinicId(clinicId);
         response.setCurrentNumber(current);
         response.setWaitingCount((int) waiting);
         queueSessionRepository.findByClinicIdAndQueueDate(clinicId, today)
-            .ifPresent(session -> response.setState(session.getState().name()));
+                .ifPresent(session -> response.setState(session.getState().name()));
         return response;
     }
 
@@ -293,29 +289,29 @@ public class QueueService {
         LocalDate today = LocalDate.now();
         List<QueueEntry> entries = queueEntryRepository.findByClinicIdAndQueueDateOrderByQueueNumberAsc(clinicId, today);
         Map<Long, Appointment> appointments = appointmentRepository
-            .findAllById(entries.stream()
-                .map(QueueEntry::getAppointmentId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet()))
-            .stream()
-            .collect(Collectors.toMap(Appointment::getId, appointment -> appointment));
+                .findAllById(entries.stream()
+                        .map(QueueEntry::getAppointmentId)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toSet()))
+                .stream()
+                .collect(Collectors.toMap(Appointment::getId, appointment -> appointment));
 
         return entries.stream()
-            .map(entry -> {
-                QueueEntrySummaryResponse response = new QueueEntrySummaryResponse();
-                response.setQueueNumber(entry.getQueueNumber().longValue());
-                response.setStatus(entry.getStatus().name());
-                response.setAppointmentId(entry.getAppointmentId());
-                if (entry.getAppointmentId() != null) {
-                    Appointment appointment = appointments.get(entry.getAppointmentId());
-                    if (appointment != null) {
-                        response.setPatientId(appointment.getPatientId());
-                        response.setDoctorId(appointment.getDoctorId());
+                .map(entry -> {
+                    QueueEntrySummaryResponse response = new QueueEntrySummaryResponse();
+                    response.setQueueNumber(entry.getQueueNumber().longValue());
+                    response.setStatus(entry.getStatus().name());
+                    response.setAppointmentId(entry.getAppointmentId());
+                    if (entry.getAppointmentId() != null) {
+                        Appointment appointment = appointments.get(entry.getAppointmentId());
+                        if (appointment != null) {
+                            response.setPatientId(appointment.getPatientId());
+                            response.setDoctorId(appointment.getDoctorId());
+                        }
                     }
-                }
-                return response;
-            })
-            .collect(Collectors.toList());
+                    return response;
+                })
+                .collect(Collectors.toList());
     }
 
     private QueueEntryResponse toPatientResponse(QueueEntry entry, Appointment appointment) {
@@ -347,25 +343,29 @@ public class QueueService {
 
     private void notifyUpcomingPatients(Long clinicId, LocalDate date, int calledNumber) {
         queueEntryRepository.findByClinicIdAndQueueDateOrderByQueueNumberAsc(clinicId, date).stream()
-            .filter(QueueEntry::isWaiting)
-            .filter(entry -> entry.getQueueNumber() == calledNumber + 3)
-            .findFirst()
-            .ifPresent(entry -> sendNotification(entry, "You're 3 numbers away. Please get ready."));
+                .filter(QueueEntry::isWaiting)
+                .filter(entry -> entry.getQueueNumber() == calledNumber + 3)
+                .findFirst()
+                .ifPresent(entry -> sendNotification(entry,
+                        NotificationType.REMINDER,
+                        "You are 3 patients away. Please proceed closer to the consultation room."));
 
         queueEntryRepository.findByClinicIdAndQueueDateOrderByQueueNumberAsc(clinicId, date).stream()
-            .filter(entry -> entry.getQueueNumber() == calledNumber)
-            .findFirst()
-            .ifPresent(entry -> sendNotification(entry, "It's your turn. Please proceed to the counter."));
+                .filter(entry -> entry.getQueueNumber() == calledNumber)
+                .findFirst()
+                .ifPresent(entry -> sendNotification(entry,
+                        NotificationType.QUEUE_CALLED,
+                        "It’s your turn. Kindly proceed to the consultation room."));
     }
 
-    private void sendNotification(QueueEntry entry, String message) {
+    private void sendNotification(QueueEntry entry, NotificationType type, String message) {
         if (entry.getAppointmentId() == null) {
             return;
         }
         appointmentRepository.findById(entry.getAppointmentId()).ifPresent(appointment -> {
             NotificationRequest request = new NotificationRequest();
             request.setUserId(appointment.getPatientId());
-            request.setType(NotificationType.QUEUE_CALLED.name());
+            request.setType(type.name());
             request.setMessage(message);
             notificationService.sendNotification(request);
         });
