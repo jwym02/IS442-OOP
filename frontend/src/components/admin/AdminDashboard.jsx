@@ -136,6 +136,7 @@ export default function AdminDashboard() {
   };
 
   const handleEditUser = (user) => {
+    console.log(user);
     setEditingUserId(user.id);
     setUserForm({
       email: user.email || '',
@@ -145,7 +146,7 @@ export default function AdminDashboard() {
       phone: user.phone || '',
       clinicId: user.staffClinicId || user.doctorClinicId || '',
       doctor: Boolean(user.doctorProfileId),
-      speciality: '',
+      speciality: user.speciality || user.medicalSpeciality || '',
     });
   };
 
@@ -663,7 +664,7 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="user-role">Role *</Label>
+                      <Label htmlFor="user-role">User Group *</Label>
                       <Select
                         id="user-role"
                         value={userForm.role}
@@ -674,7 +675,7 @@ export default function AdminDashboard() {
                       >
                         <option value="PATIENT">Patient</option>
                         <option value="CLINIC_STAFF">Clinic Staff</option>
-                        {/* <option value="SYSTEM_ADMINISTRATOR">System Administrator</option> */}
+                        <option value="SYSTEM_ADMINISTRATOR">System Administrator</option>
                       </Select>
                     </div>
 
