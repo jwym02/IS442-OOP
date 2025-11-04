@@ -49,6 +49,8 @@ export default function AdminDashboard() {
   });
   const [editingUserId, setEditingUserId] = useState(null);
   const [roleSelections, setRoleSelections] = useState({});
+  const [roleGroupSelections, setRoleGroupSelections] = useState({});
+  const [allowedRolesMap, setAllowedRolesMap] = useState({});
   const [editingClinicId, setEditingClinicId] = useState(null);
   const [clinicForm, setClinicForm] = useState({
     name: '',
@@ -385,10 +387,9 @@ export default function AdminDashboard() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`
                     flex items-center px-1 py-4 border-b-2 font-medium text-sm transition-colors
-                    ${
-                      activeTab === tab.id
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                    ${activeTab === tab.id
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
                     }
                   `}
                 >
@@ -673,45 +674,49 @@ export default function AdminDashboard() {
                       >
                         <option value="PATIENT">Patient</option>
                         <option value="CLINIC_STAFF">Clinic Staff</option>
-                        <option value="SYSTEM_ADMINISTRATOR">System Administrator</option>
+                        {/* <option value="SYSTEM_ADMINISTRATOR">System Administrator</option> */}
                       </Select>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="user-clinic">Assigned Clinic</Label>
-                      <Select
-                        id="user-clinic"
-                        value={userForm.clinicId}
+                    {userForm.role === "CLINIC_STAFF" && (
+                      <div className="space-y-2">
+                        <Label htmlFor="user-clinic">Assigned Clinic</Label>
+                        <Select
+                          id="user-clinic"
+                          value={userForm.clinicId}
+                          onChange={(event) =>
+                            setUserForm((prev) => ({ ...prev, clinicId: event.target.value }))
+                          }
+                        >
+                          <option value="">Unassigned</option>
+                          {clinics.map((clinic) => (
+                            <option key={clinic.id} value={clinic.id}>
+                              {clinic.name}
+                            </option>
+                          ))}
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+
+                  {userForm.role === "CLINIC_STAFF" && (
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="user-doctor"
+                        checked={userForm.doctor}
                         onChange={(event) =>
-                          setUserForm((prev) => ({ ...prev, clinicId: event.target.value }))
+                          setUserForm((prev) => ({ ...prev, doctor: event.target.checked }))
                         }
-                      >
-                        <option value="">Unassigned</option>
-                        {clinics.map((clinic) => (
-                          <option key={clinic.id} value={clinic.id}>
-                            {clinic.name}
-                          </option>
-                        ))}
-                      </Select>
+                        className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                      />
+                      <label htmlFor="user-doctor" className="ml-2 text-sm text-slate-700">
+                        Create doctor profile for this user
+                      </label>
                     </div>
-                  </div>
+                  )}
 
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="user-doctor"
-                      checked={userForm.doctor}
-                      onChange={(event) =>
-                        setUserForm((prev) => ({ ...prev, doctor: event.target.checked }))
-                      }
-                      className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
-                    />
-                    <label htmlFor="user-doctor" className="ml-2 text-sm text-slate-700">
-                      Create doctor profile for this user
-                    </label>
-                  </div>
-
-                  {userForm.doctor && (
+                  {(userForm.role === "CLINIC_STAFF" && userForm.doctor) && (
                     <div className="space-y-2">
                       <Label htmlFor="user-speciality">Medical Speciality</Label>
                       <Input
@@ -825,9 +830,9 @@ export default function AdminDashboard() {
                                     <option value="">Select role...</option>
                                     <option value="PATIENT">Patient</option>
                                     <option value="CLINIC_STAFF">Clinic Staff</option>
-                                    <option value="SYSTEM_ADMINISTRATOR">
+                                    {/* <option value="SYSTEM_ADMINISTRATOR">
                                       System Administrator
-                                    </option>
+                                    </option> */}
                                   </Select>
                                   <Button
                                     size="sm"
