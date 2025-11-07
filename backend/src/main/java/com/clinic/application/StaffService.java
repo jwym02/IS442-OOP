@@ -43,8 +43,8 @@ public class StaffService {
     }
 
     @Transactional
-    public void cancelAppointment(Long appointmentId) {
-        appointmentService.cancelAppointment(appointmentId);
+    public void cancelAppointmentAsStaff(Long appointmentId) {
+        appointmentService.cancelAppointmentAsStaff(appointmentId);
     }
 
     @Transactional(readOnly = true)

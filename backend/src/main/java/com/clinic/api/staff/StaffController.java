@@ -50,7 +50,7 @@ public class StaffController {
 
     @DeleteMapping("/appointments/{appointmentId}")
     public ResponseEntity<Void> cancel(@PathVariable Long appointmentId) {
-        staffService.cancelAppointment(appointmentId);
+        staffService.cancelAppointmentAsStaff(appointmentId);
         return ResponseEntity.noContent().build();
     }
 

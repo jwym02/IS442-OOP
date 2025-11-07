@@ -87,6 +87,14 @@ public class AppointmentService {
     }
 
     @Transactional
+    public void cancelAppointmentAsStaff(long appointmentId) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Appointment not found"));
+        appointment.setStatus(AppointmentStatus.CANCELLED);
+        appointmentRepository.save(appointment);
+    }
+
+    @Transactional
 public AppointmentResponse rescheduleAppointment(long appointmentId, AppointmentRequest request) {
     Appointment appointment = appointmentRepository.findById(appointmentId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Appointment not found"));
