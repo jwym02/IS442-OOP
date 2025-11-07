@@ -60,6 +60,12 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
   const isStaff = Boolean(staffProfileId);
   const isDoctor = Boolean(doctorProfileId) && !isStaff;
 
+  // Appointments tab
+  const [currentPage, setCurrentPage] = useState(1);
+  const [dateFilter, setDateFilter] = useState('all'); // all | today | week | month
+  const ITEMS_PER_PAGE = 10;
+
+
   useEffect(() => {
     const loadData = async () => {
       if (!clinicId) {
@@ -205,7 +211,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
   const handleWalkInSubmit = async (event) => {
     event.preventDefault();
     if (!walkInPatientId || !walkInDoctorId || !walkInSelectedDate || !walkInSelectedSlot) {
-      show(error?.userMessage || 'Please provide patient, doctor, and appointment time.', 'error');
+      show('Please provide patient, doctor, and appointment time.', 'error');
       return;
     }
     try {
@@ -228,6 +234,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       show(error?.userMessage || 'Unable to register walk-in.', 'error');
     }
   };
+  
 
   const handleStaffCancel = async (appointmentId) => {
     try {
@@ -255,14 +262,15 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
   const handleRescheduleSubmit = async (event) => {
     event.preventDefault();
     if (!rescheduleTarget || !rescheduleDoctorId || !rescheduleDateTime) {
-      show(error?.userMessage || 'Please choose the new doctor and timeslot.', 'error');
+      show('Please choose the new doctor and timeslot.', 'error');
       return;
     }
     try {
+      const iso = new Date(rescheduleDateTime).toISOString();
       await appointmentAPI.staffReschedule(rescheduleTarget.id, {
         clinicId,
         doctorId: Number(rescheduleDoctorId),
-        dateTime: rescheduleDateTime,
+        dateTime: iso,
       });
       show('Appointment rescheduled.', 'success');
       cancelRescheduleForm();
@@ -290,6 +298,39 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
     return doctors.filter((d) => d.clinicId === Number(filterClinic));
   }, [doctors, filterClinic]);
 
+  const now = new Date();
+
+  const applyDateFilter = (list) => {
+    if (dateFilter === 'today') {
+      return list.filter(a => {
+        const d = new Date(a.dateTime);
+        return (
+          d.getFullYear() === now.getFullYear() &&
+          d.getMonth() === now.getMonth() &&
+          d.getDate() === now.getDate()
+        );
+      });
+    } else if (dateFilter === 'week') {
+      const start = new Date(now);
+      start.setDate(now.getDate() - now.getDay());
+      const end = new Date(start);
+      end.setDate(start.getDate() + 7);
+      return list.filter(a => {
+        const d = new Date(a.dateTime);
+        return d >= start && d < end;
+      });
+    } else if (dateFilter === 'month') {
+      return list.filter(a => {
+        const d = new Date(a.dateTime);
+        return (
+          d.getFullYear() === now.getFullYear() &&
+          d.getMonth() === now.getMonth()
+        );
+      });
+    }
+    return list;
+  };
+
   const filteredAppointments = useMemo(() => {
     let list = appointments || [];
     if (filterClinic) {
@@ -304,8 +345,16 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
         return d === filterDate;
       });
     }
+    list = applyDateFilter(list);
     return list.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
-  }, [appointments, filterClinic, filterDoctor, filterDate]);
+  }, [appointments, filterClinic, filterDoctor, filterDate, dateFilter]);
+
+  const totalPages = Math.ceil(filteredAppointments.length / ITEMS_PER_PAGE);
+  const paginatedAppointments = filteredAppointments.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
 
   const isSameDay = (a, b) => {
     const da = new Date(a);
@@ -915,6 +964,24 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                   </div>
                 )}
 
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {['all', 'today', 'week', 'month'].map((f) => (
+                    <Button
+                      key={f}
+                      variant={dateFilter === f ? 'default' : 'outline'}
+                      onClick={() => {
+                        setDateFilter(f);
+                        setCurrentPage(1);
+                      }}
+                    >
+                      {f === 'all' && 'All'}
+                      {f === 'today' && 'Today'}
+                      {f === 'week' && 'This Week'}
+                      {f === 'month' && 'This Month'}
+                    </Button>
+                  ))}
+                </div>
+
                 {filteredAppointments.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center">
                     <Calendar className="mx-auto h-12 w-12 text-slate-400 mb-4" />
@@ -933,7 +1000,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredAppointments.map((appointment) => (
+                        {paginatedAppointments.map((appointment) => (
                           <TableRow key={appointment.id}>
                             <TableCell className="font-medium">
                               {formatDateTime(appointment.dateTime)}
@@ -994,6 +1061,28 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                         ))}
                       </TableBody>
                     </Table>
+                  </div>
+                )}
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex justify-between items-center px-4 py-3  rounded-lg">
+                    <Button
+                      variant="outline"
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                    >
+                      Previous
+                    </Button>
+                    <p className="text-sm text-slate-600">
+                      Page {currentPage} of {totalPages}
+                    </p>
+                    <Button
+                      variant="outline"
+                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                    >
+                      Next
+                    </Button>
                   </div>
                 )}
               </CardContent>

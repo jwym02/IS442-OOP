@@ -68,7 +68,7 @@ public class StaffController {
             LocalDate targetDate = LocalDate.parse(date);
             return ResponseEntity.ok(staffService.getClinicAppointments(clinicId, targetDate));
         } else {
-            return ResponseEntity.ok(staffService.getClinicAppointments(clinicId));
+            return ResponseEntity.ok(staffService.getClinicAppointments(clinicId, null));
         }
     }
 
