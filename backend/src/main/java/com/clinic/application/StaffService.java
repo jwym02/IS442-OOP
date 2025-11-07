@@ -17,18 +17,16 @@ public class StaffService {
     private final AppointmentService appointmentService;
     private final ReportService reportService;
 
-    public StaffService(AppointmentService appointmentService,
-                        ReportService reportService) {
+    public StaffService(AppointmentService appointmentService, ReportService reportService) {
         this.appointmentService = appointmentService;
         this.reportService = reportService;
     }
 
     @Transactional
     public AppointmentResponse bookWalkIn(com.clinic.api.staff.dto.AppointmentRequest request) {
-        AppointmentRequest createRequest = new AppointmentRequest();
+        var createRequest = new AppointmentRequest();
         createRequest.setClinicId(request.getClinicId());
         createRequest.setDoctorId(request.getDoctorId());
-        // request.dateTime is OffsetDateTime (client provides timezone/offset)
         createRequest.setDateTime(request.getDateTime());
         var created = appointmentService.bookAppointment(request.getPatientId(), createRequest);
         return toStaffResponse(created);
@@ -36,7 +34,7 @@ public class StaffService {
 
     @Transactional
     public AppointmentResponse rescheduleAppointment(Long appointmentId, RescheduleRequest request) {
-        AppointmentRequest update = new AppointmentRequest();
+        var update = new AppointmentRequest();
         update.setClinicId(request.getClinicId());
         update.setDoctorId(request.getDoctorId());
         update.setDateTime(request.getDateTime());
@@ -51,9 +49,18 @@ public class StaffService {
 
     @Transactional(readOnly = true)
     public List<AppointmentResponse> getClinicAppointments(Long clinicId, LocalDate date) {
-        return appointmentService.getClinicAppointments(clinicId, date).stream()
-            .map(this::toStaffResponse)
-            .collect(Collectors.toList());
+        return appointmentService.getClinicAppointments(clinicId, date)
+                .stream()
+                .map(this::toStaffResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<AppointmentResponse> getUpcomingClinicAppointments(Long clinicId) {
+        return appointmentService.getUpcomingClinicAppointments(clinicId)
+                .stream()
+                .map(this::toStaffResponse)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -62,7 +69,7 @@ public class StaffService {
     }
 
     private AppointmentResponse toStaffResponse(com.clinic.api.patients.dto.AppointmentResponse source) {
-        AppointmentResponse response = new AppointmentResponse();
+        var response = new AppointmentResponse();
         response.setId(source.getId());
         response.setPatientId(source.getPatientId());
         response.setDoctorId(source.getDoctorId());

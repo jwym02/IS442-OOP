@@ -55,11 +55,23 @@ public class StaffController {
     }
 
     @GetMapping("/appointments")
-    public ResponseEntity<List<AppointmentResponse>> getClinicAppointments(@RequestParam Long clinicId,
-                                                                           @RequestParam(required = false) String date) {
-        LocalDate targetDate = date != null ? LocalDate.parse(date) : LocalDate.now();
-        return ResponseEntity.ok(staffService.getClinicAppointments(clinicId, targetDate));
+    public ResponseEntity<List<AppointmentResponse>> getClinicAppointments(
+            @RequestParam Long clinicId,
+            @RequestParam(required = false) String date,
+            @RequestParam(required = false, defaultValue = "all") String type) {
+
+        if ("upcoming".equalsIgnoreCase(type)) {
+            return ResponseEntity.ok(staffService.getUpcomingClinicAppointments(clinicId));
+        }
+
+        if (date != null && !date.isBlank()) {
+            LocalDate targetDate = LocalDate.parse(date);
+            return ResponseEntity.ok(staffService.getClinicAppointments(clinicId, targetDate));
+        } else {
+            return ResponseEntity.ok(staffService.getClinicAppointments(clinicId));
+        }
     }
+
 
     @PostMapping("/queue/start")
     public ResponseEntity<Void> startQueue(@RequestParam Long clinicId) {

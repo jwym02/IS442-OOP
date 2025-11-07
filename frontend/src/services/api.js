@@ -61,8 +61,12 @@ export const appointmentAPI = {
   cancel: (appointmentId) => apiClient.delete(`/patients/appointments/${appointmentId}`),
   reschedule: (appointmentId, data) =>
     apiClient.patch(`/patients/appointments/${appointmentId}/reschedule`, data),
-  listForClinic: (clinicId, date) =>
-    apiClient.get('/staff/appointments', { params: { clinicId, date } }),
+  listForClinic: (clinicId, date = null, type = 'upcoming') => {
+    const params = { clinicId };
+    if (date) params.date = date;
+    if (type) params.type = type;
+    return apiClient.get('/staff/appointments', { params });
+  },  
   listForDoctor: (doctorId, date) =>
     apiClient.get(`/doctors/${doctorId}/appointments`, { params: { date } }),
   staffWalkIn: (data) => apiClient.post('/staff/appointments/walk-in', data),

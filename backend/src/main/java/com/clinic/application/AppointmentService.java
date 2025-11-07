@@ -127,6 +127,25 @@ public class AppointmentService {
     }
 
     @Transactional(readOnly = true)
+    public List<AppointmentResponse> getUpcomingClinicAppointments(Long clinicId) {
+        LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
+        LocalDateTime farFuture = LocalDateTime.now().plusYears(5);
+
+        return appointmentRepository.findByClinicIdAndDateTimeBetween(clinicId, startOfToday, farFuture)
+            .stream()
+            .map(this::toResponse)
+            .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<AppointmentResponse> getClinicAppointments(Long clinicId) {
+        return appointmentRepository.findByClinicId(clinicId)
+            .stream()
+            .map(this::toResponse)
+            .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public List<AppointmentResponse> getClinicAppointments(Long clinicId, LocalDate date) {
         LocalDate target = date != null ? date : LocalDate.now();
         LocalDateTime start = target.atStartOfDay();

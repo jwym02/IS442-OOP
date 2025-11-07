@@ -70,7 +70,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
         if (isStaff) {
           const [appointmentRes, queueRes, reportRes, entriesRes, doctorRes, clinicRes] =
             await Promise.all([
-              appointmentAPI.listForClinic(clinicId),
+              appointmentAPI.listForClinic(clinicId, null, 'upcoming'),
               queueAPI.staffQueueStatus(clinicId),
               queueAPI.staffDailyReport(clinicId),
               queueAPI.staffQueueEntries(clinicId),
@@ -105,7 +105,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
   const refreshAppointments = async () => {
     try {
       if (isStaff) {
-        const res = await appointmentAPI.listForClinic(clinicId);
+        const res = await appointmentAPI.listForClinic(clinicId, null, 'upcoming');
         setAppointments(res.data || []);
       } else if (isDoctor && doctorProfileId) {
         const res = await appointmentAPI.listForDoctor(doctorProfileId);
