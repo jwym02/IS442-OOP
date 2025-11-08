@@ -77,11 +77,17 @@ export default function UserForm({
                 value={userForm.role}
                 onChange={(e) => setUserForm((p) => ({ ...p, role: e.target.value }))}
                 required
+                disabled={!!editingUserId}
               >
                 <option value="PATIENT">Patient</option>
                 <option value="CLINIC_STAFF">Clinic Staff</option>
                 {/* <option value="SYSTEM_ADMINISTRATOR">System Administrator</option> */}
               </Select>
+              {editingUserId && (
+                <p className="text-xs text-slate-500 mt-1">
+                  Role cannot be changed when editing a user
+                </p>
+              )}
             </div>
 
             {userForm.role === "CLINIC_STAFF" && (
