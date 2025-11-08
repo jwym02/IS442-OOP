@@ -1,7 +1,6 @@
 package com.clinic.application;
 
 import com.clinic.api.common.dto.NotificationRequest;
-import com.clinic.application.EmailNotifierService;
 import com.clinic.domain.entity.NotificationEntity;
 import com.clinic.domain.entity.PatientProfile;
 import com.clinic.domain.entity.UserAccount;

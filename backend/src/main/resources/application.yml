@@ -16,7 +16,7 @@ spring:
     locations: classpath:db/migration
   sendgrid:
     apiKey: ${SENDGRID_API_KEY}
-    fromEmail: is442oop.g2@gmail.com
+    fromEmail: ${SENDGRID_FROM_EMAIL}
     fromName: SingHealth Clinic
   notifications:
     enabled: true

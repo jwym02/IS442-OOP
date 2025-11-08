@@ -8,12 +8,17 @@
 | Backend  | Spring Boot 3 (Java 21) | Appointment rules, queue engine, notification hooks, admin APIs |
 | Database | MySQL 8                 | Stores clinics, users, appointments, queue sessions, analytics  |
 
-Port allocation:
-
+### Port allocation
+- Executable Jar: `http://localhost:8081`
+- MySQL: `localhost:3306`
+  
+#### Development Environment
 - Backend API: `http://localhost:8081`
-- Frontend dev server: `http://localhost:5173` (proxies `/api` to port 8081)
+- Frontend Development Server: `http://localhost:5173` (proxies `/api` to port 8081)
+- MySQL: `localhost:3306`
 
----
+<br>
+
 
 ## Prerequisites
 
@@ -22,11 +27,11 @@ Port allocation:
 - Maven
 - MySQL 8.x
 
----
+<br>
 
-## Backend Setup
+## Initial Setup
 
-1. **Create the schema (run once)**
+1. **Create the Database and User (Run Once)**
 
    ```sql
    CREATE DATABASE clinicdb;
@@ -37,17 +42,52 @@ Port allocation:
 
    > If `CREATE USER` reports _Error 1396_, the account already exists. Run only the `GRANT` and `FLUSH` statements.
 
-2. **Build & run the API**
+   <br>
 
-   ```powershell
-   cd backend
-   ./mvnw.cmd -DskipTests clean package
-   ./mvnw.cmd spring-boot:run
+2. **Set Environment Variables**
+
+   Create a `.env` file in `backend/src/main/resources` with the following content:
+
+   ```env
+   SENDGRID_API_KEY=YOUR_SENDGRID_API_KEY
+   SENDGRID_FROM_EMAIL=YOUR_SENDGRID_EMAIL
    ```
 
-   - Flyway migrations execute automatically against `clinicdb`.
-   - The API listens on `http://localhost:8081`.
-   - Interactive docs: `http://localhost:8081/swagger-ui.html`.
+      <br>
+
+3. **Build the project**
+
+   Run the build script to compile and package the application:
+
+   ```bash
+   build.sh
+   ```
+
+   > Executable jar outputs to backend/target
+
+   <br>
+
+## Running the application
+
+1. **Make sure the MySQL server is running on port 3306.**
+   
+2. **Start the application using the generated JAR file:**
+   ```jar
+   java -jar <your-jar-file>.jar
+   ```
+
+
+<!-- 2. **Build & run the API**
+
+```powershell
+cd backend
+./mvnw.cmd -DskipTests clean package
+./mvnw.cmd spring-boot:run
+```
+
+- Flyway migrations execute automatically against `clinicdb`.
+- The API listens on `http://localhost:8081`.
+- Interactive docs: `http://localhost:8081/swagger-ui.html`.
 
 ## Frontend Setup
 
@@ -65,4 +105,4 @@ npm run build
 npm run preview
 ```
 
----
+--- -->
