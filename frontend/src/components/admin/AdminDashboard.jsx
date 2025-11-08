@@ -45,6 +45,8 @@ export default function AdminDashboard() {
   });
   const [editingUserId, setEditingUserId] = useState(null);
   const [roleSelections, setRoleSelections] = useState({});
+  const [roleGroupSelections, setRoleGroupSelections] = useState({});
+  const [allowedRolesMap, setAllowedRolesMap] = useState({});
 
   // Clinic edit
   const [editingClinicId, setEditingClinicId] = useState(null);
@@ -131,6 +133,7 @@ export default function AdminDashboard() {
   };
 
   const handleEditUser = (user) => {
+    console.log(user);
     setEditingUserId(user.id);
     setUserForm({
       email: user.email || "",
@@ -140,6 +143,7 @@ export default function AdminDashboard() {
       phone: user.phone || "",
       clinicId: user.staffClinicId || user.doctorClinicId || "",
       doctor: Boolean(user.doctorProfileId),
+      speciality: user.speciality || user.medicalSpeciality || '',
       speciality: "",
     });
     setActiveTab("users");

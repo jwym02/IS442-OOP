@@ -117,6 +117,32 @@ public class AdminService {
             account.setPhoneNumber(request.getPhone());
         }
 
+        // Update staff profile clinic assignment if applicable
+        if (request.getClinicId() != null) {
+            clinicStaffProfileRepository.findByUserId(userId).ifPresent(profile -> {
+                profile.setClinicId(request.getClinicId());
+                clinicStaffProfileRepository.save(profile);
+            });
+        }
+
+        // Update or create doctor profile if applicable
+        if (Boolean.TRUE.equals(request.getDoctor())) {
+            DoctorProfile doctorProfile = doctorProfileRepository.findByUserId(userId)
+                .orElseGet(() -> {
+                    DoctorProfile newProfile = new DoctorProfile();
+                    newProfile.setUser(account);
+                    return newProfile;
+                });
+            doctorProfile.setFullName(Optional.ofNullable(request.getName()).orElse(account.getFullName()));
+            if (request.getClinicId() != null) {
+                doctorProfile.setClinicId(request.getClinicId());
+            }
+            if (StringUtils.hasText(request.getSpeciality())) {
+                doctorProfile.setSpeciality(request.getSpeciality());
+            }
+            doctorProfileRepository.save(doctorProfile);
+        }
+
         userAccountRepository.save(account);
         return toResponse(account);
     }
@@ -336,6 +362,7 @@ public class AdminService {
             .ifPresent(profile -> {
                 response.setDoctorProfileId(profile.getId());
                 response.setDoctorClinicId(profile.getClinicId());
+                response.setSpeciality(profile.getSpeciality());
             });
         adminProfileRepository.findByUserId(account.getId())
             .ifPresent(profile -> response.setAdminProfileId(profile.getId()));
