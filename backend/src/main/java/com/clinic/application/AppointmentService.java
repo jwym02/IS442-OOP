@@ -87,32 +87,47 @@ public class AppointmentService {
     }
 
     @Transactional
-    public AppointmentResponse rescheduleAppointment(long appointmentId, AppointmentRequest request) {
+    public void cancelAppointmentAsStaff(long appointmentId) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Appointment not found"));
-        if (!canModify(appointment.getDateTime())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot reschedule within 24 hours of appointment time");
-        }
-        DoctorProfile doctorProfile = doctorProfileRepository.findById(request.getDoctorId())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Doctor not found"));
-        if (doctorProfile.getClinicId() != null && !doctorProfile.getClinicId().equals(request.getClinicId())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Doctor does not belong to selected clinic");
-        }
-        OffsetDateTime odt = request.getDateTime();
-        Instant appointmentInstant = odt.toInstant();
-        LocalDateTime appointmentLocal = LocalDateTime.ofInstant(appointmentInstant, ZoneId.systemDefault());
-
-        validateClinicAndSlotRules(request.getClinicId(), doctorProfile.getId(), appointmentInstant, odt.getOffset());
-        if (appointmentRepository.existsByDoctorIdAndDateTime(doctorProfile.getId(), appointmentLocal)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "New time slot already booked for this doctor");
-        }
-        appointment.setDoctorId(doctorProfile.getId());
-        appointment.setClinicId(request.getClinicId());
-        appointment.setDateTime(appointmentLocal);
-        appointment.setStatus(AppointmentStatus.SCHEDULED);
-        appointment = appointmentRepository.save(appointment);
-        return toResponse(appointment);
+        appointment.setStatus(AppointmentStatus.CANCELLED);
+        appointmentRepository.save(appointment);
     }
+
+    @Transactional
+public AppointmentResponse rescheduleAppointment(long appointmentId, AppointmentRequest request) {
+    Appointment appointment = appointmentRepository.findById(appointmentId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Appointment not found"));
+
+    if (!canModify(appointment.getDateTime())) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot reschedule within 24 hours of appointment time");
+    }
+
+    DoctorProfile doctorProfile = doctorProfileRepository.findById(request.getDoctorId())
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Doctor not found"));
+
+    if (doctorProfile.getClinicId() != null && !doctorProfile.getClinicId().equals(request.getClinicId())) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Doctor does not belong to selected clinic");
+    }
+    var odt = request.getDateTime();
+    var appointmentInstant = odt.toInstant();
+    var appointmentLocal = LocalDateTime.ofInstant(appointmentInstant, ZoneId.systemDefault());
+
+    validateClinicAndSlotRules(request.getClinicId(), doctorProfile.getId(), appointmentInstant, odt.getOffset());
+
+    if (appointmentRepository.existsByDoctorIdAndDateTimeAndIdNot(doctorProfile.getId(), appointmentLocal, appointment.getId())) {
+        throw new ResponseStatusException(HttpStatus.CONFLICT, "New time slot already booked for this doctor");
+    }
+
+    appointment.setDoctorId(doctorProfile.getId());
+    appointment.setClinicId(request.getClinicId());
+    appointment.setDateTime(appointmentLocal);
+    appointment.setStatus(AppointmentStatus.SCHEDULED);
+
+    appointment = appointmentRepository.save(appointment);
+    return toResponse(appointment);
+}
+
 
     @Transactional(readOnly = true)
     public List<AppointmentResponse> getPatientAppointments(Long patientId, LocalDate startDate, LocalDate endDate) {
@@ -121,6 +136,25 @@ public class AppointmentService {
         LocalDateTime start = (startDate != null ? startDate : LocalDate.now()).atStartOfDay();
         LocalDateTime end = (endDate != null ? endDate.plusDays(1) : LocalDate.now().plusMonths(1)).atStartOfDay();
         return appointmentRepository.findByPatientIdAndDateTimeBetween(patientId, start, end)
+            .stream()
+            .map(this::toResponse)
+            .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<AppointmentResponse> getUpcomingClinicAppointments(Long clinicId) {
+        LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
+        LocalDateTime farFuture = LocalDateTime.now().plusYears(5);
+
+        return appointmentRepository.findByClinicIdAndDateTimeBetween(clinicId, startOfToday, farFuture)
+            .stream()
+            .map(this::toResponse)
+            .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<AppointmentResponse> getClinicAppointments(Long clinicId) {
+        return appointmentRepository.findByClinicId(clinicId)
             .stream()
             .map(this::toResponse)
             .collect(Collectors.toList());
