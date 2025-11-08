@@ -133,7 +133,7 @@ export default function AdminDashboard() {
   };
 
   const handleEditUser = (user) => {
-    console.log(user);
+    // console.log(user);
     setEditingUserId(user.id);
     setUserForm({
       email: user.email || "",
@@ -144,7 +144,6 @@ export default function AdminDashboard() {
       clinicId: user.staffClinicId || user.doctorClinicId || "",
       doctor: Boolean(user.doctorProfileId),
       speciality: user.speciality || user.medicalSpeciality || '',
-      speciality: "",
     });
     setActiveTab("users");
   };

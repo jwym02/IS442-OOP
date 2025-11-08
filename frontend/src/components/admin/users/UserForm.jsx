@@ -77,44 +77,54 @@ export default function UserForm({
                 value={userForm.role}
                 onChange={(e) => setUserForm((p) => ({ ...p, role: e.target.value }))}
                 required
+                disabled={!!editingUserId}
               >
                 <option value="PATIENT">Patient</option>
                 <option value="CLINIC_STAFF">Clinic Staff</option>
-                <option value="SYSTEM_ADMINISTRATOR">System Administrator</option>
+                {/* <option value="SYSTEM_ADMINISTRATOR">System Administrator</option> */}
               </Select>
+              {editingUserId && (
+                <p className="text-xs text-slate-500 mt-1">
+                  Role cannot be changed when editing a user
+                </p>
+              )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="user-clinic">Assigned Clinic</Label>
-              <Select
-                id="user-clinic"
-                value={userForm.clinicId}
-                onChange={(e) => setUserForm((p) => ({ ...p, clinicId: e.target.value }))}
-              >
-                <option value="">Unassigned</option>
-                {clinics.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </Select>
+            {userForm.role === "CLINIC_STAFF" && (
+              <div className="space-y-2">
+                <Label htmlFor="user-clinic">Assigned Clinic</Label>
+                <Select
+                  id="user-clinic"
+                  value={userForm.clinicId}
+                  onChange={(e) => setUserForm((p) => ({ ...p, clinicId: e.target.value }))}
+                >
+                  <option value="">Unassigned</option>
+                  {clinics.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            )}
+          </div>
+
+          {userForm.role === "CLINIC_STAFF" && (
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="user-doctor"
+                checked={userForm.doctor}
+                onChange={(e) => setUserForm((p) => ({ ...p, doctor: e.target.checked }))}
+                className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="user-doctor" className="ml-2 text-sm text-slate-700">
+                Create doctor profile for this user
+              </label>
             </div>
-          </div>
+          )}
 
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="user-doctor"
-              checked={userForm.doctor}
-              onChange={(e) => setUserForm((p) => ({ ...p, doctor: e.target.checked }))}
-              className="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
-            />
-            <label htmlFor="user-doctor" className="ml-2 text-sm text-slate-700">
-              Create doctor profile for this user
-            </label>
-          </div>
-
-          {userForm.doctor && (
+          {(userForm.role === "CLINIC_STAFF" && userForm.doctor) && (
             <div className="space-y-2">
               <Label htmlFor="user-speciality">Medical Speciality</Label>
               <Input
