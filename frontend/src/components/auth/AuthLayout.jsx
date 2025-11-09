@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 
 export function AuthLayout({ title, description, children, footer }) {
   return (
@@ -9,10 +9,6 @@ export function AuthLayout({ title, description, children, footer }) {
           <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
             SingHealth Clinic System
           </h1>
-          <p className="text-base text-slate-600">
-            Secure access to appointments, queue updates, and medical records from a single
-            intuitive portal.
-          </p>
         </div>
         <div className="grid gap-6 md:grid-cols-[1.1fr_minmax(0,0.9fr)] md:items-start">
           <div className="hidden h-full flex-col justify-between rounded-2xl bg-slate-50 p-8 md:flex">

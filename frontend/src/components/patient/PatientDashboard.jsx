@@ -505,45 +505,90 @@ export default function PatientDashboard({ patientId, userName }) {
     return map;
   }, [medicalRecords]);
 
+  const isWithinCheckInWindow = (appointmentDateTime) => {
+    const appointmentTime = new Date(appointmentDateTime);
+    const now = new Date();
+    const timeDiff = appointmentTime - now;
+    const hoursDiff = timeDiff / (1000 * 60 * 60);
+    // Allow check-in within 5 hours before the appointment
+    return hoursDiff <= 5 && hoursDiff >= 0;
+  };
+
+  const getCheckInAvailableTime = (appointmentDateTime) => {
+    const appointmentTime = new Date(appointmentDateTime);
+    const checkInTime = new Date(appointmentTime.getTime() - 5 * 60 * 60 * 1000); // 5 hours before
+    return formatDateTime(checkInTime);
+  };
+
+  const canReschedule = (appointmentDateTime) => {
+    const appointmentTime = new Date(appointmentDateTime);
+    const now = new Date();
+    const timeDiff = appointmentTime - now;
+    const hoursDiff = timeDiff / (1000 * 60 * 60);
+    // Allow rescheduling only if more than 24 hours before appointment
+    return hoursDiff > 24;
+  };
+
   const renderAppointmentActions = (appointment, { compact = false } = {}) => {
     const isScheduled = appointment.status === 'SCHEDULED';
     const isCheckedIn =
       appointment.status === 'CHECKED_IN' || appointment.id === checkedInAppointmentId;
     const size = compact ? 'sm' : 'default';
+    const canCheckIn = isWithinCheckInWindow(appointment.dateTime);
+    const canRescheduleAppt = canReschedule(appointment.dateTime);
 
     return (
-      <div className={cn('flex flex-wrap gap-2', compact ? 'mt-3' : 'mt-4')}>
-        {isScheduled ? (
-          <>
-            <Button size={size} className="gap-2" onClick={() => handleCheckIn(appointment.id)}>
-              <CheckCircle2 className="h-4 w-4" />
-              Check in
+      <div className={cn('flex flex-col gap-2', compact ? 'mt-3' : 'mt-4')}>
+        <div className="flex flex-wrap gap-2">
+          {isScheduled ? (
+            <>
+              <Button
+                size={size}
+                className="gap-2"
+                onClick={() => handleCheckIn(appointment.id)}
+                disabled={!canCheckIn}
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                Check in
+              </Button>
+              <Button
+                size={size}
+                variant="outline"
+                className="gap-2"
+                onClick={() => startReschedule(appointment)}
+                disabled={!canRescheduleAppt}
+              >
+                <History className="h-4 w-4" />
+                Reschedule
+              </Button>
+              <Button
+                size={size}
+                variant="ghost"
+                className="gap-2 text-rose-600 hover:bg-rose-50"
+                onClick={() => handleCancelAppointment(appointment.id)}
+                disabled={!canRescheduleAppt}
+              >
+                Cancel
+              </Button>
+            </>
+          ) : null}
+          {isCheckedIn ? (
+            <Button size={size} variant="secondary" className="gap-2" onClick={fetchQueueStatus}>
+              <RefreshCw className="h-4 w-4" />
+              Refresh queue
             </Button>
-            <Button
-              size={size}
-              variant="outline"
-              className="gap-2"
-              onClick={() => startReschedule(appointment)}
-            >
-              <History className="h-4 w-4" />
-              Reschedule
-            </Button>
-            <Button
-              size={size}
-              variant="ghost"
-              className="gap-2 text-rose-600 hover:bg-rose-50"
-              onClick={() => handleCancelAppointment(appointment.id)}
-            >
-              Cancel
-            </Button>
-          </>
-        ) : null}
-        {isCheckedIn ? (
-          <Button size={size} variant="secondary" className="gap-2" onClick={fetchQueueStatus}>
-            <RefreshCw className="h-4 w-4" />
-            Refresh queue
-          </Button>
-        ) : null}
+          ) : null}
+        </div>
+        {isScheduled && !canCheckIn && (
+          <p className="text-xs text-muted-foreground">
+            Check-in available from {getCheckInAvailableTime(appointment.dateTime)}
+          </p>
+        )}
+        {isScheduled && !canRescheduleAppt && (
+          <p className="text-xs text-muted-foreground">
+            Rescheduling/Cancelling allowed only more than 24 hours before appointment
+          </p>
+        )}
       </div>
     );
   };
