@@ -171,6 +171,31 @@ public class AdminService {
     }
 
     @Transactional
+    public UserResponse removeRole(UUID userId, String roleName) {
+        UserAccount account = userAccountRepository.findById(userId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        
+        // Validate that user has at least 2 roles before removing
+        if (account.getRoles().size() <= 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                "Cannot remove role. User must have at least one role.");
+        }
+        
+        // Check if the role exists for this user
+        boolean hasRole = account.getRoles().stream()
+            .anyMatch(r -> roleName.equalsIgnoreCase(r.getName()));
+        
+        if (!hasRole) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                "User does not have the role: " + roleName);
+        }
+        
+        account.removeRoleByName(roleName);
+        userAccountRepository.save(account);
+        return toResponse(account);
+    }
+
+    @Transactional
     public ClinicResponse updateClinic(Long clinicId, ClinicRequest request) {
         Clinic clinic = clinicRepository.findById(clinicId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Clinic not found"));

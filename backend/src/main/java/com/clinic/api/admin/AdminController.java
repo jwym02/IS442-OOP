@@ -63,6 +63,12 @@ public class AdminController {
         return ResponseEntity.ok(adminService.assignRoles(userId, request.getRole()));
     }
 
+    @DeleteMapping("/users/{userId}/roles")
+    public ResponseEntity<UserResponse> removeRole(@PathVariable UUID userId,
+                                                   @RequestBody @Valid AssignRoleRequest request) {
+        return ResponseEntity.ok(adminService.removeRole(userId, request.getRole()));
+    }
+
     @PutMapping("/clinics/{clinicId}")
     public ResponseEntity<ClinicResponse> updateClinic(@PathVariable Long clinicId,
                                                        @RequestBody @Valid ClinicRequest request) {

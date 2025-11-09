@@ -122,6 +122,7 @@ export const adminAPI = {
   updateUser: (userId, payload) => apiClient.put(`/admin/users/${userId}`, payload),
   deleteUser: (userId) => apiClient.delete(`/admin/users/${userId}`),
   assignRole: (userId, role) => apiClient.post(`/admin/users/${userId}/roles`, { role }),
+  removeRole: (userId, role) => apiClient.delete(`/admin/users/${userId}/roles`, { data: { role } }),
   listUsers: () => apiClient.get('/admin/users'),
 };
 

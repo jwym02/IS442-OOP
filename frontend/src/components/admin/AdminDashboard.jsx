@@ -178,6 +178,19 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleRemoveRole = async (userId, role) => {
+    if (!window.confirm(`Are you sure you want to remove the "${role.replace(/_/g, " ").toLowerCase()}" role from this user?`)) {
+      return;
+    }
+    try {
+      await adminAPI.removeRole(userId, role);
+      show("Role removed.", "success");
+      refreshAll();
+    } catch (error) {
+      show(error?.userMessage || "Unable to remove role.", "error");
+    }
+  };
+
   // Clinic management
   const resetClinicForm = () => {
     setClinicForm({
@@ -365,6 +378,7 @@ export default function AdminDashboard() {
               roleSelections={roleSelections}
               onRoleSelectionChange={handleRoleSelectionChange}
               onAssignRole={handleAssignRole}
+              onRemoveRole={handleRemoveRole}
             />
           </div>
         )}

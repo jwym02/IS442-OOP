@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Edit2, Shield, Trash2, Users } from "lucide-react";
+import { Edit2, Shield, Trash2, Users, X } from "lucide-react";
 import { Badge } from "../../ui/badge";
 import { Button } from "../../ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../ui/card";
@@ -33,6 +33,7 @@ export default function UsersTable({
   roleSelections,
   onRoleSelectionChange,
   onAssignRole,
+  onRemoveRole,
 }) {
   const [term, setTerm] = useState("");
   const [page, setPage] = useState(1);
@@ -108,9 +109,18 @@ export default function UsersTable({
                               <Badge
                                 key={idx}
                                 variant="outline"
-                                className={cn("text-xs capitalize border", getRoleBadgeColor(role))}
+                                className={cn("text-xs capitalize border group relative", getRoleBadgeColor(role))}
                               >
                                 {role.replace(/_/g, " ").toLowerCase()}
+                                {user.roles.length > 1 && (
+                                  <button
+                                    onClick={() => onRemoveRole(user.id, role)}
+                                    className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center justify-center rounded-full hover:bg-black/10 w-4 h-4"
+                                    title="Remove this role"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                )}
                               </Badge>
                             ))
                           ) : (
