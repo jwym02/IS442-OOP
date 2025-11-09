@@ -1,14 +1,14 @@
-import { Navigate } from "react-router-dom";
-import { useAuth } from "../context/useAuth";
-import PatientDashboard from "../components/patient/PatientDashboard";
-import StaffDashboard from "../components/staff/StaffDashboard";
-import AdminDashboard from "../components/admin/AdminDashboard";
-import { AppShell } from "../components/layout/AppShell";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
-import { Card, CardContent } from "../components/ui/card";
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../context/useAuth';
+import PatientDashboard from '../components/patient/PatientDashboard';
+import StaffDashboard from '../components/staff/StaffDashboard';
+import AdminDashboard from '../components/admin/AdminDashboard';
+import { AppShell } from '../components/layout/AppShell';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Card, CardContent } from '../components/ui/card';
 
 export default function Dashboard() {
-  const { user, logout, hasRole } = useAuth();
+  const { user, logout, hasRole, activeRole } = useAuth();
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -17,23 +17,25 @@ export default function Dashboard() {
   const isPatient = Boolean(user.patientProfileId);
   const isStaff = Boolean(user.staffProfileId);
   const isDoctor = Boolean(user.doctorProfileId);
-  const isAdmin = hasRole("SYSTEM_ADMINISTRATOR");
+  const isAdmin = hasRole('SYSTEM_ADMINISTRATOR');
   const clinicId = user.staffClinicId || user.doctorClinicId || null;
 
   const views = [];
-  if (isPatient) {
+  if (isPatient && (!activeRole || activeRole === 'PATIENT')) {
     views.push({
-      key: "patient",
-      label: "Patient Home",
-      component: (
-        <PatientDashboard patientId={user.patientProfileId} userName={user.name} />
-      ),
+      key: 'patient',
+      label: 'Patient Home',
+      component: <PatientDashboard patientId={user.patientProfileId} userName={user.name} />,
     });
   }
-  if ((isStaff || isDoctor) && clinicId) {
+  if (
+    (isStaff || isDoctor) &&
+    clinicId &&
+    (!activeRole || activeRole === 'STAFF' || activeRole === 'DOCTOR')
+  ) {
     views.push({
-      key: "clinic",
-      label: isDoctor && !isStaff ? "Doctor Workspace" : "Clinic Operations",
+      key: 'clinic',
+      label: isDoctor && !isStaff ? 'Doctor Workspace' : 'Clinic Operations',
       component: (
         <StaffDashboard
           clinicId={clinicId}
@@ -43,10 +45,10 @@ export default function Dashboard() {
       ),
     });
   }
-  if (isAdmin) {
+  if (isAdmin && (!activeRole || activeRole === 'SYSTEM_ADMINISTRATOR')) {
     views.push({
-      key: "admin",
-      label: "System Admin",
+      key: 'admin',
+      label: 'System Admin',
       component: <AdminDashboard />,
     });
   }
