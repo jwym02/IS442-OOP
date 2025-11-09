@@ -61,10 +61,23 @@ export default function PatientDashboard({ patientId, userName }) {
           doctorAPI.getAll(),
           patientAPI.medicalRecords(patientId),
         ]);
-        setAppointments(apptRes.data || []);
+        const appointmentsData = apptRes.data || [];
+        setAppointments(appointmentsData);
         setClinics(clinicRes.data || []);
         setDoctors(doctorRes.data || []);
         setMedicalRecords(recordsRes.data || []);
+
+        const checkedIn = appointmentsData.find((appt) => appt.status === 'CHECKED_IN');
+
+        if (checkedIn) {
+          setCheckedInAppointmentId(checkedIn.id);
+          try {
+            const queueRes = await queueAPI.getPatientStatus(patientId);
+            setQueueStatus(queueRes.data);
+          } catch (queueError) {
+            setQueueStatus(null);
+          }
+        }
       } catch (error) {
         show(
           error?.userMessage ||
@@ -90,7 +103,24 @@ export default function PatientDashboard({ patientId, userName }) {
   const refreshAppointments = async () => {
     try {
       const res = await appointmentAPI.listForPatient(patientId);
-      setAppointments(res.data || []);
+      const appointmentsData = res.data || [];
+      setAppointments(appointmentsData);
+
+      // Check if there's a checked-in appointment
+      const checkedIn = appointmentsData.find((appt) => appt.status === 'CHECKED_IN');
+
+      if (checkedIn) {
+        setCheckedInAppointmentId(checkedIn.id);
+        try {
+          const queueRes = await queueAPI.getPatientStatus(patientId);
+          setQueueStatus(queueRes.data);
+        } catch (queueError) {
+          setQueueStatus(null);
+        }
+      } else {
+        setCheckedInAppointmentId(null);
+        setQueueStatus(null);
+      }
     } catch (error) {
       show(
         error?.userMessage || error.response?.data?.message || 'Unable to refresh appointments.',
@@ -411,11 +441,13 @@ export default function PatientDashboard({ patientId, userName }) {
       case 'WAITING':
         return 'Waiting';
       case 'CALLED':
-        return 'Called';
-      case 'IN_SERVICE':
-        return 'In Service';
-      case 'DONE':
-        return 'Done';
+        return 'Called - Please Proceed';
+      case 'SERVED':
+        return 'Served';
+      case 'SKIPPED':
+        return 'Skipped';
+      case 'FAST_TRACKED':
+        return 'Fast Tracked';
       case 'CANCELLED':
         return 'Cancelled';
       default:
@@ -1189,43 +1221,90 @@ export default function PatientDashboard({ patientId, userName }) {
                     </Alert>
 
                     {queueStatus ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                          <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">
-                            Your Queue Number
-                          </p>
-                          <p className="text-4xl font-bold text-blue-600">
-                            {queueStatus.queueNumber ?? '—'}
-                          </p>
+                      <>
+                        {/* Show special message if patient is served or out of queue */}
+                        {(queueStatus.status === 'SERVED' ||
+                          queueStatus.status === 'SKIPPED' ||
+                          queueStatus.status === 'CANCELLED') && (
+                          <Alert className="mb-6 border-green-200 bg-green-50">
+                            <AlertCircle className="h-4 w-4 text-green-600" />
+                            <AlertTitle className="text-green-900">
+                              {queueStatus.status === 'SERVED'
+                                ? 'Consultation Complete'
+                                : queueStatus.status === 'SKIPPED'
+                                ? 'Queue Skipped'
+                                : 'Queue Cancelled'}
+                            </AlertTitle>
+                            <AlertDescription className="text-green-800">
+                              {queueStatus.status === 'SERVED'
+                                ? 'Your consultation has been completed. You may leave the clinic or proceed to other services.'
+                                : queueStatus.status === 'SKIPPED'
+                                ? 'Your queue number was skipped. Please check with clinic staff.'
+                                : 'Your queue entry was cancelled.'}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+
+                        {/* Show called alert if patient is being called */}
+                        {queueStatus.status === 'CALLED' && (
+                          <Alert className="mb-6 border-orange-200 bg-orange-50">
+                            <AlertCircle className="h-4 w-4 text-orange-600" />
+                            <AlertTitle className="text-orange-900">
+                              You Are Being Called!
+                            </AlertTitle>
+                            <AlertDescription className="text-orange-800">
+                              Please proceed to the consultation room now. Your doctor is ready to
+                              see you.
+                            </AlertDescription>
+                          </Alert>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                            <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">
+                              Your Queue Number
+                            </p>
+                            <p className="text-4xl font-bold text-blue-600">
+                              {queueStatus.queueNumber ?? '—'}
+                            </p>
+                          </div>
+                          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                            <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">
+                              Now Serving
+                            </p>
+                            <p className="text-4xl font-bold text-green-600">
+                              {queueStatus.currentNumber ?? '—'}
+                            </p>
+                          </div>
+                          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                            <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">
+                              {queueStatus.status === 'SERVED' ||
+                              queueStatus.status === 'SKIPPED' ||
+                              queueStatus.status === 'CANCELLED'
+                                ? 'Final Position'
+                                : 'Numbers Away'}
+                            </p>
+                            <p className="text-4xl font-bold text-orange-600">
+                              {queueStatus.status === 'SERVED' ||
+                              queueStatus.status === 'SKIPPED' ||
+                              queueStatus.status === 'CANCELLED'
+                                ? '—'
+                                : queueStatus.numbersAway ?? '—'}
+                            </p>
+                          </div>
+                          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                            <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">
+                              Status
+                            </p>
+                            <p className="text-2xl font-bold text-slate-900">
+                              {mapQueueStatusLabel(queueStatus.status)}
+                            </p>
+                            <p className="text-xs text-slate-500 mt-2">
+                              State: {queueStatus.state ?? '—'}
+                            </p>
+                          </div>
                         </div>
-                        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                          <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">
-                            Now Serving
-                          </p>
-                          <p className="text-4xl font-bold text-green-600">
-                            {queueStatus.currentNumber ?? '—'}
-                          </p>
-                        </div>
-                        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                          <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">
-                            Numbers Away
-                          </p>
-                          <p className="text-4xl font-bold text-orange-600">
-                            {queueStatus.numbersAway ?? '—'}
-                          </p>
-                        </div>
-                        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                          <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">
-                            Status
-                          </p>
-                          <p className="text-2xl font-bold text-slate-900">
-                            {mapQueueStatusLabel(queueStatus.status)}
-                          </p>
-                          <p className="text-xs text-slate-500 mt-2">
-                            State: {queueStatus.state ?? '—'}
-                          </p>
-                        </div>
-                      </div>
+                      </>
                     ) : (
                       <Alert variant="default" className="border-dashed">
                         <AlertCircle className="h-4 w-4" />
