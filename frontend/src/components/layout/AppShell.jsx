@@ -58,7 +58,7 @@ export function AppShell({ user, onLogout, children }) {
           </div>
         </div>
       </header>
-      <main className="container px-6 py-8">{children}</main>
+      <main className="container px-6 pb-8">{children}</main>
     </div>
   );
 }
