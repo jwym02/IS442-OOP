@@ -23,6 +23,10 @@ public class DoctorProfile {
     @Column(name = "clinic_id")
     private Long clinicId;
 
+    // link to specialists table (nullable)
+    @Column(name = "specialist_id")
+    private Long specialistId;
+
     public Long getId() {
         return id;
     }
@@ -61,5 +65,13 @@ public class DoctorProfile {
 
     public void setClinicId(Long clinicId) {
         this.clinicId = clinicId;
+    }
+
+    public Long getSpecialistId() {
+        return specialistId;
+    }
+
+    public void setSpecialistId(Long specialistId) {
+        this.specialistId = specialistId;
     }
 }

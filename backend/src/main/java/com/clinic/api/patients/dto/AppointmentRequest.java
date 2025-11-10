@@ -4,15 +4,10 @@ import jakarta.validation.constraints.NotNull;
 import java.time.OffsetDateTime;
 
 public class AppointmentRequest {
-
-    @NotNull
     private Long clinicId;
-
-    @NotNull
     private Long doctorId;
-    
-    @NotNull
-    private OffsetDateTime dateTime;
+    private Long specialistId;
+    private Object dateTime;
 
     public Long getClinicId() {
         return clinicId;
@@ -26,10 +21,12 @@ public class AppointmentRequest {
     public void setDoctorId(Long doctorId) {
         this.doctorId = doctorId;
     }
-    public OffsetDateTime getDateTime() {
+    public Long getSpecialistId() { return specialistId; }
+    public void setSpecialistId(Long specialistId) { this.specialistId = specialistId; }
+    public Object getDateTime() {
         return dateTime;
     }
-    public void setDateTime(OffsetDateTime dateTime) {
+    public void setDateTime(Object dateTime) {
         this.dateTime = dateTime;
     }
 }

@@ -15,7 +15,7 @@ import {
   Users,
   ActivitySquare,
 } from 'lucide-react';
-import { appointmentAPI, clinicAPI, doctorAPI, patientAPI, queueAPI } from '../../services/api';
+import { appointmentAPI, clinicAPI, doctorAPI, patientAPI, queueAPI, specialistAPI } from '../../services/api';
 import { useToast } from '../../context/useToast';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -29,6 +29,9 @@ import { cn } from '../../lib/utils';
 
 export default function PatientDashboard({ patientId, userName }) {
   const { show } = useToast();
+  const [specialists, setSpecialists] = useState([]);
+  // 'clinic' or 'specialist' - which list to show in the left dropdown
+  const [selectionType, setSelectionType] = useState('clinic');
   const [activeTab, setActiveTab] = useState('overview');
   const [appointments, setAppointments] = useState([]);
   const [clinics, setClinics] = useState([]);
@@ -55,16 +58,18 @@ export default function PatientDashboard({ patientId, userName }) {
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        const [apptRes, clinicRes, doctorRes, recordsRes] = await Promise.all([
+        const [apptRes, clinicRes, doctorRes, recordsRes, specialistRes] = await Promise.all([
           appointmentAPI.listForPatient(patientId),
           clinicAPI.getAll(),
           doctorAPI.getAll(),
           patientAPI.medicalRecords(patientId),
+          specialistAPI.getAll(),
         ]);
         setAppointments(apptRes.data || []);
         setClinics(clinicRes.data || []);
         setDoctors(doctorRes.data || []);
         setMedicalRecords(recordsRes.data || []);
+        setSpecialists(specialistRes.data || []);
       } catch (error) {
         show(
           error?.userMessage ||
@@ -84,8 +89,12 @@ export default function PatientDashboard({ patientId, userName }) {
 
   const filteredDoctors = useMemo(() => {
     if (!selectedClinic) return doctors;
-    return doctors.filter((doctor) => doctor.clinicId === Number(selectedClinic));
-  }, [doctors, selectedClinic]);
+    if (selectionType === 'clinic') {
+      return doctors.filter((doctor) => doctor.clinicId === Number(selectedClinic));
+    }
+    // selectionType === 'specialist'
+    return doctors.filter((doctor) => doctor.specialistId === Number(selectedClinic));
+  }, [doctors, selectedClinic, selectionType]);
 
   const refreshAppointments = async () => {
     try {
@@ -101,67 +110,67 @@ export default function PatientDashboard({ patientId, userName }) {
 
   useEffect(() => {
     const loadSlots = async () => {
-      if (!selectedClinic || !selectedDoctor || !selectedDate) {
+      // Two modes: clinic-based availability (existing) OR specialist-based availability (new)
+      if (selectionType === 'clinic') {
+        const actualClinicId = Number(selectedClinic) || null;
+        if (!actualClinicId || !selectedDoctor || !selectedDate) {
+          setTimeSlots([]);
+          return;
+        }
+        setSlotsLoading(true);
+        try {
+          const scheduleRes = await doctorAPI.getSchedule(Number(selectedDoctor));
+          const slotInterval = scheduleRes.data?.slotIntervalMinutes || 15;
+
+          const apptRes = await appointmentAPI.listForClinic(Number(actualClinicId), selectedDate);
+          const occupied = (apptRes.data || []).map((appointment) =>
+            toLocalInputValue(appointment.dateTime)
+          );
+
+          const clinic = clinics.find((c) => c.id === Number(actualClinicId));
+          const openTime = clinic?.openTime || clinic?.open_time || '09:00:00';
+          const closeTime = clinic?.closeTime || clinic?.close_time || '17:00:00';
+
+          const slots = buildSlotsFromTimes(openTime, closeTime, slotInterval, selectedDate, occupied);
+          setTimeSlots(slots);
+          if (!slots.includes(selectedSlot)) setSelectedSlot('');
+        } catch (error) {
+          show(error?.userMessage || error.response?.data?.message || 'Unable to load available slots.', 'error');
+          setTimeSlots([]);
+        } finally {
+          setSlotsLoading(false);
+        }
+        return;
+      }
+
+      // selectionType === 'specialist' -> compute slots from specialist hours and specialist appointments
+      const specialistId = Number(selectedClinic) || null;
+      if (!specialistId || !selectedDoctor || !selectedDate) {
         setTimeSlots([]);
         return;
       }
       setSlotsLoading(true);
       try {
-        const scheduleRes = await doctorAPI.getSchedule(Number(selectedDoctor));
-        const slotInterval = scheduleRes.data?.slotIntervalMinutes || 15;
+        // prefer specialist schedule if available, otherwise fall back to doctor's schedule
+        const specialist = specialists.find((s) => s.id === specialistId);
+        let slotInterval = specialist?.defaultSlotIntervalMinutes ?? specialist?.default_slot_interval_minutes ?? null;
+        const openTime = specialist?.openTime || specialist?.open_time || '09:00:00';
+        const closeTime = specialist?.closeTime || specialist?.close_time || '17:00:00';
 
-        const apptRes = await appointmentAPI.listForClinic(Number(selectedClinic), selectedDate);
-        const occupied = (apptRes.data || []).map((appointment) =>
-          toLocalInputValue(appointment.dateTime)
-        );
-
-        const clinic = clinics.find((c) => c.id === Number(selectedClinic));
-        const openTime = clinic?.openTime || '09:00:00';
-        const closeTime = clinic?.closeTime || '17:00:00';
-
-        const parseTime = (timeValue) => {
-          const parts = timeValue.split(':');
-          return { hh: Number(parts[0]), mm: Number(parts[1]) };
-        };
-
-        const open = parseTime(openTime);
-        const close = parseTime(closeTime);
-
-        const slots = [];
-        const start = new Date(
-          `${selectedDate}T${String(open.hh).padStart(2, '0')}:${String(open.mm).padStart(
-            2,
-            '0'
-          )}:00`
-        );
-        const end = new Date(
-          `${selectedDate}T${String(close.hh).padStart(2, '0')}:${String(close.mm).padStart(
-            2,
-            '0'
-          )}:00`
-        );
-        for (
-          let timeCursor = new Date(start);
-          timeCursor < end;
-          timeCursor.setMinutes(timeCursor.getMinutes() + slotInterval)
-        ) {
-          const isoLocal = new Date(timeCursor.getTime() - timeCursor.getTimezoneOffset() * 60000)
-            .toISOString()
-            .slice(0, 16);
-          const timeOnly = isoLocal.slice(11, 16);
-          if (!occupied.includes(isoLocal)) {
-            slots.push(timeOnly);
-          }
+        if (!slotInterval) {
+          // fallback: doctor's schedule
+          const scheduleRes = await doctorAPI.getSchedule(Number(selectedDoctor));
+          slotInterval = scheduleRes.data?.slotIntervalMinutes || 15;
         }
+
+        const apptRes = await appointmentAPI.listForSpecialist(specialistId, selectedDate);
+        const occupied = (apptRes.data || []).map((appointment) => toLocalInputValue(appointment.dateTime));
+
+        const slots = buildSlotsFromTimes(openTime, closeTime, slotInterval, selectedDate, occupied);
         setTimeSlots(slots);
-        if (!slots.includes(selectedSlot)) {
-          setSelectedSlot('');
-        }
+        if (!slots.includes(selectedSlot)) setSelectedSlot('');
       } catch (error) {
-        show(
-          error?.userMessage || error.response?.data?.message || 'Unable to load available slots.',
-          'error'
-        );
+        show(error?.userMessage || error.response?.data?.message || 'Unable to load available slots.', 'error');
         setTimeSlots([]);
       } finally {
         setSlotsLoading(false);
@@ -170,6 +179,25 @@ export default function PatientDashboard({ patientId, userName }) {
 
     loadSlots();
   }, [selectedClinic, selectedDoctor, selectedDate, clinics, selectedSlot, show]);
+ 
+  // helper used above to generate available time strings
+  function buildSlotsFromTimes(openTime, closeTime, slotInterval, dateStr, occupiedList) {
+    const parseTime = (timeValue) => {
+      const parts = timeValue.split(':');
+      return { hh: Number(parts[0]), mm: Number(parts[1]) };
+    };
+    const open = parseTime(openTime);
+    const close = parseTime(closeTime);
+    const slots = [];
+    const start = new Date(`${dateStr}T${String(open.hh).padStart(2, '0')}:${String(open.mm).padStart(2, '0')}:00`);
+    const end = new Date(`${dateStr}T${String(close.hh).padStart(2, '0')}:${String(close.mm).padStart(2, '0')}:00`);
+    for (let timeCursor = new Date(start); timeCursor < end; timeCursor.setMinutes(timeCursor.getMinutes() + slotInterval)) {
+      const isoLocal = new Date(timeCursor.getTime() - timeCursor.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      const timeOnly = isoLocal.slice(11, 16);
+      if (!occupiedList.includes(isoLocal)) slots.push(timeOnly);
+    }
+    return slots;
+  }
 
   useEffect(() => {
     const loadRescheduleSlots = async () => {
@@ -272,18 +300,28 @@ export default function PatientDashboard({ patientId, userName }) {
 
   const handleBookAppointment = async (event) => {
     event.preventDefault();
-    if (!selectedClinic || !selectedDoctor || !selectedSlot) {
+    if (!selectedDoctor || !selectedSlot) {
       show('Please complete all booking details.', 'error');
       return;
     }
     try {
       const combined = new Date(`${selectedDate}T${selectedSlot}:00`);
-      const iso = combined.toISOString();
-      await appointmentAPI.book(patientId, {
-        clinicId: Number(selectedClinic),
+      // send local wall time "YYYY-MM-DDTHH:mm:ss" (no timezone) so backend stores the intended local datetime
+      const iso = new Date(combined.getTime() - combined.getTimezoneOffset() * 60000)
+        .toISOString()
+        .slice(0, 19);
+      const payload = {
         doctorId: Number(selectedDoctor),
         dateTime: iso,
-      });
+      };
+      if (selectionType === 'specialist') {
+        // mark specialist appointment: specialistId set, clinicId null
+        payload.specialistId = Number(selectedClinic);
+        payload.clinicId = null;
+      } else {
+        payload.clinicId = Number(selectedClinic);
+      }
+      await appointmentAPI.book(patientId, payload);
       show('Appointment booked successfully.', 'success');
       refreshAppointments();
       setSelectedClinic('');
@@ -368,12 +406,18 @@ export default function PatientDashboard({ patientId, userName }) {
         return;
       }
       const combined = new Date(`${rescheduleSelectedDate}T${rescheduleSelectedSlot}:00`);
-      const iso = combined.toISOString();
-      await appointmentAPI.reschedule(rescheduleTarget.id, {
-        clinicId: Number(rescheduleClinic),
-        doctorId: Number(rescheduleDoctor),
-        dateTime: iso,
-      });
+      const iso = new Date(combined.getTime() - combined.getTimezoneOffset() * 60000)
+        .toISOString()
+        .slice(0, 19);
+      const payload = { doctorId: Number(rescheduleDoctor), dateTime: iso };
+      // if the target appointment was a specialist booking, keep specialistId null clinicId null handling
+      if (rescheduleTarget.specialistId) {
+        payload.specialistId = rescheduleTarget.specialistId;
+        payload.clinicId = null;
+      } else {
+        payload.clinicId = Number(rescheduleClinic);
+      }
+      await appointmentAPI.reschedule(rescheduleTarget.id, payload);
       show('Appointment rescheduled.', 'success');
       cancelReschedule();
       refreshAppointments();
@@ -428,17 +472,50 @@ export default function PatientDashboard({ patientId, userName }) {
     return doctors.filter((doctor) => doctor.clinicId === Number(rescheduleClinic));
   }, [doctors, rescheduleClinic]);
 
-  const upcomingAppointments = useMemo(() => {
-    return (appointments || [])
-      .filter((appointment) => appointment.status !== 'COMPLETED')
-      .sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+  // normalize appointments for display:
+  // - mark as MISSED any appointment whose date is before today and whose status is not COMPLETED/CANCELLED
+  const normalizedAppointments = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // 00:00 local today
+    return (appointments || []).map((appt) => {
+      const copy = { ...appt };
+      const apptDate = new Date(appt.dateTime);
+      const statusUpper = String(appt.status || '').toUpperCase();
+      if (apptDate < todayStart && statusUpper !== 'COMPLETED' && statusUpper !== 'CANCELLED' && statusUpper !== 'MISSED') {
+        copy.status = 'MISSED';
+      }
+      return copy;
+    });
   }, [appointments]);
 
+  // upcoming: only appointments strictly after today's date (i.e. from tomorrow onwards)
+  const upcomingAppointments = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrowStart = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
+    // include scheduled-like statuses for future appointments and exclude cancelled
+    const allowed = new Set(['SCHEDULED', 'CHECKED_IN', 'IN_SERVICE', 'MISSED']); // MISSED shouldn't appear (filtered by date) but kept safe
+    return normalizedAppointments
+      .slice()
+      .filter((appointment) => {
+        const apptDate = new Date(appointment.dateTime);
+        if (apptDate < tomorrowStart) return false; // exclude today and past
+        const status = String(appointment.status || '').toUpperCase();
+        return status !== 'CANCELLED' && allowed.has(status);
+      })
+      .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
+  }, [normalizedAppointments]);
+
+  // past: include COMPLETED and MISSED, newest-first
   const pastAppointments = useMemo(() => {
-    return (appointments || [])
-      .filter((appointment) => appointment.status === 'COMPLETED')
-      .sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
-  }, [appointments]);
+    return normalizedAppointments
+      .slice()
+      .filter((appointment) => {
+        const status = String(appointment.status || '').toUpperCase();
+        return status === 'COMPLETED' || status === 'MISSED';
+      })
+      .sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
+  }, [normalizedAppointments]);
 
   const nextAppointment = upcomingAppointments[0] || null;
 
@@ -454,9 +531,21 @@ export default function PatientDashboard({ patientId, userName }) {
     return map;
   }, [doctors]);
 
-  const getClinicName = (clinicId) => clinicMap.get(clinicId)?.name || `Clinic #${clinicId}`;
+  const getClinicName = (clinicId, specialistId) => {
+    // If this appointment is a specialist booking, show specialist name
+    if (specialistId != null) {
+      const sp = specialists.find((s) => Number(s.id) === Number(specialistId));
+      return sp?.name || sp?.fullName || `Specialist #${specialistId}`;
+    }
+    if (clinicId == null) return '—';
+    return clinicMap.get(clinicId)?.name || `Clinic #${clinicId}`;
+  };
 
-  const getClinicLocation = (clinicId) => {
+  const getClinicLocation = (clinicId, specialistId) => {
+    if (specialistId != null) {
+      const sp = specialists.find((s) => Number(s.id) === Number(specialistId));
+      return sp?.address || sp?.location || null;
+    }
     const clinic = clinicMap.get(clinicId);
     return clinic?.address || clinic?.location || null;
   };
@@ -696,11 +785,11 @@ export default function PatientDashboard({ patientId, userName }) {
                           <div>
                             <p className="text-xs uppercase tracking-wide text-slate-500">Clinic</p>
                             <p className="text-sm font-semibold text-slate-900">
-                              {getClinicName(nextAppointment.clinicId)}
+                              {getClinicName(nextAppointment.clinicId, nextAppointment.specialistId)}
                             </p>
-                            {getClinicLocation(nextAppointment.clinicId) && (
+                            {getClinicLocation(nextAppointment.clinicId, nextAppointment.specialistId) && (
                               <p className="text-xs text-slate-500">
-                                {getClinicLocation(nextAppointment.clinicId)}
+                                {getClinicLocation(nextAppointment.clinicId, nextAppointment.specialistId)}
                               </p>
                             )}
                           </div>
@@ -798,9 +887,43 @@ export default function PatientDashboard({ patientId, userName }) {
                 <form className="space-y-6" onSubmit={handleBookAppointment}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="clinic">Clinic</Label>
+                      <Label>Search by</Label>
+                      <div className="flex items-center gap-4">
+                        <label className="inline-flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="selectionType"
+                            value="clinic"
+                            checked={selectionType === 'clinic'}
+                            onChange={() => {
+                              setSelectionType('clinic');
+                              setSelectedClinic('');
+                              setSelectedDoctor('');
+                            }}
+                          />
+                          <span>Clinic</span>
+                        </label>
+                        <label className="inline-flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="selectionType"
+                            value="specialist"
+                            checked={selectionType === 'specialist'}
+                            onChange={() => {
+                              setSelectionType('specialist');
+                              setSelectedClinic('');
+                              setSelectedDoctor('');
+                            }}
+                          />
+                          <span>Specialist</span>
+                        </label>
+                      </div>
+
+                      <Label htmlFor="clinicOrSpecialist" className="mt-2">
+                        {selectionType === 'clinic' ? 'Clinic' : 'Specialist'}
+                      </Label>
                       <Select
-                        id="clinic"
+                        id="clinicOrSpecialist"
                         value={selectedClinic}
                         onChange={(event) => {
                           setSelectedClinic(event.target.value);
@@ -808,12 +931,18 @@ export default function PatientDashboard({ patientId, userName }) {
                         }}
                         required
                       >
-                        <option value="">Choose a clinic...</option>
-                        {clinics.map((clinic) => (
-                          <option key={clinic.id} value={clinic.id}>
-                            {clinic.name}
-                          </option>
-                        ))}
+                        <option value="">{selectionType === 'clinic' ? 'Choose a clinic...' : 'Choose a specialist...'}</option>
+                        {selectionType === 'clinic'
+                          ? clinics.map((clinic) => (
+                              <option key={clinic.id} value={clinic.id}>
+                                {clinic.name}
+                              </option>
+                            ))
+                          : (specialists || []).map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.name}
+                              </option>
+                            ))}
                       </Select>
                     </div>
 
@@ -824,6 +953,7 @@ export default function PatientDashboard({ patientId, userName }) {
                         value={selectedDoctor}
                         onChange={(event) => setSelectedDoctor(event.target.value)}
                         required
+                        // enabled when a clinic OR a specialist is selected
                         disabled={!selectedClinic}
                       >
                         <option value="">Choose a doctor...</option>
@@ -1010,12 +1140,12 @@ export default function PatientDashboard({ patientId, userName }) {
                               {formatDateTime(appointment.dateTime)}
                             </p>
                             <p className="text-sm text-slate-600">
-                              {getClinicName(appointment.clinicId)} ·{' '}
+                              {getClinicName(appointment.clinicId, appointment.specialistId)} ·{' '}
                               {getDoctorName(appointment.doctorId)}
                             </p>
-                            {getClinicLocation(appointment.clinicId) && (
+                            {getClinicLocation(appointment.clinicId, appointment.specialistId) && (
                               <p className="text-xs text-slate-500">
-                                📍 {getClinicLocation(appointment.clinicId)}
+                                📍 {getClinicLocation(appointment.clinicId, appointment.specialistId)}
                               </p>
                             )}
                           </div>
@@ -1070,7 +1200,7 @@ export default function PatientDashboard({ patientId, userName }) {
                               <TableCell className="font-medium">
                                 {formatDateTime(appointment.dateTime)}
                               </TableCell>
-                              <TableCell>{getClinicName(appointment.clinicId)}</TableCell>
+                              <TableCell>{getClinicName(appointment.clinicId, appointment.specialistId)}</TableCell>
                               <TableCell>{getDoctorName(appointment.doctorId)}</TableCell>
                               <TableCell>
                                 <Badge

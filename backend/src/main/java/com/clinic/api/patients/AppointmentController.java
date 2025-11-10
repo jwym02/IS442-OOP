@@ -17,7 +17,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/patients")
+@RequestMapping("/api/v1")
 @Tag(name = "Appointments", description = "API for managing patient appointments")
 public class AppointmentController {
     private final AppointmentService appointmentService;
@@ -26,7 +26,7 @@ public class AppointmentController {
         this.appointmentService = appointmentService;
     }
 
-    @PostMapping("/{patientId}/appointments")
+    @PostMapping("/patients/{patientId}/appointments")
     @Operation(summary = "Book an appointment", description = "Book a new appointment for a patient with a doctor at a specific clinic")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Appointment booked successfully",
@@ -41,7 +41,7 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.bookAppointment(patientId, request));
     }
 
-    @GetMapping("/{patientId}/appointments")
+    @GetMapping("/patients/{patientId}/appointments")
     @Operation(summary = "List patient appointments", description = "Retrieve upcoming appointments for a patient")
     public ResponseEntity<List<AppointmentResponse>> listAppointments(
             @PathVariable Long patientId,
@@ -52,16 +52,23 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.getPatientAppointments(patientId, start, end));
     }
 
-    @DeleteMapping("/appointments/{appointmentId}")
-    @Operation(summary = "Cancel an appointment", description = "Cancel an existing appointment by ID")
-    @ApiResponses({
-        @ApiResponse(responseCode = "204", description = "Appointment cancelled successfully"),
-        @ApiResponse(responseCode = "404", description = "Appointment not found"),
-        @ApiResponse(responseCode = "400", description = "Cannot cancel appointment (too close to appointment time)")
-    })
-    public ResponseEntity<Void> cancelAppointment(@PathVariable long appointmentId) {
-        appointmentService.cancelAppointment(appointmentId);
+    // DELETE /api/v1/appointments/{id}
+    @DeleteMapping("/appointments/{id}")
+    public ResponseEntity<Void> cancelAppointment(@PathVariable Long id) {
+        appointmentService.cancelAppointment(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // GET /api/v1/clinics/{clinicId}/appointments?date=YYYY-MM-DD
+    @GetMapping("/clinics/{clinicId}/appointments")
+    @Operation(summary = "List appointments for a clinic")
+    public List<AppointmentResponse> listForClinic(
+        @PathVariable("clinicId") Long clinicId,
+        @RequestParam(value = "date", required = false) String date) {
+        if (date == null || date.isBlank()) {
+            return appointmentService.listForClinic(clinicId);
+        }
+        return appointmentService.listForClinicOnDate(clinicId, date);
     }
 
     @PatchMapping("/appointments/{appointmentId}/reschedule")

@@ -55,24 +55,12 @@ export const authAPI = {
 };
 
 export const appointmentAPI = {
-  listForPatient: (patientId, params = {}) =>
-    apiClient.get(`/patients/${patientId}/appointments`, { params }),
-  book: (patientId, data) => apiClient.post(`/patients/${patientId}/appointments`, data),
-  cancel: (appointmentId) => apiClient.delete(`/patients/appointments/${appointmentId}`),
-  reschedule: (appointmentId, data) =>
-    apiClient.patch(`/patients/appointments/${appointmentId}/reschedule`, data),
-  listForClinic: (clinicId, date = null, type = 'upcoming') => {
-    const params = { clinicId };
-    if (date) params.date = date;
-    if (type) params.type = type;
-    return apiClient.get('/staff/appointments', { params });
-  },  
-  listForDoctor: (doctorId, date) =>
-    apiClient.get(`/doctors/${doctorId}/appointments`, { params: { date } }),
-  staffWalkIn: (data) => apiClient.post('/staff/appointments/walk-in', data),
-  staffReschedule: (appointmentId, data) =>
-    apiClient.patch(`/staff/appointments/${appointmentId}/reschedule`, data),
-  staffCancel: (appointmentId) => apiClient.delete(`/staff/appointments/${appointmentId}`),
+  listForPatient: (patientId) => apiClient.get(`/patients/${patientId}/appointments`),
+  listForClinic: (clinicId, date) => apiClient.get(`/clinics/${clinicId}/appointments`, { params: { date } }),
+  listForSpecialist: (specialistId, date) => apiClient.get(`/specialists/${specialistId}/appointments`, { params: { date } }),
+  book: (patientId, payload) => apiClient.post(`/patients/${patientId}/appointments`, payload),
+  reschedule: (appointmentId, payload) => apiClient.put(`/appointments/${appointmentId}`, payload),
+  cancel: (appointmentId) => apiClient.delete(`/appointments/${appointmentId}`),
 };
 
 export const patientAPI = {
@@ -105,10 +93,16 @@ export const clinicAPI = {
   getAll: () => apiClient.get('/admin/clinics'),
 };
 
+export const specialistAPI = {
+  getAll: () => apiClient.get('/specialists'),
+  getSchedule: (id) => apiClient.get(`/specialists/${id}/schedule`),
+};
+
 export const doctorAPI = {
   getSchedule: (id) => apiClient.get(`/doctors/${id}/schedule`),
   updateSchedule: (id, data) => apiClient.put(`/doctors/${id}/schedule`, data),
-  getAll: () => apiClient.get('/admin/doctors'),
+  // point to the new non-conflicting backend route
+  getAll: () => apiClient.get('/admin/doctors/all'),
   postNotes: (doctorId, payload) =>
     apiClient.post(`/doctors/${doctorId}/appointments/notes`, payload),
 };

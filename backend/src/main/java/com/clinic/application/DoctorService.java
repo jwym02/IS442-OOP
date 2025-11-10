@@ -1,5 +1,6 @@
 package com.clinic.application;
 
+import com.clinic.api.admin.dto.DoctorAdminResponse;
 import com.clinic.api.doctors.dto.AppointmentResponse;
 import com.clinic.api.doctors.dto.ScheduleResponse;
 import com.clinic.domain.entity.Appointment;
@@ -110,5 +111,23 @@ public class DoctorService {
                 return response;
             })
             .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<DoctorAdminResponse> listAllAdminDoctors() {
+        return doctorProfileRepository.findAll().stream()
+            .map(this::toAdminResponse)
+            .collect(Collectors.toList());
+    }
+
+    private DoctorAdminResponse toAdminResponse(DoctorProfile d) {
+        // DoctorProfile uses the "speciality" column/name — call getSpeciality()
+        return new DoctorAdminResponse(
+            d.getId(),
+            d.getFullName(),
+            d.getSpeciality(),
+            d.getClinicId(),
+            d.getSpecialistId()
+        );
     }
 }

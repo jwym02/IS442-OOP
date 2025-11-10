@@ -27,7 +27,8 @@ public class StaffService {
         var createRequest = new AppointmentRequest();
         createRequest.setClinicId(request.getClinicId());
         createRequest.setDoctorId(request.getDoctorId());
-        createRequest.setDateTime(request.getDateTime());
+        // staff request.getDateTime() may be OffsetDateTime -> convert to String for patient AppointmentRequest
+        createRequest.setDateTime(request.getDateTime() != null ? request.getDateTime().toString() : null);
         var created = appointmentService.bookAppointment(request.getPatientId(), createRequest);
         return toStaffResponse(created);
     }
@@ -37,7 +38,8 @@ public class StaffService {
         var update = new AppointmentRequest();
         update.setClinicId(request.getClinicId());
         update.setDoctorId(request.getDoctorId());
-        update.setDateTime(request.getDateTime());
+        // convert OffsetDateTime -> String for AppointmentRequest
+        update.setDateTime(request.getDateTime() != null ? request.getDateTime().toString() : null);
         var updated = appointmentService.rescheduleAppointment(appointmentId, update);
         return toStaffResponse(updated);
     }
@@ -74,6 +76,7 @@ public class StaffService {
         response.setPatientId(source.getPatientId());
         response.setDoctorId(source.getDoctorId());
         response.setClinicId(source.getClinicId());
+        // patient source.getDateTime() is LocalDateTime -> pass it directly to staff DTO (matching its type)
         response.setDateTime(source.getDateTime());
         response.setStatus(source.getStatus());
         return response;

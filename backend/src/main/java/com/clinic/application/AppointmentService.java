@@ -3,243 +3,226 @@ package com.clinic.application;
 import com.clinic.api.patients.dto.AppointmentRequest;
 import com.clinic.api.patients.dto.AppointmentResponse;
 import com.clinic.domain.entity.Appointment;
-import com.clinic.domain.entity.Clinic;
-import com.clinic.domain.entity.DoctorProfile;
-import com.clinic.domain.entity.Schedule;
 import com.clinic.domain.enums.AppointmentStatus;
-import com.clinic.infrastructure.persistence.*;
-import org.springframework.http.HttpStatus;
+import com.clinic.infrastructure.persistence.AppointmentRepository;
+import com.clinic.infrastructure.persistence.SpecialistRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDate;
+import java.time.*;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
+import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class AppointmentService {
-
     private final AppointmentRepository appointmentRepository;
-    private final ClinicRepository clinicRepository;
-    private final ScheduleRepository scheduleRepository;
-    private final PatientProfileRepository patientProfileRepository;
-    private final DoctorProfileRepository doctorProfileRepository;
+    private final SpecialistRepository specialistRepository;
 
     public AppointmentService(AppointmentRepository appointmentRepository,
-                              ClinicRepository clinicRepository,
-                              ScheduleRepository scheduleRepository,
-                              PatientProfileRepository patientProfileRepository,
-                              DoctorProfileRepository doctorProfileRepository) {
+                              SpecialistRepository specialistRepository) {
         this.appointmentRepository = appointmentRepository;
-        this.clinicRepository = clinicRepository;
-        this.scheduleRepository = scheduleRepository;
-        this.patientProfileRepository = patientProfileRepository;
-        this.doctorProfileRepository = doctorProfileRepository;
+        this.specialistRepository = specialistRepository;
     }
 
     @Transactional
-    public AppointmentResponse bookAppointment(long patientId, AppointmentRequest request) {
-        patientProfileRepository.findById(patientId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient not found"));
-        DoctorProfile doctorProfile = doctorProfileRepository.findById(request.getDoctorId())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Doctor not found"));
-        if (doctorProfile.getClinicId() != null && !doctorProfile.getClinicId().equals(request.getClinicId())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Doctor does not belong to selected clinic");
+    public AppointmentResponse bookAppointment(Long patientId, AppointmentRequest req) {
+        Appointment a = new Appointment();
+        a.setPatientId(patientId);
+        // If booking a specialist appointment, attach specialistId and leave clinicId null
+        if (req.getSpecialistId() != null) {
+            a.setSpecialistId(req.getSpecialistId());
+            a.setClinicId(null);
+        } else {
+            a.setClinicId(req.getClinicId());
         }
-        // Convert incoming OffsetDateTime to Instant, then to server LocalDateTime for storage/queries
-        OffsetDateTime odt = request.getDateTime();
-        Instant appointmentInstant = odt.toInstant();
-        LocalDateTime appointmentLocal = LocalDateTime.ofInstant(appointmentInstant, ZoneId.systemDefault());
-
-        validateClinicAndSlotRules(request.getClinicId(), doctorProfile.getId(), appointmentInstant, odt.getOffset());
-        if (appointmentRepository.existsByDoctorIdAndDateTime(doctorProfile.getId(), appointmentLocal)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Time slot already booked for this doctor");
-        }
-
-        Appointment appointment = new Appointment();
-        appointment.setPatientId(patientId);
-        appointment.setDoctorId(doctorProfile.getId());
-        appointment.setClinicId(request.getClinicId());
-        appointment.setDateTime(appointmentLocal);
-        appointment.setStatus(AppointmentStatus.SCHEDULED);
-        appointment = appointmentRepository.save(appointment);
-        return toResponse(appointment);
+        a.setDoctorId(req.getDoctorId());
+        // parse date/time from request (assume ISO local or offset formats)
+        a.setDateTime(parseToLocalDateTime(req.getDateTime()));
+        // ensure status is set for new appointments to avoid DB NOT NULL constraint
+        a.setStatus(AppointmentStatus.SCHEDULED);
+        // persist
+        Appointment saved = appointmentRepository.save(a);
+        return toResponse(saved);
     }
 
     @Transactional
-    public void cancelAppointment(long appointmentId) {
-        Appointment appointment = appointmentRepository.findById(appointmentId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Appointment not found"));
-        if (!canModify(appointment.getDateTime())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot cancel within 24 hours of appointment time");
+    public AppointmentResponse rescheduleAppointment(Long appointmentId, AppointmentRequest req) {
+        Optional<Appointment> opt = appointmentRepository.findById(appointmentId);
+        if (opt.isEmpty()) {
+            throw new IllegalArgumentException("Appointment not found");
         }
+        Appointment a = opt.get();
+        if (req.getSpecialistId() != null) {
+            a.setSpecialistId(req.getSpecialistId());
+            a.setClinicId(null);
+        } else {
+            a.setClinicId(req.getClinicId());
+            a.setSpecialistId(null);
+        }
+        a.setDoctorId(req.getDoctorId());
+        a.setDateTime(parseToLocalDateTime(req.getDateTime()));
+        Appointment updated = appointmentRepository.save(a);
+        return toResponse(updated);
+    }
+
+    @Transactional
+    public void cancelAppointment(Long appointmentId) {
+        var opt = appointmentRepository.findById(appointmentId);
+        if (opt.isEmpty()) {
+            throw new IllegalArgumentException("Appointment not found");
+        }
+        Appointment appointment = opt.get();
+        // mark as cancelled and persist
         appointment.setStatus(AppointmentStatus.CANCELLED);
         appointmentRepository.save(appointment);
     }
 
     @Transactional
-    public void cancelAppointmentAsStaff(long appointmentId) {
-        Appointment appointment = appointmentRepository.findById(appointmentId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Appointment not found"));
-        appointment.setStatus(AppointmentStatus.CANCELLED);
-        appointmentRepository.save(appointment);
-    }
-
-    @Transactional
-public AppointmentResponse rescheduleAppointment(long appointmentId, AppointmentRequest request) {
-    Appointment appointment = appointmentRepository.findById(appointmentId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Appointment not found"));
-
-    if (!canModify(appointment.getDateTime())) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot reschedule within 24 hours of appointment time");
-    }
-
-    DoctorProfile doctorProfile = doctorProfileRepository.findById(request.getDoctorId())
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Doctor not found"));
-
-    if (doctorProfile.getClinicId() != null && !doctorProfile.getClinicId().equals(request.getClinicId())) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Doctor does not belong to selected clinic");
-    }
-    var odt = request.getDateTime();
-    var appointmentInstant = odt.toInstant();
-    var appointmentLocal = LocalDateTime.ofInstant(appointmentInstant, ZoneId.systemDefault());
-
-    validateClinicAndSlotRules(request.getClinicId(), doctorProfile.getId(), appointmentInstant, odt.getOffset());
-
-    if (appointmentRepository.existsByDoctorIdAndDateTimeAndIdNot(doctorProfile.getId(), appointmentLocal, appointment.getId())) {
-        throw new ResponseStatusException(HttpStatus.CONFLICT, "New time slot already booked for this doctor");
-    }
-
-    appointment.setDoctorId(doctorProfile.getId());
-    appointment.setClinicId(request.getClinicId());
-    appointment.setDateTime(appointmentLocal);
-    appointment.setStatus(AppointmentStatus.SCHEDULED);
-
-    appointment = appointmentRepository.save(appointment);
-    return toResponse(appointment);
-}
-
-
-    @Transactional(readOnly = true)
-    public List<AppointmentResponse> getPatientAppointments(Long patientId, LocalDate startDate, LocalDate endDate) {
-        patientProfileRepository.findById(patientId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Patient not found"));
-        LocalDateTime start = (startDate != null ? startDate : LocalDate.now()).atStartOfDay();
-        LocalDateTime end = (endDate != null ? endDate.plusDays(1) : LocalDate.now().plusMonths(1)).atStartOfDay();
-        return appointmentRepository.findByPatientIdAndDateTimeBetween(patientId, start, end)
-            .stream()
-            .map(this::toResponse)
-            .collect(Collectors.toList());
+    public void cancelAppointmentAsStaff(Long appointmentId) {
+        cancelAppointment(appointmentId);
     }
 
     @Transactional(readOnly = true)
-    public List<AppointmentResponse> getUpcomingClinicAppointments(Long clinicId) {
-        LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
-        LocalDateTime farFuture = LocalDateTime.now().plusYears(5);
-
-        return appointmentRepository.findByClinicIdAndDateTimeBetween(clinicId, startOfToday, farFuture)
-            .stream()
-            .map(this::toResponse)
-            .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<AppointmentResponse> getClinicAppointments(Long clinicId) {
-        return appointmentRepository.findByClinicId(clinicId)
-            .stream()
+    public List<AppointmentResponse> getDoctorAppointments(Long doctorId, LocalDate date) {
+        LocalDateTime start = date.atStartOfDay();
+        LocalDateTime end = start.plusDays(1);
+        return appointmentRepository.findAll().stream()
+            .filter(a -> a.getDoctorId() != null && a.getDoctorId().equals(doctorId))
+            .filter(a -> {
+                LocalDateTime dt = a.getDateTime();
+                return dt != null && (!dt.isBefore(start) && dt.isBefore(end));
+            })
             .map(this::toResponse)
             .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<AppointmentResponse> getClinicAppointments(Long clinicId, LocalDate date) {
-        LocalDate target = date != null ? date : LocalDate.now();
-        LocalDateTime start = target.atStartOfDay();
-        LocalDateTime end = target.plusDays(1).atStartOfDay();
-        return appointmentRepository.findByClinicIdAndDateTimeBetween(clinicId, start, end)
-            .stream()
+        LocalDateTime start = date.atStartOfDay();
+        LocalDateTime end = start.plusDays(1);
+        return appointmentRepository.findAll().stream()
+            .filter(a -> a.getClinicId() != null && a.getClinicId().equals(clinicId))
+            .filter(a -> {
+                LocalDateTime dt = a.getDateTime();
+                return dt != null && (!dt.isBefore(start) && dt.isBefore(end));
+            })
             .map(this::toResponse)
             .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public List<AppointmentResponse> getDoctorAppointments(Long doctorProfileId, LocalDate date) {
-        LocalDate target = date != null ? date : LocalDate.now();
-        LocalDateTime start = target.atStartOfDay();
-        LocalDateTime end = target.plusDays(1).atStartOfDay();
-        return appointmentRepository.findByDoctorIdAndDateTimeBetween(doctorProfileId, start, end)
-            .stream()
+    public List<AppointmentResponse> getUpcomingClinicAppointments(Long clinicId) {
+        LocalDateTime now = LocalDateTime.now();
+        return appointmentRepository.findAll().stream()
+            .filter(a -> a.getClinicId() != null && a.getClinicId().equals(clinicId))
+            .filter(a -> {
+                LocalDateTime dt = a.getDateTime();
+                return dt != null && dt.isAfter(now);
+            })
             .map(this::toResponse)
             .collect(Collectors.toList());
     }
 
-    private boolean canModify(LocalDateTime appointmentTime) {
-        // preserve behavior for existing LocalDateTime from DB
-        return Duration.between(LocalDateTime.now(), appointmentTime).toHours() >= 24;
+    @Transactional(readOnly = true)
+    public List<AppointmentResponse> listForSpecialist(Long specialistId, LocalDate date) {
+        LocalDateTime start = date.atStartOfDay();
+        LocalDateTime end = start.plusDays(1);
+        return appointmentRepository.findAll().stream()
+            .filter(a -> a.getSpecialistId() != null && a.getSpecialistId().equals(specialistId))
+            .filter(a -> {
+                LocalDateTime dt = a.getDateTime();
+                return dt != null && (!dt.isBefore(start) && dt.isBefore(end));
+            })
+            .map(this::toResponse)
+            .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<AppointmentResponse> getPatientAppointments(Long patientId, LocalDate startDate, LocalDate endDate) {
+        LocalDateTime start = startDate != null ? startDate.atStartOfDay() : LocalDateTime.MIN;
+        LocalDateTime end = endDate != null ? endDate.plusDays(1).atStartOfDay() : LocalDateTime.MAX;
+        return appointmentRepository.findAll().stream()
+            .filter(a -> a.getPatientId() != null && a.getPatientId().equals(patientId))
+            .filter(a -> {
+                LocalDateTime dt = a.getDateTime();
+                return dt != null && (!dt.isBefore(start) && dt.isBefore(end));
+            })
+            .map(this::toResponse)
+            .collect(Collectors.toList());
     }
 
     /**
-     * appointmentInstant: instant of appointment (from client OffsetDateTime)
-     * clientOffset: the offset provided by client (used only if needed)
+     * Return appointments for a clinic (no date filter).
+     * Simple implementation that fetches all appointments and filters in-memory.
+     * This avoids adding repository methods and is safe for the small dataset used by the app.
      */
-    private void validateClinicAndSlotRules(long clinicId, long doctorId, Instant appointmentInstant, java.time.ZoneOffset clientOffset) {
-        if (appointmentInstant == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Appointment dateTime is required");
-        }
-        Clinic clinic = clinicRepository.findById(clinicId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Clinic not found"));
-        // Compare instants in UTC
-        Instant now = Instant.now();
-        if (appointmentInstant.isBefore(now)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot book an appointment in the past");
-        }
-
-        // Convert appointment instant to the clinic/local zone (system default used here)
-        ZoneId zone = ZoneId.systemDefault();
-        ZonedDateTime zdt = ZonedDateTime.ofInstant(appointmentInstant, zone);
-
-        LocalTime open = clinic.getOpenTime();
-        LocalTime close = clinic.getCloseTime();
-        if (open != null && close != null) {
-            LocalTime time = zdt.toLocalTime().truncatedTo(ChronoUnit.MINUTES);
-            if (time.isBefore(open) || !time.isBefore(close)) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Appointment time is outside clinic operating hours");
-            }
-        }
-
-        int interval = clinic.getDefaultSlotIntervalMinutes() > 0 ? clinic.getDefaultSlotIntervalMinutes() : 15;
-        interval = scheduleRepository.findByDoctorId(doctorId)
-            .map(Schedule::getSlotIntervalMinutes)
-            .filter(minutes -> minutes != null && minutes > 0)
-            .orElse(interval);
-
-        if (zdt.getSecond() != 0 || zdt.getNano() != 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Appointment time must align to minute boundaries");
-        }
-        int minutes = zdt.getMinute();
-        if (minutes % interval != 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Appointment time must align to " + interval + "-minute slots");
-        }
+    public List<AppointmentResponse> listForClinic(Long clinicId) {
+        return appointmentRepository.findAll().stream()
+                .filter(a -> Objects.equals(a.getClinicId(), clinicId))
+                .sorted((a, b) -> a.getDateTime().compareTo(b.getDateTime()))
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
-    private AppointmentResponse toResponse(Appointment appointment) {
-        AppointmentResponse response = new AppointmentResponse();
-        response.setId(appointment.getId());
-        response.setPatientId(appointment.getPatientId());
-        response.setDoctorId(appointment.getDoctorId());
-        response.setClinicId(appointment.getClinicId());
-        response.setDateTime(appointment.getDateTime());
-        response.setStatus(appointment.getStatus().name());
-        return response;
+    /**
+     * Return appointments for a clinic on a specific date (YYYY-MM-DD).
+     */
+    public List<AppointmentResponse> listForClinicOnDate(Long clinicId, String date) {
+        LocalDate d;
+        try {
+            d = LocalDate.parse(date);
+        } catch (DateTimeParseException ex) {
+            throw new IllegalArgumentException("Invalid date format, expected YYYY-MM-DD: " + date, ex);
+        }
+        LocalDate finalDate = d;
+        return appointmentRepository.findAll().stream()
+                .filter(a -> Objects.equals(a.getClinicId(), clinicId))
+                .filter(a -> a.getDateTime() != null && a.getDateTime().toLocalDate().equals(finalDate))
+                .sorted((a, b) -> a.getDateTime().compareTo(b.getDateTime()))
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    // map entity -> DTO
+    private AppointmentResponse toResponse(Appointment a) {
+        AppointmentResponse r = new AppointmentResponse();
+        r.setId(a.getId());
+        r.setClinicId(a.getClinicId());
+        r.setSpecialistId(a.getSpecialistId());
+        r.setDoctorId(a.getDoctorId());
+        r.setPatientId(a.getPatientId());
+        // keep the LocalDateTime object (AppointmentResponse.dateTime is LocalDateTime)
+        r.setDateTime(a.getDateTime());
+        r.setStatus(a.getStatus() != null ? a.getStatus().name() : null);
+        return r;
+    }
+
+    private LocalDateTime parseToLocalDateTime(Object value) {
+        if (value == null) return null;
+        String s = value.toString();
+        try {
+            // If string contains 'Z' or explicit offset, parse as OffsetDateTime then convert to system zone
+            if (s.endsWith("Z") || s.matches(".*[+-]\\d{2}:?\\d{2}$")) {
+                OffsetDateTime odt = OffsetDateTime.parse(s);
+                return odt.atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime();
+            }
+            // otherwise treat as plain local datetime (YYYY-MM-DDTHH:mm:ss)
+            return LocalDateTime.parse(s);
+        } catch (DateTimeParseException e) {
+            // fallback: try parsing OffsetDateTime more leniently
+            try {
+                OffsetDateTime odt = OffsetDateTime.parse(s);
+                return odt.atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime();
+            } catch (Exception ex) {
+                throw new IllegalArgumentException("Invalid dateTime format: " + s, ex);
+            }
+        }
     }
 }
 

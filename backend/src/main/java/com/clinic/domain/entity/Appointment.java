@@ -18,7 +18,8 @@ public class Appointment {
     @Column(name = "status", nullable = false, length = 20)
     private AppointmentStatus status;
 
-    @Column(name = "clinic_id", nullable = false)
+    // allow null for specialist bookings
+    @Column(name = "clinic_id", nullable = true)
     private Long clinicId;
 
     @Column(name = "doctor_id", nullable = false)
@@ -26,6 +27,10 @@ public class Appointment {
 
     @Column(name = "patient_id", nullable = false)
     private Long patientId;
+
+    // optional link to specialists table (when appointment made with a specialist)
+    @Column(name = "specialist_id", nullable = true)
+    private Long specialistId;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -39,4 +44,6 @@ public class Appointment {
     public void setDoctorId(Long doctorId) { this.doctorId = doctorId; }
     public Long getPatientId() { return patientId; }
     public void setPatientId(Long patientId) { this.patientId = patientId; }
+    public Long getSpecialistId() { return specialistId; }
+    public void setSpecialistId(Long specialistId) { this.specialistId = specialistId; }
 }
