@@ -16,7 +16,7 @@ export function AppShell({ user, onLogout, children }) {
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="border-b border-slate-200 bg-white/80 backdrop-blur">
-        <div className="container flex flex-col gap-3 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto max-w-[1920px] flex flex-col gap-3 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <Stethoscope className="h-6 w-6" aria-hidden />
@@ -58,7 +58,7 @@ export function AppShell({ user, onLogout, children }) {
           </div>
         </div>
       </header>
-      <main className="container px-6 pb-8">{children}</main>
+      <main className="mx-auto max-w-[1920px] w-full px-6 pb-8">{children}</main>
     </div>
   );
 }
