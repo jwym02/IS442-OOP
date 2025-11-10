@@ -43,13 +43,21 @@ const mapAuthResponse = (data) => ({
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeRole, setActiveRole] = useState(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem(STORAGE_KEY);
     const token = localStorage.getItem(TOKEN_KEY);
+    const storedRole = localStorage.getItem('activeRole');
     if (storedUser && token) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        if (storedRole && parsedUser.roles?.includes(storedRole)) {
+          setActiveRole(storedRole);
+        } else if (parsedUser.roles?.length > 0) {
+          setActiveRole(parsedUser.roles[0]);
+        }
       } catch {
         clearSession();
       }
@@ -63,7 +71,12 @@ export const AuthProvider = ({ children }) => {
       const mapped = mapAuthResponse(data);
       persistSession(mapped);
       setUser(mapped.user);
-      return { success: true };
+      if (mapped.user.roles?.length > 0) {
+        const defaultRole = mapped.user.roles[0];
+        setActiveRole(defaultRole);
+        localStorage.setItem('activeRole', defaultRole);
+      }
+      return { success: true, user: mapped.user };
     } catch (error) {
       clearSession();
       return {
@@ -97,7 +110,9 @@ export const AuthProvider = ({ children }) => {
 
   const logout = useCallback(() => {
     clearSession();
+    localStorage.removeItem('activeRole');
     setUser(null);
+    setActiveRole(null);
   }, []);
 
   // Bypass real auth and create a fake session
@@ -121,10 +136,22 @@ export const AuthProvider = ({ children }) => {
     };
     persistSession(fake);
     setUser(fake.user);
+    setActiveRole(normalizedRole);
+    localStorage.setItem('activeRole', normalizedRole);
     // Allow state to commit before navigation by awaiting a microtask
     await new Promise((r) => setTimeout(r, 0));
     return { success: true };
   }, []);
+
+  const updateActiveRole = useCallback(
+    (role) => {
+      if (user?.roles?.includes(role)) {
+        setActiveRole(role);
+        localStorage.setItem('activeRole', role);
+      }
+    },
+    [user]
+  );
 
   const hasRole = useCallback(
     (role) => {
@@ -138,13 +165,15 @@ export const AuthProvider = ({ children }) => {
     () => ({
       user,
       loading,
+      activeRole,
       login,
       register,
       logout,
       hasRole,
       devBypassLogin,
+      setActiveRole: updateActiveRole,
     }),
-    [user, loading, hasRole, login, register, logout, devBypassLogin]
+    [user, loading, activeRole, hasRole, login, register, logout, devBypassLogin, updateActiveRole]
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

@@ -1,17 +1,17 @@
-import { Stethoscope, LogOut } from "lucide-react";
-import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
+import { Stethoscope, LogOut } from 'lucide-react';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
 
 const roleLabels = {
-  PATIENT: "Patient",
-  STAFF: "Clinic Staff",
-  DOCTOR: "Doctor",
-  SYSTEM_ADMINISTRATOR: "System Admin",
+  PATIENT: 'Patient',
+  STAFF: 'Clinic Staff',
+  DOCTOR: 'Doctor',
+  SYSTEM_ADMINISTRATOR: 'System Admin',
 };
 
 export function AppShell({ user, onLogout, children }) {
   const roles = Array.isArray(user?.roles) ? user.roles : [];
-  const displayName = user?.name || user?.email || "Signed in user";
+  const displayName = user?.name || user?.email || 'Signed in user';
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -25,9 +25,6 @@ export function AppShell({ user, onLogout, children }) {
               <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">
                 SingHealth Clinic System
               </h1>
-              <p className="text-sm text-muted-foreground">
-                A single workspace for appointments, queues, and patient care.
-              </p>
             </div>
           </div>
           <div className="flex flex-col items-start gap-3 sm:items-end">
@@ -61,7 +58,7 @@ export function AppShell({ user, onLogout, children }) {
           </div>
         </div>
       </header>
-      <main className="container px-6 py-8">{children}</main>
+      <main className="container px-6 pb-8">{children}</main>
     </div>
   );
 }

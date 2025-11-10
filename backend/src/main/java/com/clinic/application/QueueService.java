@@ -159,7 +159,18 @@ public class QueueService {
 
         response.setQueueNumber(myEntry.getQueueNumber().longValue());
         response.setStatus(myEntry.getStatus().name());
-        int numbersAway = Math.max(0, myEntry.getQueueNumber() - currentNumber - 1);
+        
+        final QueueEntry finalMyEntry = myEntry;
+        int numbersAway = 0;
+        if (myEntry.getStatus() == QueueStatus.WAITING || 
+            myEntry.getStatus() == QueueStatus.FAST_TRACKED || 
+            myEntry.getStatus() == QueueStatus.CALLED) {
+            numbersAway = (int) entries.stream()
+                    .filter(entry -> EnumSet.of(QueueStatus.WAITING, QueueStatus.FAST_TRACKED, QueueStatus.CALLED)
+                            .contains(entry.getStatus()))
+                    .filter(entry -> entry.getQueueNumber() < finalMyEntry.getQueueNumber())
+                    .count();
+        }
         response.setNumbersAway(numbersAway);
 
         queueSessionRepository.findByClinicIdAndQueueDate(appointment.getClinicId(), today)
