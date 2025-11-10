@@ -88,7 +88,15 @@ SET @sql_stmt := IF(@fk_exists = 0,
                    "SELECT 1");
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- 8) Add foreign key constraint appointments.specialist_id -> specialists.id if not present
+-- 8) Ensure appointments table has specialist_id column
+SET @has_appt_specid := (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'appointments' AND COLUMN_NAME = 'specialist_id');
+SET @sql_stmt := IF(@has_appt_specid = 0,
+                   "ALTER TABLE `appointments` ADD COLUMN `specialist_id` BIGINT DEFAULT NULL;",
+                   "SELECT 1");
+PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- 9) Add foreign key constraint appointments.specialist_id -> specialists.id if not present
 SET @fk_exists2 := (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
                    JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE kcu
                      ON tc.CONSTRAINT_NAME = kcu.CONSTRAINT_NAME
