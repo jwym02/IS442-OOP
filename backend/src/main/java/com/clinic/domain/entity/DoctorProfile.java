@@ -17,8 +17,8 @@ public class DoctorProfile {
     @Column(name = "full_name")
     private String fullName;
 
-    @Column(name = "speciality")
-    private String speciality;
+    @Column(name = "specialty")
+    private String specialty;
 
     @Column(name = "clinic_id")
     private Long clinicId;
@@ -51,12 +51,12 @@ public class DoctorProfile {
         this.fullName = fullName;
     }
 
-    public String getSpeciality() {
-        return speciality;
+    public String getSpecialty() {
+        return specialty;
     }
 
-    public void setSpeciality(String speciality) {
-        this.speciality = speciality;
+    public void setSpecialty(String specialty) {
+        this.specialty = specialty;
     }
 
     public Long getClinicId() {

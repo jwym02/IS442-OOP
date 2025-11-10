@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS doctor_profiles (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     user_id BINARY(16) NOT NULL UNIQUE,
     full_name VARCHAR(255),
-    speciality VARCHAR(255),
+    specialty VARCHAR(255),
     clinic_id BIGINT NULL,
     CONSTRAINT fk_doctor_user FOREIGN KEY (user_id) REFERENCES users(id),
     CONSTRAINT fk_doctor_clinic FOREIGN KEY (clinic_id) REFERENCES clinics(id)

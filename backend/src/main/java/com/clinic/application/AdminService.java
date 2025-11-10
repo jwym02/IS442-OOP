@@ -137,8 +137,8 @@ public class AdminService {
             if (request.getClinicId() != null) {
                 doctorProfile.setClinicId(request.getClinicId());
             }
-            if (StringUtils.hasText(request.getSpeciality())) {
-                doctorProfile.setSpeciality(request.getSpeciality());
+            if (StringUtils.hasText(request.getSpecialty())) {
+                doctorProfile.setSpecialty(request.getSpecialty());
             }
             doctorProfileRepository.save(doctorProfile);
         }
@@ -279,7 +279,7 @@ public class AdminService {
                 DoctorAdminResponse dto = new DoctorAdminResponse();
                 dto.setId(profile.getId());
                 dto.setFullName(profile.getFullName());
-                dto.setSpeciality(profile.getSpeciality());
+                dto.setSpecialty(profile.getSpecialty());
                 dto.setClinicId(profile.getClinicId());
                 Schedule schedule = schedulesByDoctor.get(profile.getId());
                 dto.setSlotIntervalMinutes(schedule != null ? schedule.getSlotIntervalMinutes() : null);
@@ -327,7 +327,7 @@ public class AdminService {
         DoctorProfile profile = new DoctorProfile();
         profile.setUser(account);
         profile.setFullName(Optional.ofNullable(request.getName()).orElse(account.getFullName()));
-        profile.setSpeciality(request.getSpeciality());
+        profile.setSpecialty(request.getSpecialty());
         profile.setClinicId(clinic.getId());
         doctorProfileRepository.save(profile);
     }
@@ -387,7 +387,7 @@ public class AdminService {
             .ifPresent(profile -> {
                 response.setDoctorProfileId(profile.getId());
                 response.setDoctorClinicId(profile.getClinicId());
-                response.setSpeciality(profile.getSpeciality());
+                response.setSpecialty(profile.getSpecialty());
             });
         adminProfileRepository.findByUserId(account.getId())
             .ifPresent(profile -> response.setAdminProfileId(profile.getId()));

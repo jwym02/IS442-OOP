@@ -126,12 +126,12 @@ export default function UserForm({
 
           {(userForm.role === "CLINIC_STAFF" && userForm.doctor) && (
             <div className="space-y-2">
-              <Label htmlFor="user-speciality">Medical Speciality</Label>
+              <Label htmlFor="user-specialty">Medical Specialty</Label>
               <Input
-                id="user-speciality"
+                id="user-specialty"
                 type="text"
-                value={userForm.speciality}
-                onChange={(e) => setUserForm((p) => ({ ...p, speciality: e.target.value }))}
+                value={userForm.specialty}
+                onChange={(e) => setUserForm((p) => ({ ...p, specialty: e.target.value }))}
               />
             </div>
           )}

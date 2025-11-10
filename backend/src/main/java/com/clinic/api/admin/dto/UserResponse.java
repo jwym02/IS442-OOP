@@ -14,7 +14,7 @@ public class UserResponse {
     private Long adminProfileId;
     private Long staffClinicId;
     private Long doctorClinicId;
-    private String speciality;
+    private String specialty;
 
     public String getId() {
         return id;
@@ -104,11 +104,11 @@ public class UserResponse {
         this.doctorClinicId = doctorClinicId;
     }
 
-    public String getSpeciality() {
-        return speciality;
+    public String getSpecialty() {
+        return specialty;
     }
 
-    public void setSpeciality(String speciality) {
-        this.speciality = speciality;
+    public void setSpecialty(String specialty) {
+        this.specialty = specialty;
     }
 }

@@ -91,7 +91,7 @@ JOIN clinics c ON (
 )
 WHERE NOT EXISTS (SELECT 1 FROM clinic_staff_profiles s WHERE s.user_id = u.id);
 
-INSERT INTO doctor_profiles (user_id, full_name, speciality, clinic_id)
+INSERT INTO doctor_profiles (user_id, full_name, specialty, clinic_id)
 SELECT u.id, u.full_name,
        CASE u.email
          WHEN 'd.tan@evergreen.clinic'  THEN 'Family Medicine'

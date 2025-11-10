@@ -41,7 +41,7 @@ export default function AdminDashboard() {
     phone: "",
     clinicId: "",
     doctor: false,
-    speciality: "",
+    specialty: "",
   });
   const [editingUserId, setEditingUserId] = useState(null);
   const [roleSelections, setRoleSelections] = useState({});
@@ -105,7 +105,7 @@ export default function AdminDashboard() {
       phone: "",
       clinicId: "",
       doctor: false,
-      speciality: "",
+      specialty: "",
     });
     setEditingUserId(null);
   };
@@ -143,7 +143,7 @@ export default function AdminDashboard() {
       phone: user.phone || "",
       clinicId: user.staffClinicId || user.doctorClinicId || "",
       doctor: Boolean(user.doctorProfileId),
-      speciality: user.speciality || user.medicalSpeciality || '',
+      specialty: user.specialty || user.medicalSpecialty || '',
     });
     setActiveTab("users");
   };

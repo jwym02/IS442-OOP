@@ -121,11 +121,11 @@ public class DoctorService {
     }
 
     private DoctorAdminResponse toAdminResponse(DoctorProfile d) {
-        // DoctorProfile uses the "speciality" column/name — call getSpeciality()
+        // DoctorProfile uses the "specialty" column/name — call getSpecialty()
         return new DoctorAdminResponse(
             d.getId(),
             d.getFullName(),
-            d.getSpeciality(),
+            d.getSpecialty(),
             d.getClinicId(),
             d.getSpecialistId()
         );

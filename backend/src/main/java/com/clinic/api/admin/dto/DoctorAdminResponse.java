@@ -19,9 +19,9 @@ public class DoctorAdminResponse {
         this.specialistId = specialistId;
     }
 
-    // alias methods to match other parts of code that use "speciality" spelling
-    public String getSpeciality() { return this.specialty; }
-    public void setSpeciality(String speciality) { this.specialty = speciality; }
+    // alias methods to match other parts of code that use "specialty" spelling
+    public String getSpecialty() { return this.specialty; }
+    public void setSpecialty(String specialty) { this.specialty = specialty; }
 
     // slot interval accessor expected by AdminService
     public Integer getSlotIntervalMinutes() { return this.slotIntervalMinutes; }

@@ -12,7 +12,7 @@ public class UserRequest {
     private String phone;
     private Long clinicId;
     private Boolean doctor;
-    private String speciality;
+    private String specialty;
     private String birthDate;
 
     // getters and setters
@@ -30,8 +30,8 @@ public class UserRequest {
     public void setClinicId(Long clinicId) { this.clinicId = clinicId; }
     public Boolean getDoctor() { return doctor; }
     public void setDoctor(Boolean doctor) { this.doctor = doctor; }
-    public String getSpeciality() { return speciality; }
-    public void setSpeciality(String speciality) { this.speciality = speciality; }
+    public String getSpecialty() { return specialty; }
+    public void setSpecialty(String specialty) { this.specialty = specialty; }
     public String getBirthDate() { return birthDate; }
     public void setBirthDate(String birthDate) { this.birthDate = birthDate; }
 }
