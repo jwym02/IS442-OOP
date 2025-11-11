@@ -60,7 +60,7 @@ public class AdminController {
     @PostMapping("/users/{userId}/roles")
     public ResponseEntity<UserResponse> assignRoles(@PathVariable UUID userId,
                                                     @RequestBody @Valid AssignRoleRequest request) {
-        return ResponseEntity.ok(adminService.assignRoles(userId, request.getRole()));
+        return ResponseEntity.ok(adminService.assignRoles(userId, request.getRole(), request.getClinicId()));
     }
 
     @DeleteMapping("/users/{userId}/roles")

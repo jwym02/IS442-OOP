@@ -34,6 +34,8 @@ export default function UsersTable({
   onRoleSelectionChange,
   onAssignRole,
   onRemoveRole,
+  roleClinicSelections,
+  onRoleClinicSelectionChange,
 }) {
   const [term, setTerm] = useState('');
   const [page, setPage] = useState(1);
@@ -137,7 +139,7 @@ export default function UsersTable({
                           : '—'}
                       </TableCell>
                       <TableCell>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 items-center">
                           <Select
                             value={roleSelections[user.id] || ''}
                             onChange={(e) => onRoleSelectionChange(user.id, e.target.value)}
@@ -148,6 +150,20 @@ export default function UsersTable({
                             <option value="CLINIC_STAFF">Clinic Staff</option>
                             <option value="SYSTEM_ADMINISTRATOR">System Administrator</option>
                           </Select>
+                          {roleSelections[user.id] === 'CLINIC_STAFF' && (
+                            <Select
+                              value={roleClinicSelections[user.id] || ''}
+                              onChange={(e) => onRoleClinicSelectionChange(user.id, e.target.value)}
+                              className="text-sm w-40"
+                            >
+                              <option value="">Select clinic...</option>
+                              {clinics.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.name}
+                                </option>
+                              ))}
+                            </Select>
+                          )}
                           <Button size="sm" variant="outline" onClick={() => onAssignRole(user.id)}>
                             <UserRoundCheck className="h-4 w-4" />
                           </Button>

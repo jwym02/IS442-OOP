@@ -1,30 +1,24 @@
 /* eslint-disable no-unused-vars */
-import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  BarChart3,
-  Users,
-  Building2,
-  Stethoscope,
-  RefreshCw,
-} from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { BarChart3, Users, Building2, Stethoscope, RefreshCw } from 'lucide-react';
 
-import { adminAPI, clinicAPI, doctorAPI, statsAPI } from "../../services/api";
-import { useToast } from "../../context/useToast";
+import { adminAPI, clinicAPI, doctorAPI, statsAPI } from '../../services/api';
+import { useToast } from '../../context/useToast';
 
-import { Button } from "../ui/button";
+import { Button } from '../ui/button';
 
 // Sections
-import OverviewSection from "./OverviewSection";
-import ClinicsTable from "./clinics/ClinicsTable";
-import DoctorsTable from "./doctors/DoctorsTable";
-import UserForm from "./users/UserForm";
-import UsersTable from "./users/UsersTable";
+import OverviewSection from './OverviewSection';
+import ClinicsTable from './clinics/ClinicsTable';
+import DoctorsTable from './doctors/DoctorsTable';
+import UserForm from './users/UserForm';
+import UsersTable from './users/UsersTable';
 
 export default function AdminDashboard() {
   const { show } = useToast();
 
   // Tabs
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState('overview');
 
   // Data
   const [clinics, setClinics] = useState([]);
@@ -34,28 +28,29 @@ export default function AdminDashboard() {
 
   // User form
   const [userForm, setUserForm] = useState({
-    email: "",
-    password: "",
-    role: "PATIENT",
-    name: "",
-    phone: "",
-    clinicId: "",
+    email: '',
+    password: '',
+    role: 'PATIENT',
+    name: '',
+    phone: '',
+    clinicId: '',
     doctor: false,
-    specialty: "",
+    specialty: '',
   });
   const [editingUserId, setEditingUserId] = useState(null);
   const [roleSelections, setRoleSelections] = useState({});
+  const [roleClinicSelections, setRoleClinicSelections] = useState({});
   const [roleGroupSelections, setRoleGroupSelections] = useState({});
   const [allowedRolesMap, setAllowedRolesMap] = useState({});
 
   // Clinic edit
   const [editingClinicId, setEditingClinicId] = useState(null);
   const [clinicForm, setClinicForm] = useState({
-    name: "",
-    address: "",
-    openTime: "",
-    closeTime: "",
-    slotInterval: "",
+    name: '',
+    address: '',
+    openTime: '',
+    closeTime: '',
+    slotInterval: '',
   });
   const [savingClinic, setSavingClinic] = useState(false);
 
@@ -77,7 +72,7 @@ export default function AdminDashboard() {
       setSystemStats(statsRes.data || null);
       setUsers(userRes.data || []);
     } catch (error) {
-      show(error?.userMessage || "Unable to load administrator data.", "error");
+      show(error?.userMessage || 'Unable to load administrator data.', 'error');
     }
   }, [show]);
 
@@ -89,7 +84,7 @@ export default function AdminDashboard() {
     setDoctorEdits((prev) => {
       const next = {};
       doctors.forEach((d) => {
-        next[d.id] = prev[d.id] ?? d.slotIntervalMinutes ?? "";
+        next[d.id] = prev[d.id] ?? d.slotIntervalMinutes ?? '';
       });
       return next;
     });
@@ -98,14 +93,14 @@ export default function AdminDashboard() {
   // User management
   const resetUserForm = () => {
     setUserForm({
-      email: "",
-      password: "",
-      role: "PATIENT",
-      name: "",
-      phone: "",
-      clinicId: "",
+      email: '',
+      password: '',
+      role: 'PATIENT',
+      name: '',
+      phone: '',
+      clinicId: '',
       doctor: false,
-      specialty: "",
+      specialty: '',
     });
     setEditingUserId(null);
   };
@@ -120,15 +115,15 @@ export default function AdminDashboard() {
     try {
       if (editingUserId) {
         await adminAPI.updateUser(editingUserId, payload);
-        show("User updated.", "success");
+        show('User updated.', 'success');
       } else {
         await adminAPI.createUser(payload);
-        show("User created.", "success");
+        show('User created.', 'success');
       }
       resetUserForm();
       refreshAll();
     } catch (error) {
-      show(error?.userMessage || "Unable to save user.", "error");
+      show(error?.userMessage || 'Unable to save user.', 'error');
     }
   };
 
@@ -136,69 +131,112 @@ export default function AdminDashboard() {
     // console.log(user);
     setEditingUserId(user.id);
     setUserForm({
-      email: user.email || "",
-      password: "",
-      role: user.roles?.[0] || "PATIENT",
-      name: user.name || "",
-      phone: user.phone || "",
-      clinicId: user.staffClinicId || user.doctorClinicId || "",
+      email: user.email || '',
+      password: '',
+      role: user.roles?.[0] || 'PATIENT',
+      name: user.name || '',
+      phone: user.phone || '',
+      clinicId: user.staffClinicId || user.doctorClinicId || '',
       doctor: Boolean(user.doctorProfileId),
       specialty: user.specialty || user.medicalSpecialty || '',
     });
-    setActiveTab("users");
+    setActiveTab('users');
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm("Are you sure you want to delete this user?")) return;
+    if (!window.confirm('Are you sure you want to delete this user?')) return;
     try {
       await adminAPI.deleteUser(userId);
-      show("User deleted.", "success");
+      show('User deleted.', 'success');
       refreshAll();
     } catch (error) {
-      show(error?.userMessage || "Unable to delete user.", "error");
+      show(error?.userMessage || 'Unable to delete user.', 'error');
     }
   };
 
   const handleRoleSelectionChange = (userId, role) => {
     setRoleSelections((prev) => ({ ...prev, [userId]: role }));
+    // Reset clinic selection when role changes
+    if (role !== 'CLINIC_STAFF') {
+      setRoleClinicSelections((prev) => {
+        const next = { ...prev };
+        delete next[userId];
+        return next;
+      });
+    }
+  };
+
+  const handleRoleClinicSelectionChange = (userId, clinicId) => {
+    setRoleClinicSelections((prev) => ({ ...prev, [userId]: clinicId }));
   };
 
   const handleAssignRole = async (userId) => {
     const role = roleSelections[userId];
     if (!role) {
-      show("Select a role to assign.", "info");
+      show('Select a role to assign.', 'info');
       return;
     }
+
+    // If role is CLINIC_STAFF, check if clinic is selected
+    if (role === 'CLINIC_STAFF') {
+      const clinicId = roleClinicSelections[userId];
+      if (!clinicId) {
+        show('Please select a clinic for the clinic staff role.', 'info');
+        return;
+      }
+    }
+
     try {
-      await adminAPI.assignRole(userId, role);
-      show("Role assigned.", "success");
+      const payload = { role };
+      if (role === 'CLINIC_STAFF' && roleClinicSelections[userId]) {
+        payload.clinicId = Number(roleClinicSelections[userId]);
+      }
+      await adminAPI.assignRole(userId, payload);
+      show('Role assigned.', 'success');
       refreshAll();
+      // Clear the selections
+      setRoleSelections((prev) => {
+        const next = { ...prev };
+        delete next[userId];
+        return next;
+      });
+      setRoleClinicSelections((prev) => {
+        const next = { ...prev };
+        delete next[userId];
+        return next;
+      });
     } catch (error) {
-      show(error?.userMessage || "Unable to assign role.", "error");
+      show(error?.userMessage || 'Unable to assign role.', 'error');
     }
   };
 
   const handleRemoveRole = async (userId, role) => {
-    if (!window.confirm(`Are you sure you want to remove the "${role.replace(/_/g, " ").toLowerCase()}" role from this user?`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to remove the "${role
+          .replace(/_/g, ' ')
+          .toLowerCase()}" role from this user?`
+      )
+    ) {
       return;
     }
     try {
       await adminAPI.removeRole(userId, role);
-      show("Role removed.", "success");
+      show('Role removed.', 'success');
       refreshAll();
     } catch (error) {
-      show(error?.userMessage || "Unable to remove role.", "error");
+      show(error?.userMessage || 'Unable to remove role.', 'error');
     }
   };
 
   // Clinic management
   const resetClinicForm = () => {
     setClinicForm({
-      name: "",
-      address: "",
-      openTime: "",
-      closeTime: "",
-      slotInterval: "",
+      name: '',
+      address: '',
+      openTime: '',
+      closeTime: '',
+      slotInterval: '',
     });
     setEditingClinicId(null);
   };
@@ -206,14 +244,12 @@ export default function AdminDashboard() {
   const handleEditClinic = (clinic) => {
     setEditingClinicId(clinic.id);
     setClinicForm({
-      name: clinic.name || "",
-      address: clinic.address || "",
-      openTime: clinic.openTime || "",
-      closeTime: clinic.closeTime || "",
+      name: clinic.name || '',
+      address: clinic.address || '',
+      openTime: clinic.openTime || '',
+      closeTime: clinic.closeTime || '',
       slotInterval:
-        clinic.defaultSlotIntervalMinutes != null
-          ? String(clinic.defaultSlotIntervalMinutes)
-          : "",
+        clinic.defaultSlotIntervalMinutes != null ? String(clinic.defaultSlotIntervalMinutes) : '',
     });
   };
 
@@ -228,7 +264,7 @@ export default function AdminDashboard() {
     const name = clinicForm.name.trim();
     const address = clinicForm.address.trim();
     if (!name || !address) {
-      show("Clinic name and address are required.", "error");
+      show('Clinic name and address are required.', 'error');
       return;
     }
 
@@ -236,7 +272,7 @@ export default function AdminDashboard() {
       ? parseInt(clinicForm.slotInterval, 10)
       : null;
     if (slotIntervalValue !== null && (Number.isNaN(slotIntervalValue) || slotIntervalValue <= 0)) {
-      show("Slot interval must be a positive number.", "error");
+      show('Slot interval must be a positive number.', 'error');
       return;
     }
 
@@ -253,11 +289,11 @@ export default function AdminDashboard() {
         ops.push(clinicAPI.updateSlotInterval(editingClinicId, slotIntervalValue));
       }
       await Promise.all(ops);
-      show("Clinic updated.", "success");
+      show('Clinic updated.', 'success');
       resetClinicForm();
       refreshAll();
     } catch (error) {
-      show(error?.userMessage || "Unable to update clinic.", "error");
+      show(error?.userMessage || 'Unable to update clinic.', 'error');
     } finally {
       setSavingClinic(false);
     }
@@ -273,16 +309,16 @@ export default function AdminDashboard() {
   const handleDoctorScheduleSave = async (doctorId) => {
     const intervalValue = parseInt(doctorEdits[doctorId], 10);
     if (Number.isNaN(intervalValue) || intervalValue <= 0) {
-      show("Provide a positive slot interval (minutes).", "error");
+      show('Provide a positive slot interval (minutes).', 'error');
       return;
     }
     setSavingDoctorId(doctorId);
     try {
       await doctorAPI.updateSchedule(doctorId, { slotIntervalMinutes: intervalValue });
-      show("Doctor schedule updated.", "success");
+      show('Doctor schedule updated.', 'success');
       refreshAll();
     } catch (error) {
-      show(error?.userMessage || "Unable to update doctor schedule.", "error");
+      show(error?.userMessage || 'Unable to update doctor schedule.', 'error');
     } finally {
       setSavingDoctorId(null);
     }
@@ -295,7 +331,7 @@ export default function AdminDashboard() {
   }, [clinics]);
 
   const getClinicName = (clinicId) =>
-    clinicMap.get(clinicId)?.name || (clinicId ? `Clinic #${clinicId}` : "—");
+    clinicMap.get(clinicId)?.name || (clinicId ? `Clinic #${clinicId}` : '—');
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -320,10 +356,10 @@ export default function AdminDashboard() {
         <div className="px-6">
           <nav className="flex space-x-8 -mb-px">
             {[
-              { id: "overview", label: "Overview", icon: BarChart3 },
-              { id: "users", label: "User Management", icon: Users },
-              { id: "clinics", label: "Clinic Management", icon: Building2 },
-              { id: "doctors", label: "Doctor Management", icon: Stethoscope },
+              { id: 'overview', label: 'Overview', icon: BarChart3 },
+              { id: 'users', label: 'User Management', icon: Users },
+              { id: 'clinics', label: 'Clinic Management', icon: Building2 },
+              { id: 'doctors', label: 'Doctor Management', icon: Stethoscope },
             ].map((tab) => {
               const Icon = tab.icon;
               const active = activeTab === tab.id;
@@ -333,8 +369,8 @@ export default function AdminDashboard() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center px-1 py-4 border-b-2 font-medium text-sm transition-colors ${
                     active
-                      ? "border-blue-500 text-blue-600"
-                      : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
                   }`}
                 >
                   <Icon className="mr-2 h-4 w-4" />
@@ -347,19 +383,19 @@ export default function AdminDashboard() {
       </div>
 
       <div className="px-6 py-8">
-        {activeTab === "overview" && (
+        {activeTab === 'overview' && (
           <OverviewSection
             usersCount={users.length}
             clinicsCount={clinics.length}
             doctorsCount={doctors.length}
             systemStats={systemStats}
-            onGoUsers={() => setActiveTab("users")}
-            onGoClinics={() => setActiveTab("clinics")}
-            onGoDoctors={() => setActiveTab("doctors")}
+            onGoUsers={() => setActiveTab('users')}
+            onGoClinics={() => setActiveTab('clinics')}
+            onGoDoctors={() => setActiveTab('doctors')}
           />
         )}
 
-        {activeTab === "users" && (
+        {activeTab === 'users' && (
           <div className="space-y-6">
             <UserForm
               clinics={clinics}
@@ -379,11 +415,13 @@ export default function AdminDashboard() {
               onRoleSelectionChange={handleRoleSelectionChange}
               onAssignRole={handleAssignRole}
               onRemoveRole={handleRemoveRole}
+              roleClinicSelections={roleClinicSelections}
+              onRoleClinicSelectionChange={handleRoleClinicSelectionChange}
             />
           </div>
         )}
 
-        {activeTab === "clinics" && (
+        {activeTab === 'clinics' && (
           <ClinicsTable
             clinics={clinics}
             editingClinicId={editingClinicId}
@@ -396,7 +434,7 @@ export default function AdminDashboard() {
           />
         )}
 
-        {activeTab === "doctors" && (
+        {activeTab === 'doctors' && (
           <DoctorsTable
             doctors={doctors}
             getClinicName={getClinicName}

@@ -162,11 +162,59 @@ public class AdminService {
 
     @Transactional
     public UserResponse assignRoles(UUID userId, String roleName) {
+        return assignRoles(userId, roleName, null);
+    }
+
+    @Transactional
+    public UserResponse assignRoles(UUID userId, String roleName, Long clinicId) {
         Roles role = parseRole(roleName);
         UserAccount account = userAccountRepository.findById(userId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        account.addRole(resolveRole(role));
-        userAccountRepository.save(account);
+        
+        // Check if user already has this role
+        boolean hasRole = account.getRoles().stream()
+            .anyMatch(r -> roleName.equalsIgnoreCase(r.getName()));
+        
+        if (!hasRole) {
+            account.addRole(resolveRole(role));
+            userAccountRepository.save(account);
+            
+            // Create the appropriate profile if it doesn't exist
+            switch (role) {
+                case CLINIC_STAFF -> {
+                    if (clinicStaffProfileRepository.findByUserId(userId).isEmpty()) {
+                        if (clinicId == null) {
+                            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                                "Clinic assignment is required for clinic staff role");
+                        }
+                        Clinic clinic = clinicRepository.findById(clinicId)
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Clinic not found"));
+                        ClinicStaffProfile profile = new ClinicStaffProfile();
+                        profile.setUser(account);
+                        profile.setFullName(account.getFullName());
+                        profile.setClinicId(clinic.getId());
+                        clinicStaffProfileRepository.save(profile);
+                    }
+                }
+                case PATIENT -> {
+                    if (patientProfileRepository.findByUserId(userId).isEmpty()) {
+                        PatientProfile profile = new PatientProfile();
+                        profile.setUser(account);
+                        profile.setFullName(account.getFullName());
+                        patientProfileRepository.save(profile);
+                    }
+                }
+                case SYSTEM_ADMINISTRATOR -> {
+                    if (adminProfileRepository.findByUserId(userId).isEmpty()) {
+                        AdminProfile profile = new AdminProfile();
+                        profile.setUser(account);
+                        profile.setFullName(account.getFullName());
+                        adminProfileRepository.save(profile);
+                    }
+                }
+            }
+        }
+        
         return toResponse(account);
     }
 
