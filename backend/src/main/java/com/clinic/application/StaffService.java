@@ -38,11 +38,15 @@ public class StaffService {
         var update = new AppointmentRequest();
         update.setClinicId(request.getClinicId());
         update.setDoctorId(request.getDoctorId());
-        // convert OffsetDateTime -> String for AppointmentRequest
         update.setDateTime(request.getDateTime() != null ? request.getDateTime().toString() : null);
+
         var updated = appointmentService.rescheduleAppointment(appointmentId, update);
+
+        appointmentService.updateAppointmentStatus(appointmentId, "SCHEDULED");
+
         return toStaffResponse(updated);
     }
+
 
     @Transactional
     public void cancelAppointmentAsStaff(Long appointmentId) {
