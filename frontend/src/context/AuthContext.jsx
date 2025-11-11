@@ -131,10 +131,10 @@ export const AuthProvider = ({ children }) => {
         name: `${normalizedRole} 1`,
         roles: [normalizedRole],
         patientProfileId: normalizedRole === 'PATIENT' ? 1 : null,
-        staffProfileId: normalizedRole === 'STAFF' ? 1 : null,
+        staffProfileId: normalizedRole === 'CLINIC_STAFF' ? 1 : null,
         doctorProfileId: normalizedRole === 'DOCTOR' ? 1 : null,
         adminProfileId: normalizedRole === 'SYSTEM_ADMINISTRATOR' ? 1 : null,
-        staffClinicId: normalizedRole === 'STAFF' ? 1 : null,
+        staffClinicId: normalizedRole === 'CLINIC_STAFF' ? 1 : null,
         doctorClinicId: normalizedRole === 'DOCTOR' ? 1 : null,
       },
     };

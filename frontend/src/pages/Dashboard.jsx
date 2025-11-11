@@ -39,7 +39,7 @@ export default function Dashboard() {
   if (
     (isStaff || isDoctor) &&
     clinicId &&
-    (!activeRole || activeRole === 'CLINIC_STAFF')
+    (!activeRole || activeRole === 'CLINIC_STAFF' || activeRole === 'DOCTOR')
   ) {
     views.push({
       key: 'clinic',
