@@ -983,41 +983,45 @@ const pastAppointments = useMemo(() => {
               </CardHeader>
               <CardContent>
                 <form className="space-y-6" onSubmit={handleBookAppointment}>
+                  {/* Search by radio buttons */}
+                  <div className="space-y-2">
+                    <Label>Search by</Label>
+                    <div className="flex items-center gap-4">
+                      <label className="inline-flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="selectionType"
+                          value="clinic"
+                          checked={selectionType === 'clinic'}
+                          onChange={() => {
+                            setSelectionType('clinic');
+                            setSelectedClinic('');
+                            setSelectedDoctor('');
+                          }}
+                        />
+                        <span>Clinic</span>
+                      </label>
+                      <label className="inline-flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="selectionType"
+                          value="specialist"
+                          checked={selectionType === 'specialist'}
+                          onChange={() => {
+                            setSelectionType('specialist');
+                            setSelectedClinic('');
+                            setSelectedDoctor('');
+                          }}
+                        />
+                        <span>Specialist</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Clinic/Specialist and Doctor dropdowns inline */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label>Search by</Label>
-                      <div className="flex items-center gap-4">
-                        <label className="inline-flex items-center gap-2">
-                          <input
-                            type="radio"
-                            name="selectionType"
-                            value="clinic"
-                            checked={selectionType === 'clinic'}
-                            onChange={() => {
-                              setSelectionType('clinic');
-                              setSelectedClinic('');
-                              setSelectedDoctor('');
-                            }}
-                          />
-                          <span>Clinic</span>
-                        </label>
-                        <label className="inline-flex items-center gap-2">
-                          <input
-                            type="radio"
-                            name="selectionType"
-                            value="specialist"
-                            checked={selectionType === 'specialist'}
-                            onChange={() => {
-                              setSelectionType('specialist');
-                              setSelectedClinic('');
-                              setSelectedDoctor('');
-                            }}
-                          />
-                          <span>Specialist</span>
-                        </label>
-                      </div>
-
-                      <Label htmlFor="clinicOrSpecialist" className="mt-2">
+                      <Label htmlFor="clinicOrSpecialist">
                         {selectionType === 'clinic' ? 'Clinic' : 'Specialist'}
                       </Label>
                       <Select
@@ -1051,7 +1055,6 @@ const pastAppointments = useMemo(() => {
                         value={selectedDoctor}
                         onChange={(event) => setSelectedDoctor(event.target.value)}
                         required
-                        // enabled when a clinic OR a specialist is selected
                         disabled={!selectedClinic}
                       >
                         <option value="">Choose a doctor...</option>
@@ -1062,7 +1065,10 @@ const pastAppointments = useMemo(() => {
                         ))}
                       </Select>
                     </div>
+                  </div>
 
+                  {/* Date and Time Slot inline */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="appointment-date">Date</Label>
                       <Input
