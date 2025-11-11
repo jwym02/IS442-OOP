@@ -3,8 +3,12 @@ package com.clinic.application;
 import com.clinic.api.patients.dto.AppointmentRequest;
 import com.clinic.api.patients.dto.AppointmentResponse;
 import com.clinic.domain.entity.Appointment;
+import com.clinic.domain.entity.DoctorProfile;
+import com.clinic.domain.entity.PatientProfile;
 import com.clinic.domain.enums.AppointmentStatus;
 import com.clinic.infrastructure.persistence.AppointmentRepository;
+import com.clinic.infrastructure.persistence.DoctorProfileRepository;
+import com.clinic.infrastructure.persistence.PatientProfileRepository;
 import com.clinic.infrastructure.persistence.SpecialistRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,14 +24,20 @@ import java.util.stream.Collectors;
 public class AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final SpecialistRepository specialistRepository;
+    private final PatientProfileRepository patientProfileRepository;
+    private final DoctorProfileRepository doctorProfileRepository;
 
     // sentinel clinic id used for "specialist / external - no clinic"
     private static final Long SPECIALIST_ONLY_CLINIC_ID = 99999L;
 
     public AppointmentService(AppointmentRepository appointmentRepository,
-            SpecialistRepository specialistRepository) {
+            SpecialistRepository specialistRepository,
+            PatientProfileRepository patientProfileRepository,
+            DoctorProfileRepository doctorProfileRepository) {
         this.appointmentRepository = appointmentRepository;
         this.specialistRepository = specialistRepository;
+        this.patientProfileRepository = patientProfileRepository;
+        this.doctorProfileRepository = doctorProfileRepository;
     }
 
     @Transactional
@@ -257,6 +267,19 @@ public class AppointmentService {
         r.setDoctorId(a.getDoctorId());
         r.setPatientId(a.getPatientId());
         r.setDateTime(a.getDateTime());
+        
+        // Fetch and set patient name
+        if (a.getPatientId() != null) {
+            patientProfileRepository.findById(a.getPatientId())
+                .ifPresent(patient -> r.setPatientName(patient.getFullName()));
+        }
+        
+        // Fetch and set doctor name
+        if (a.getDoctorId() != null) {
+            doctorProfileRepository.findById(a.getDoctorId())
+                .ifPresent(doctor -> r.setDoctorName(doctor.getFullName()));
+        }
+        
         try {
             Object status = a.getStatus();
             r.setStatus(status != null ? status.toString() : null);

@@ -4,6 +4,8 @@ import com.clinic.api.patients.dto.AppointmentRequest;
 import com.clinic.api.staff.dto.AppointmentResponse;
 import com.clinic.api.staff.dto.DailyReportResponse;
 import com.clinic.api.staff.dto.RescheduleRequest;
+import com.clinic.infrastructure.persistence.DoctorProfileRepository;
+import com.clinic.infrastructure.persistence.PatientProfileRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,10 +18,17 @@ public class StaffService {
 
     private final AppointmentService appointmentService;
     private final ReportService reportService;
+    private final PatientProfileRepository patientProfileRepository;
+    private final DoctorProfileRepository doctorProfileRepository;
 
-    public StaffService(AppointmentService appointmentService, ReportService reportService) {
+    public StaffService(AppointmentService appointmentService, 
+                       ReportService reportService,
+                       PatientProfileRepository patientProfileRepository,
+                       DoctorProfileRepository doctorProfileRepository) {
         this.appointmentService = appointmentService;
         this.reportService = reportService;
+        this.patientProfileRepository = patientProfileRepository;
+        this.doctorProfileRepository = doctorProfileRepository;
     }
 
     @Transactional
@@ -79,6 +88,14 @@ public class StaffService {
         // patient source.getDateTime() is LocalDateTime -> pass it directly to staff DTO (matching its type)
         response.setDateTime(source.getDateTime());
         response.setStatus(source.getStatus());
+        // Fetch and set patient name
+        patientProfileRepository.findById(source.getPatientId())
+            .ifPresent(patient -> response.setPatientName(patient.getFullName()));
+        // Fetch and set doctor name
+        if (source.getDoctorId() != null) {
+            doctorProfileRepository.findById(source.getDoctorId())
+                .ifPresent(doctor -> response.setDoctorName(doctor.getFullName()));
+        }
         return response;
     }
 }

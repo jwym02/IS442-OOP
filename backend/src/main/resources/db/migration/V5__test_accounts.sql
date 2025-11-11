@@ -23,5 +23,17 @@ WHERE email IN (
   'rahul.patient@example.com',
   'siti.patient@example.com',
   'marcus.patient@example.com',
-  'chloe.patient@example.com'
+  'chloe.patient@example.com',
+  'sarah.wong@example.com',
+  'david.chen@example.com',
+  'linda.lim@example.com',
+  'robert.kumar@example.com',
+  'emily.tan@example.com',
+  'michael.ng@example.com',
+  'jane.seah@example.com',
+  'william.goh@example.com',
+  'jessica.ong@example.com',
+  'daniel.yeo@example.com',
+  'rachel.chua@example.com',
+  'kevin.poh@example.com'
 );

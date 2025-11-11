@@ -883,8 +883,9 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                               </Badge>
                             </div>
                             <p className="text-sm text-slate-600">
-                              Patient #{appointment.patientId}
-                              {isStaff && ` • Doctor #${appointment.doctorId}`}
+                              {appointment.patientName || `Patient #${appointment.patientId}`}
+                              {isStaff &&
+                                ` • ${appointment.doctorName || `Doctor #${appointment.doctorId}`}`}
                             </p>
                           </div>
                           {isStaff && appointment.status === 'SCHEDULED' && (
@@ -946,9 +947,11 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                             </div>
                             <div>
                               <p className="text-sm font-medium text-slate-900">
-                                Patient #{entry.patientId}
+                                {entry.patientName || `Patient #${entry.patientId}`}
                               </p>
-                              <p className="text-xs text-slate-500">Doctor #{entry.doctorId}</p>
+                              <p className="text-xs text-slate-500">
+                                {entry.doctorName || `Doctor #${entry.doctorId}`}
+                              </p>
                             </div>
                           </div>
                           <Badge
@@ -1155,8 +1158,14 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                             <TableCell className="font-medium">
                               {formatDateTime(appointment.dateTime)}
                             </TableCell>
-                            <TableCell>Patient #{appointment.patientId}</TableCell>
-                            {isStaff && <TableCell>Doctor #{appointment.doctorId}</TableCell>}
+                            <TableCell>
+                              {appointment.patientName || `Patient #${appointment.patientId}`}
+                            </TableCell>
+                            {isStaff && (
+                              <TableCell>
+                                {appointment.doctorName || `Doctor #${appointment.doctorId}`}
+                              </TableCell>
+                            )}
                             <TableCell>
                               <Badge
                                 variant="outline"
@@ -1344,9 +1353,11 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                             </div>
                             <div>
                               <p className="text-sm font-semibold text-slate-900">
-                                Patient #{entry.patientId}
+                                {entry.patientName || `Patient #${entry.patientId}`}
                               </p>
-                              <p className="text-sm text-slate-600">Doctor #{entry.doctorId}</p>
+                              <p className="text-sm text-slate-600">
+                                {entry.doctorName || `Doctor #${entry.doctorId}`}
+                              </p>
                             </div>
                           </div>
                           <Badge

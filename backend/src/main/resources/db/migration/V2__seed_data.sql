@@ -41,7 +41,19 @@ VALUES
   (UNHEX(REPLACE('d0000000-0000-0000-0000-000000000003','-','')), 'rahul.patient@example.com',     'hash_patient', TRUE, NOW(), 'Rahul Mehta',      '+65 8000 0303'),
   (UNHEX(REPLACE('d0000000-0000-0000-0000-000000000004','-','')), 'siti.patient@example.com',      'hash_patient', TRUE, NOW(), 'Siti Aminah',      '+65 8000 0304'),
   (UNHEX(REPLACE('d0000000-0000-0000-0000-000000000005','-','')), 'marcus.patient@example.com',    'hash_patient', TRUE, NOW(), 'Marcus Lee',       '+65 8000 0305'),
-  (UNHEX(REPLACE('d0000000-0000-0000-0000-000000000006','-','')), 'chloe.patient@example.com',     'hash_patient', TRUE, NOW(), 'Chloe Tan',        '+65 8000 0306');
+  (UNHEX(REPLACE('d0000000-0000-0000-0000-000000000006','-','')), 'chloe.patient@example.com',     'hash_patient', TRUE, NOW(), 'Chloe Tan',        '+65 8000 0306'),
+  (UNHEX(REPLACE('d0000000-0000-0000-0000-000000000007','-','')), 'sarah.wong@example.com',        'hash_patient', TRUE, NOW(), 'Sarah Wong',       '+65 8000 0307'),
+  (UNHEX(REPLACE('d0000000-0000-0000-0000-000000000008','-','')), 'david.chen@example.com',        'hash_patient', TRUE, NOW(), 'David Chen',       '+65 8000 0308'),
+  (UNHEX(REPLACE('d0000000-0000-0000-0000-000000000009','-','')), 'linda.lim@example.com',         'hash_patient', TRUE, NOW(), 'Linda Lim',        '+65 8000 0309'),
+  (UNHEX(REPLACE('d0000000-0000-0000-0000-000000000010','-','')), 'robert.kumar@example.com',      'hash_patient', TRUE, NOW(), 'Robert Kumar',     '+65 8000 0310'),
+  (UNHEX(REPLACE('d0000000-0000-0000-0000-000000000011','-','')), 'emily.tan@example.com',         'hash_patient', TRUE, NOW(), 'Emily Tan',        '+65 8000 0311'),
+  (UNHEX(REPLACE('d0000000-0000-0000-0000-000000000012','-','')), 'michael.ng@example.com',        'hash_patient', TRUE, NOW(), 'Michael Ng',       '+65 8000 0312'),
+  (UNHEX(REPLACE('d0000000-0000-0000-0000-000000000013','-','')), 'jane.seah@example.com',         'hash_patient', TRUE, NOW(), 'Jane Seah',        '+65 8000 0313'),
+  (UNHEX(REPLACE('d0000000-0000-0000-0000-000000000014','-','')), 'william.goh@example.com',       'hash_patient', TRUE, NOW(), 'William Goh',      '+65 8000 0314'),
+  (UNHEX(REPLACE('d0000000-0000-0000-0000-000000000015','-','')), 'jessica.ong@example.com',       'hash_patient', TRUE, NOW(), 'Jessica Ong',      '+65 8000 0315'),
+  (UNHEX(REPLACE('d0000000-0000-0000-0000-000000000016','-','')), 'daniel.yeo@example.com',        'hash_patient', TRUE, NOW(), 'Daniel Yeo',       '+65 8000 0316'),
+  (UNHEX(REPLACE('d0000000-0000-0000-0000-000000000017','-','')), 'rachel.chua@example.com',       'hash_patient', TRUE, NOW(), 'Rachel Chua',      '+65 8000 0317'),
+  (UNHEX(REPLACE('d0000000-0000-0000-0000-000000000018','-','')), 'kevin.poh@example.com',         'hash_patient', TRUE, NOW(), 'Kevin Poh',        '+65 8000 0318');
 
 -- User Roles
 INSERT IGNORE INTO user_roles (user_id, role_id)
@@ -70,7 +82,19 @@ JOIN (
   SELECT UNHEX(REPLACE('d0000000-0000-0000-0000-000000000003','-','')) UNION ALL
   SELECT UNHEX(REPLACE('d0000000-0000-0000-0000-000000000004','-','')) UNION ALL
   SELECT UNHEX(REPLACE('d0000000-0000-0000-0000-000000000005','-','')) UNION ALL
-  SELECT UNHEX(REPLACE('d0000000-0000-0000-0000-000000000006','-',''))
+  SELECT UNHEX(REPLACE('d0000000-0000-0000-0000-000000000006','-','')) UNION ALL
+  SELECT UNHEX(REPLACE('d0000000-0000-0000-0000-000000000007','-','')) UNION ALL
+  SELECT UNHEX(REPLACE('d0000000-0000-0000-0000-000000000008','-','')) UNION ALL
+  SELECT UNHEX(REPLACE('d0000000-0000-0000-0000-000000000009','-','')) UNION ALL
+  SELECT UNHEX(REPLACE('d0000000-0000-0000-0000-000000000010','-','')) UNION ALL
+  SELECT UNHEX(REPLACE('d0000000-0000-0000-0000-000000000011','-','')) UNION ALL
+  SELECT UNHEX(REPLACE('d0000000-0000-0000-0000-000000000012','-','')) UNION ALL
+  SELECT UNHEX(REPLACE('d0000000-0000-0000-0000-000000000013','-','')) UNION ALL
+  SELECT UNHEX(REPLACE('d0000000-0000-0000-0000-000000000014','-','')) UNION ALL
+  SELECT UNHEX(REPLACE('d0000000-0000-0000-0000-000000000015','-','')) UNION ALL
+  SELECT UNHEX(REPLACE('d0000000-0000-0000-0000-000000000016','-','')) UNION ALL
+  SELECT UNHEX(REPLACE('d0000000-0000-0000-0000-000000000017','-','')) UNION ALL
+  SELECT UNHEX(REPLACE('d0000000-0000-0000-0000-000000000018','-',''))
 ) u ON 1=1
 WHERE r.name = 'PATIENT';
 
@@ -115,6 +139,66 @@ INSERT INTO patient_profiles (user_id, full_name, birth_date)
 SELECT u.id, u.full_name, '1993-12-25'
 FROM users u
 WHERE u.email = 'chloe.patient@example.com'
+AND NOT EXISTS (SELECT 1 FROM patient_profiles p WHERE p.user_id = u.id);
+
+INSERT INTO patient_profiles (user_id, full_name, birth_date)
+SELECT u.id, u.full_name, '1987-04-12'
+FROM users u WHERE u.email = 'sarah.wong@example.com'
+AND NOT EXISTS (SELECT 1 FROM patient_profiles p WHERE p.user_id = u.id);
+
+INSERT INTO patient_profiles (user_id, full_name, birth_date)
+SELECT u.id, u.full_name, '1991-08-25'
+FROM users u WHERE u.email = 'david.chen@example.com'
+AND NOT EXISTS (SELECT 1 FROM patient_profiles p WHERE p.user_id = u.id);
+
+INSERT INTO patient_profiles (user_id, full_name, birth_date)
+SELECT u.id, u.full_name, '1989-02-14'
+FROM users u WHERE u.email = 'linda.lim@example.com'
+AND NOT EXISTS (SELECT 1 FROM patient_profiles p WHERE p.user_id = u.id);
+
+INSERT INTO patient_profiles (user_id, full_name, birth_date)
+SELECT u.id, u.full_name, '1984-11-30'
+FROM users u WHERE u.email = 'robert.kumar@example.com'
+AND NOT EXISTS (SELECT 1 FROM patient_profiles p WHERE p.user_id = u.id);
+
+INSERT INTO patient_profiles (user_id, full_name, birth_date)
+SELECT u.id, u.full_name, '1994-06-18'
+FROM users u WHERE u.email = 'emily.tan@example.com'
+AND NOT EXISTS (SELECT 1 FROM patient_profiles p WHERE p.user_id = u.id);
+
+INSERT INTO patient_profiles (user_id, full_name, birth_date)
+SELECT u.id, u.full_name, '1986-09-22'
+FROM users u WHERE u.email = 'michael.ng@example.com'
+AND NOT EXISTS (SELECT 1 FROM patient_profiles p WHERE p.user_id = u.id);
+
+INSERT INTO patient_profiles (user_id, full_name, birth_date)
+SELECT u.id, u.full_name, '1990-01-08'
+FROM users u WHERE u.email = 'jane.seah@example.com'
+AND NOT EXISTS (SELECT 1 FROM patient_profiles p WHERE p.user_id = u.id);
+
+INSERT INTO patient_profiles (user_id, full_name, birth_date)
+SELECT u.id, u.full_name, '1983-05-16'
+FROM users u WHERE u.email = 'william.goh@example.com'
+AND NOT EXISTS (SELECT 1 FROM patient_profiles p WHERE p.user_id = u.id);
+
+INSERT INTO patient_profiles (user_id, full_name, birth_date)
+SELECT u.id, u.full_name, '1992-12-03'
+FROM users u WHERE u.email = 'jessica.ong@example.com'
+AND NOT EXISTS (SELECT 1 FROM patient_profiles p WHERE p.user_id = u.id);
+
+INSERT INTO patient_profiles (user_id, full_name, birth_date)
+SELECT u.id, u.full_name, '1988-07-27'
+FROM users u WHERE u.email = 'daniel.yeo@example.com'
+AND NOT EXISTS (SELECT 1 FROM patient_profiles p WHERE p.user_id = u.id);
+
+INSERT INTO patient_profiles (user_id, full_name, birth_date)
+SELECT u.id, u.full_name, '1993-03-11'
+FROM users u WHERE u.email = 'rachel.chua@example.com'
+AND NOT EXISTS (SELECT 1 FROM patient_profiles p WHERE p.user_id = u.id);
+
+INSERT INTO patient_profiles (user_id, full_name, birth_date)
+SELECT u.id, u.full_name, '1985-10-29'
+FROM users u WHERE u.email = 'kevin.poh@example.com'
 AND NOT EXISTS (SELECT 1 FROM patient_profiles p WHERE p.user_id = u.id);
 
 INSERT INTO clinic_staff_profiles (user_id, clinic_id, full_name)
