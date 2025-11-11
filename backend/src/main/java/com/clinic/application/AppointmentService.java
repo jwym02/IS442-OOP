@@ -73,7 +73,9 @@ public class AppointmentService {
         if (opt.isEmpty()) {
             throw new IllegalArgumentException("Appointment not found");
         }
+
         Appointment a = opt.get();
+
         if (req.getSpecialistId() != null) {
             a.setSpecialistId(req.getSpecialistId());
             a.setClinicId(SPECIALIST_ONLY_CLINIC_ID);
@@ -81,8 +83,11 @@ public class AppointmentService {
             a.setClinicId(req.getClinicId());
             a.setSpecialistId(null);
         }
+
         a.setDoctorId(req.getDoctorId());
         a.setDateTime(parseToLocalDateTime(req.getDateTime()));
+
+        a.setStatus(AppointmentStatus.SCHEDULED);
         Appointment updated = appointmentRepository.save(a);
         return toResponse(updated);
     }
