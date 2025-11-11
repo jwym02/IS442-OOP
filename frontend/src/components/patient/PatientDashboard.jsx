@@ -54,6 +54,8 @@ export default function PatientDashboard({ patientId, userName }) {
   const [rescheduleTimeSlots, setRescheduleTimeSlots] = useState([]);
   const [rescheduleSelectedSlot, setRescheduleSelectedSlot] = useState('');
   const [rescheduleSlotsLoading, setRescheduleSlotsLoading] = useState(false);
+  // 'clinic' or 'specialist' mode for reschedule form
+  const [rescheduleSelectionType, setRescheduleSelectionType] = useState('clinic');
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -70,6 +72,9 @@ export default function PatientDashboard({ patientId, userName }) {
         setClinics(clinicRes.data || []);
         setDoctors(doctorRes.data || []);
         setMedicalRecords(recordsRes.data || []);
+
+        // Add this line to populate the specialists dropdown
+        setSpecialists(specialistRes.data || []);
 
         const checkedIn = appointmentsData.find((appt) => appt.status === 'CHECKED_IN');
 
@@ -399,7 +404,13 @@ export default function PatientDashboard({ patientId, userName }) {
     }
 
     setRescheduleTarget(appointment);
-    setRescheduleClinic(String(appointment.clinicId));
+    if (appointment.specialistId) {
+      setRescheduleSelectionType('specialist');
+      setRescheduleClinic(String(appointment.specialistId)); // selected value represents specialist id
+    } else {
+      setRescheduleSelectionType('clinic');
+      setRescheduleClinic(String(appointment.clinicId));
+    }
     setRescheduleDoctor(String(appointment.doctorId));
     const local = toLocalInputValue(appointment.dateTime);
     setRescheduleSelectedDate(local.slice(0, 10));
@@ -439,9 +450,10 @@ export default function PatientDashboard({ patientId, userName }) {
         .toISOString()
         .slice(0, 19);
       const payload = { doctorId: Number(rescheduleDoctor), dateTime: iso };
-      // if the target appointment was a specialist booking, keep specialistId null clinicId null handling
-      if (rescheduleTarget.specialistId) {
-        payload.specialistId = rescheduleTarget.specialistId;
+      // if rescheduling a specialist booking (or the form is in specialist mode),
+      // set specialistId and send clinicId = null so backend can apply sentinel
+      if (rescheduleSelectionType === 'specialist') {
+        payload.specialistId = Number(rescheduleClinic);
         payload.clinicId = null;
       } else {
         payload.clinicId = Number(rescheduleClinic);
@@ -500,7 +512,11 @@ export default function PatientDashboard({ patientId, userName }) {
 
   const rescheduleDoctors = useMemo(() => {
     if (!rescheduleClinic) return doctors;
-    return doctors.filter((doctor) => doctor.clinicId === Number(rescheduleClinic));
+    if (rescheduleSelectionType === 'clinic') {
+      return doctors.filter((doctor) => doctor.clinicId === Number(rescheduleClinic));
+    }
+    // specialist mode -> filter by specialistId
+    return doctors.filter((doctor) => doctor.specialistId === Number(rescheduleClinic));
   }, [doctors, rescheduleClinic]);
 
   // normalize appointments for display:

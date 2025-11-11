@@ -96,7 +96,7 @@ public class NotificationService {
     // Extract email safely from your UserAccount (adapt getter name if different)
     private String safeEmail(UserAccount ua) {
         try {
-            return "jovanwang2002@gmail.com";
+            return "jovanwang2002@gmail.com"; // change to user's email
             // return ua.getEmail(); // <-- change if your field/method is different
         } catch (Exception e) {
             return null;

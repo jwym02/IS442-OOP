@@ -56,11 +56,33 @@ export const authAPI = {
 
 export const appointmentAPI = {
   listForPatient: (patientId) => apiClient.get(`/patients/${patientId}/appointments`),
-  listForClinic: (clinicId, date) => apiClient.get(`/clinics/${clinicId}/appointments`, { params: { date } }),
-  listForSpecialist: (specialistId, date) => apiClient.get(`/specialists/${specialistId}/appointments`, { params: { date } }),
+
+  // accept optional (clinicId, date, when). If when === 'upcoming' call without date param.
+  listForClinic: (clinicId, date, when) =>
+    when === 'upcoming'
+      ? apiClient.get(`/clinics/${clinicId}/appointments`)
+      : apiClient.get(`/clinics/${clinicId}/appointments`, { params: { date } }),
+
+  listForSpecialist: (specialistId, date) =>
+    apiClient.get(`/specialists/${specialistId}/appointments`, { params: { date } }),
+
+  // list appointments for a doctor (used by StaffDashboard)
+  listForDoctor: (doctorId, date) =>
+    apiClient.get(`/doctors/${doctorId}/appointments`, { params: { date } }),
+
   book: (patientId, payload) => apiClient.post(`/patients/${patientId}/appointments`, payload),
   reschedule: (appointmentId, payload) => apiClient.put(`/appointments/${appointmentId}`, payload),
+
+  // delete alias used by StaffDashboard
   cancel: (appointmentId) => apiClient.delete(`/appointments/${appointmentId}`),
+  staffCancel: (appointmentId) => apiClient.delete(`/appointments/${appointmentId}`),
+
+  // alias used by StaffDashboard for reschedule
+  staffReschedule: (appointmentId, payload) => apiClient.put(`/appointments/${appointmentId}`, payload),
+
+  // staff walk-in: payload must include patientId; post to same booking endpoint
+  staffWalkIn: (payload) =>
+    apiClient.post(`/patients/${payload.patientId}/appointments`, payload),
 };
 
 export const patientAPI = {
