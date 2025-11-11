@@ -15,7 +15,14 @@ import {
   Users,
   ActivitySquare,
 } from 'lucide-react';
-import { appointmentAPI, clinicAPI, doctorAPI, patientAPI, queueAPI, specialistAPI } from '../../services/api';
+import {
+  appointmentAPI,
+  clinicAPI,
+  doctorAPI,
+  patientAPI,
+  queueAPI,
+  specialistAPI,
+} from '../../services/api';
 import { useToast } from '../../context/useToast';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -66,10 +73,42 @@ export default function PatientDashboard({ patientId, userName }) {
           specialistAPI.getAll(),
         ]);
         const appointmentsData = apptRes.data || [];
-        setAppointments(appointmentsData);
+
+        // Mark appointments as NO_SHOW if > 3 hours past appointment time
+        const now = new Date();
+        const threeHoursInMs = 3 * 60 * 60 * 1000;
+        const updatePromises = [];
+
+        appointmentsData.forEach((appt) => {
+          if (appt.status === 'SCHEDULED') {
+            const apptTime = new Date(appt.dateTime);
+            const timeDiff = now - apptTime;
+            if (timeDiff > threeHoursInMs) {
+              // Update status to NO_SHOW in backend
+              updatePromises.push(
+                appointmentAPI.updateStatus(appt.id, 'NO_SHOW').catch((err) => {
+                  console.error(`Failed to update appointment ${appt.id} to NO_SHOW:`, err);
+                  return null;
+                })
+              );
+            }
+          }
+        });
+
+        // Wait for all status updates to complete
+        if (updatePromises.length > 0) {
+          await Promise.all(updatePromises);
+          // Re-fetch appointments to get updated statuses
+          const updatedRes = await appointmentAPI.listForPatient(patientId);
+          setAppointments(updatedRes.data || []);
+        } else {
+          setAppointments(appointmentsData);
+        }
+
         setClinics(clinicRes.data || []);
         setDoctors(doctorRes.data || []);
         setMedicalRecords(recordsRes.data || []);
+        setSpecialists(specialistRes.data || []);
 
         const checkedIn = appointmentsData.find((appt) => appt.status === 'CHECKED_IN');
 
@@ -160,11 +199,22 @@ export default function PatientDashboard({ patientId, userName }) {
           const openTime = clinic?.openTime || clinic?.open_time || '09:00:00';
           const closeTime = clinic?.closeTime || clinic?.close_time || '17:00:00';
 
-          const slots = buildSlotsFromTimes(openTime, closeTime, slotInterval, selectedDate, occupied);
+          const slots = buildSlotsFromTimes(
+            openTime,
+            closeTime,
+            slotInterval,
+            selectedDate,
+            occupied
+          );
           setTimeSlots(slots);
           if (!slots.includes(selectedSlot)) setSelectedSlot('');
         } catch (error) {
-          show(error?.userMessage || error.response?.data?.message || 'Unable to load available slots.', 'error');
+          show(
+            error?.userMessage ||
+              error.response?.data?.message ||
+              'Unable to load available slots.',
+            'error'
+          );
           setTimeSlots([]);
         } finally {
           setSlotsLoading(false);
@@ -182,7 +232,10 @@ export default function PatientDashboard({ patientId, userName }) {
       try {
         // prefer specialist schedule if available, otherwise fall back to doctor's schedule
         const specialist = specialists.find((s) => s.id === specialistId);
-        let slotInterval = specialist?.defaultSlotIntervalMinutes ?? specialist?.default_slot_interval_minutes ?? null;
+        let slotInterval =
+          specialist?.defaultSlotIntervalMinutes ??
+          specialist?.default_slot_interval_minutes ??
+          null;
         const openTime = specialist?.openTime || specialist?.open_time || '09:00:00';
         const closeTime = specialist?.closeTime || specialist?.close_time || '17:00:00';
 
@@ -193,13 +246,24 @@ export default function PatientDashboard({ patientId, userName }) {
         }
 
         const apptRes = await appointmentAPI.listForSpecialist(specialistId, selectedDate);
-        const occupied = (apptRes.data || []).map((appointment) => toLocalInputValue(appointment.dateTime));
+        const occupied = (apptRes.data || []).map((appointment) =>
+          toLocalInputValue(appointment.dateTime)
+        );
 
-        const slots = buildSlotsFromTimes(openTime, closeTime, slotInterval, selectedDate, occupied);
+        const slots = buildSlotsFromTimes(
+          openTime,
+          closeTime,
+          slotInterval,
+          selectedDate,
+          occupied
+        );
         setTimeSlots(slots);
         if (!slots.includes(selectedSlot)) setSelectedSlot('');
       } catch (error) {
-        show(error?.userMessage || error.response?.data?.message || 'Unable to load available slots.', 'error');
+        show(
+          error?.userMessage || error.response?.data?.message || 'Unable to load available slots.',
+          'error'
+        );
         setTimeSlots([]);
       } finally {
         setSlotsLoading(false);
@@ -208,7 +272,7 @@ export default function PatientDashboard({ patientId, userName }) {
 
     loadSlots();
   }, [selectedClinic, selectedDoctor, selectedDate, clinics, selectedSlot, show]);
- 
+
   // helper used above to generate available time strings
   function buildSlotsFromTimes(openTime, closeTime, slotInterval, dateStr, occupiedList) {
     const parseTime = (timeValue) => {
@@ -218,10 +282,20 @@ export default function PatientDashboard({ patientId, userName }) {
     const open = parseTime(openTime);
     const close = parseTime(closeTime);
     const slots = [];
-    const start = new Date(`${dateStr}T${String(open.hh).padStart(2, '0')}:${String(open.mm).padStart(2, '0')}:00`);
-    const end = new Date(`${dateStr}T${String(close.hh).padStart(2, '0')}:${String(close.mm).padStart(2, '0')}:00`);
-    for (let timeCursor = new Date(start); timeCursor < end; timeCursor.setMinutes(timeCursor.getMinutes() + slotInterval)) {
-      const isoLocal = new Date(timeCursor.getTime() - timeCursor.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    const start = new Date(
+      `${dateStr}T${String(open.hh).padStart(2, '0')}:${String(open.mm).padStart(2, '0')}:00`
+    );
+    const end = new Date(
+      `${dateStr}T${String(close.hh).padStart(2, '0')}:${String(close.mm).padStart(2, '0')}:00`
+    );
+    for (
+      let timeCursor = new Date(start);
+      timeCursor < end;
+      timeCursor.setMinutes(timeCursor.getMinutes() + slotInterval)
+    ) {
+      const isoLocal = new Date(timeCursor.getTime() - timeCursor.getTimezoneOffset() * 60000)
+        .toISOString()
+        .slice(0, 16);
       const timeOnly = isoLocal.slice(11, 16);
       if (!occupiedList.includes(isoLocal)) slots.push(timeOnly);
     }
@@ -333,8 +407,15 @@ export default function PatientDashboard({ patientId, userName }) {
       show('Please complete all booking details.', 'error');
       return;
     }
+
+    // Prevent booking an appointment in the past by comparing actual local datetimes
+    const combined = new Date(`${selectedDate}T${selectedSlot}:00`);
+    if (isNaN(combined.getTime()) || combined.getTime() <= Date.now()) {
+      show('Cannot book an appointment in the past.', 'error');
+      return;
+    }
+
     try {
-      const combined = new Date(`${selectedDate}T${selectedSlot}:00`);
       // send local wall time "YYYY-MM-DDTHH:mm:ss" (no timezone) so backend stores the intended local datetime
       const iso = new Date(combined.getTime() - combined.getTimezoneOffset() * 60000)
         .toISOString()
@@ -504,17 +585,33 @@ export default function PatientDashboard({ patientId, userName }) {
   }, [doctors, rescheduleClinic]);
 
   // normalize appointments for display:
-  // - mark as MISSED any appointment whose date is before today and whose status is not COMPLETED/CANCELLED
+  // - mark as NO_SHOW any scheduled appointment that is > 3 hours past appointment time
   const normalizedAppointments = useMemo(() => {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // 00:00 local today
+    const threeHoursInMs = 3 * 60 * 60 * 1000;
+
     return (appointments || []).map((appt) => {
       const copy = { ...appt };
       const apptDate = new Date(appt.dateTime);
       const statusUpper = String(appt.status || '').toUpperCase();
-      if (apptDate < todayStart && statusUpper !== 'COMPLETED' && statusUpper !== 'CANCELLED' && statusUpper !== 'MISSED') {
-        copy.status = 'MISSED';
+
+      // Check if appointment should be marked as NO_SHOW
+      // (scheduled appointment that is more than 3 hours past)
+      if (statusUpper === 'SCHEDULED') {
+        const timeDiff = now - apptDate;
+        if (timeDiff > threeHoursInMs) {
+          copy.status = 'NO_SHOW';
+          return copy;
+        }
       }
+
+      // Check if appointment should be marked as NO_SHOW
+      // (past appointment that is not completed/cancelled)
+      if (apptDate < todayStart && statusUpper !== 'COMPLETED' && statusUpper !== 'CANCELLED') {
+        copy.status = 'NO_SHOW';
+      }
+
       return copy;
     });
   }, [appointments]);
@@ -524,27 +621,27 @@ export default function PatientDashboard({ patientId, userName }) {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // 00:00 local today
     // include scheduled-like statuses for current/future appointments and exclude cancelled
-    const allowed = new Set(['SCHEDULED', 'CHECKED_IN', 'IN_SERVICE', 'MISSED']);
+    const allowed = new Set(['SCHEDULED', 'CHECKED_IN', 'IN_PROGRESS', 'NO_SHOW']);
     return normalizedAppointments
       .slice()
       .filter((appointment) => {
         const apptDate = new Date(appointment.dateTime);
         if (apptDate < todayStart) return false; // keep only today+future
         const status = String(appointment.status || '').toUpperCase();
-        return status !== 'CANCELLED' && allowed.has(status);
+        return status !== 'CANCELLED' && status !== 'NO_SHOW' && allowed.has(status);
       })
       .sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
   }, [normalizedAppointments]);
 
-  // past: include COMPLETED and MISSED, newest-first
-const pastAppointments = useMemo(() => {
+  // past: include COMPLETED and NO_SHOW, newest-first
+  const pastAppointments = useMemo(() => {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // 00:00 local today
     return normalizedAppointments
       .slice()
       .filter((appointment) => {
         const status = String(appointment.status || '').toUpperCase();
-        if (status === 'COMPLETED' || status === 'MISSED') return true;
+        if (status === 'COMPLETED' || status === 'NO_SHOW') return true;
         if (status === 'CANCELLED') {
           const apptDate = new Date(appointment.dateTime);
           return apptDate < todayStart; // only show cancelled appointments that are strictly in the past
@@ -592,7 +689,7 @@ const pastAppointments = useMemo(() => {
   const appointmentStatusStyles = {
     SCHEDULED: 'border-emerald-200 bg-emerald-50 text-emerald-700',
     CHECKED_IN: 'border-sky-200 bg-sky-50 text-sky-700',
-    IN_SERVICE: 'border-sky-200 bg-sky-50 text-sky-700',
+    IN_PROGRESS: 'border-sky-200 bg-sky-50 text-sky-700',
     COMPLETED: 'border-slate-200 bg-slate-100 text-slate-600',
     CANCELLED: 'border-rose-200 bg-rose-50 text-rose-700',
     NO_SHOW: 'border-rose-200 bg-rose-50 text-rose-700',
@@ -867,11 +964,20 @@ const pastAppointments = useMemo(() => {
                           <div>
                             <p className="text-xs uppercase tracking-wide text-slate-500">Clinic</p>
                             <p className="text-sm font-semibold text-slate-900">
-                              {getClinicName(nextAppointment.clinicId, nextAppointment.specialistId)}
+                              {getClinicName(
+                                nextAppointment.clinicId,
+                                nextAppointment.specialistId
+                              )}
                             </p>
-                            {getClinicLocation(nextAppointment.clinicId, nextAppointment.specialistId) && (
+                            {getClinicLocation(
+                              nextAppointment.clinicId,
+                              nextAppointment.specialistId
+                            ) && (
                               <p className="text-xs text-slate-500">
-                                {getClinicLocation(nextAppointment.clinicId, nextAppointment.specialistId)}
+                                {getClinicLocation(
+                                  nextAppointment.clinicId,
+                                  nextAppointment.specialistId
+                                )}
                               </p>
                             )}
                           </div>
@@ -1013,7 +1119,11 @@ const pastAppointments = useMemo(() => {
                         }}
                         required
                       >
-                        <option value="">{selectionType === 'clinic' ? 'Choose a clinic...' : 'Choose a specialist...'}</option>
+                        <option value="">
+                          {selectionType === 'clinic'
+                            ? 'Choose a clinic...'
+                            : 'Choose a specialist...'}
+                        </option>
                         {selectionType === 'clinic'
                           ? clinics.map((clinic) => (
                               <option key={clinic.id} value={clinic.id}>
@@ -1227,7 +1337,8 @@ const pastAppointments = useMemo(() => {
                             </p>
                             {getClinicLocation(appointment.clinicId, appointment.specialistId) && (
                               <p className="text-xs text-slate-500">
-                                📍 {getClinicLocation(appointment.clinicId, appointment.specialistId)}
+                                📍{' '}
+                                {getClinicLocation(appointment.clinicId, appointment.specialistId)}
                               </p>
                             )}
                           </div>
@@ -1282,7 +1393,9 @@ const pastAppointments = useMemo(() => {
                               <TableCell className="font-medium">
                                 {formatDateTime(appointment.dateTime)}
                               </TableCell>
-                              <TableCell>{getClinicName(appointment.clinicId, appointment.specialistId)}</TableCell>
+                              <TableCell>
+                                {getClinicName(appointment.clinicId, appointment.specialistId)}
+                              </TableCell>
                               <TableCell>{getDoctorName(appointment.doctorId)}</TableCell>
                               <TableCell>
                                 <Badge

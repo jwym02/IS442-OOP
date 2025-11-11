@@ -36,8 +36,7 @@ apiClient.interceptors.response.use(
         error.userMessage = pd.title || 'An error occurred';
       } else if (resp && resp.data) {
         // fallback to common patterns
-        error.userMessage =
-          resp.data.message || resp.data.title || error.message;
+        error.userMessage = resp.data.message || resp.data.title || error.message;
       } else {
         error.userMessage = error.message;
       }
@@ -56,11 +55,15 @@ export const authAPI = {
 
 export const appointmentAPI = {
   listForPatient: (patientId) => apiClient.get(`/patients/${patientId}/appointments`),
-  listForClinic: (clinicId, date) => apiClient.get(`/clinics/${clinicId}/appointments`, { params: { date } }),
-  listForSpecialist: (specialistId, date) => apiClient.get(`/specialists/${specialistId}/appointments`, { params: { date } }),
+  listForClinic: (clinicId, date) =>
+    apiClient.get(`/clinics/${clinicId}/appointments`, { params: { date } }),
+  listForSpecialist: (specialistId, date) =>
+    apiClient.get(`/specialists/${specialistId}/appointments`, { params: { date } }),
   book: (patientId, payload) => apiClient.post(`/patients/${patientId}/appointments`, payload),
   reschedule: (appointmentId, payload) => apiClient.put(`/appointments/${appointmentId}`, payload),
   cancel: (appointmentId) => apiClient.delete(`/appointments/${appointmentId}`),
+  updateStatus: (appointmentId, status) =>
+    apiClient.patch(`/appointments/${appointmentId}/status`, { status }),
 };
 
 export const patientAPI = {
@@ -116,7 +119,8 @@ export const adminAPI = {
   updateUser: (userId, payload) => apiClient.put(`/admin/users/${userId}`, payload),
   deleteUser: (userId) => apiClient.delete(`/admin/users/${userId}`),
   assignRole: (userId, role) => apiClient.post(`/admin/users/${userId}/roles`, { role }),
-  removeRole: (userId, role) => apiClient.delete(`/admin/users/${userId}/roles`, { data: { role } }),
+  removeRole: (userId, role) =>
+    apiClient.delete(`/admin/users/${userId}/roles`, { data: { role } }),
   listUsers: () => apiClient.get('/admin/users'),
 };
 

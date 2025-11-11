@@ -1,26 +1,26 @@
-import { useMemo, useState } from "react";
-import { Edit2, Shield, Trash2, Users, X } from "lucide-react";
-import { Badge } from "../../ui/badge";
-import { Button } from "../../ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../ui/card";
-import { Input } from "../../ui/input";
-import { Select } from "../../ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../ui/table";
-import Pagination from "../shared/Pagination";
-import { cn } from "../../../lib/utils";
+import { useMemo, useState } from 'react';
+import { Edit2, UserRoundCheck, Trash2, Users, X } from 'lucide-react';
+import { Badge } from '../../ui/badge';
+import { Button } from '../../ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
+import { Input } from '../../ui/input';
+import { Select } from '../../ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
+import Pagination from '../shared/Pagination';
+import { cn } from '../../../lib/utils';
 
 const PAGE_SIZE = 10;
 
 function getRoleBadgeColor(role) {
   switch (role) {
-    case "SYSTEM_ADMINISTRATOR":
-      return "border-purple-200 bg-purple-50 text-purple-700";
-    case "CLINIC_STAFF":
-      return "border-blue-200 bg-blue-50 text-blue-700";
-    case "PATIENT":
-      return "border-slate-200 bg-slate-100 text-slate-600";
+    case 'SYSTEM_ADMINISTRATOR':
+      return 'border-purple-200 bg-purple-50 text-purple-700';
+    case 'CLINIC_STAFF':
+      return 'border-blue-200 bg-blue-50 text-blue-700';
+    case 'PATIENT':
+      return 'border-slate-200 bg-slate-100 text-slate-600';
     default:
-      return "border-slate-200 bg-slate-100 text-slate-600";
+      return 'border-slate-200 bg-slate-100 text-slate-600';
   }
 }
 
@@ -35,7 +35,7 @@ export default function UsersTable({
   onAssignRole,
   onRemoveRole,
 }) {
-  const [term, setTerm] = useState("");
+  const [term, setTerm] = useState('');
   const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
@@ -80,7 +80,7 @@ export default function UsersTable({
           <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center">
             <Users className="mx-auto h-12 w-12 text-slate-400 mb-4" />
             <p className="text-sm text-slate-600">
-              {term ? "No users found matching your search" : "No users registered yet"}
+              {term ? 'No users found matching your search' : 'No users registered yet'}
             </p>
           </div>
         ) : (
@@ -100,7 +100,7 @@ export default function UsersTable({
                 <TableBody>
                   {paginated.map((user) => (
                     <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.name || "N/A"}</TableCell>
+                      <TableCell className="font-medium">{user.name || 'N/A'}</TableCell>
                       <TableCell className="text-sm text-slate-600">{user.email}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
@@ -109,9 +109,12 @@ export default function UsersTable({
                               <Badge
                                 key={idx}
                                 variant="outline"
-                                className={cn("text-xs capitalize border group relative", getRoleBadgeColor(role))}
+                                className={cn(
+                                  'text-xs capitalize border group relative',
+                                  getRoleBadgeColor(role)
+                                )}
                               >
-                                {role.replace(/_/g, " ").toLowerCase()}
+                                {role.replace(/_/g, ' ').toLowerCase()}
                                 {user.roles.length > 1 && (
                                   <button
                                     onClick={() => onRemoveRole(user.id, role)}
@@ -131,12 +134,12 @@ export default function UsersTable({
                       <TableCell className="text-sm text-slate-600">
                         {user.staffClinicId || user.doctorClinicId
                           ? getClinicName(user.staffClinicId || user.doctorClinicId)
-                          : "—"}
+                          : '—'}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
                           <Select
-                            value={roleSelections[user.id] || ""}
+                            value={roleSelections[user.id] || ''}
                             onChange={(e) => onRoleSelectionChange(user.id, e.target.value)}
                             className="text-sm w-40"
                           >
@@ -146,7 +149,7 @@ export default function UsersTable({
                             <option value="SYSTEM_ADMINISTRATOR">System Administrator</option>
                           </Select>
                           <Button size="sm" variant="outline" onClick={() => onAssignRole(user.id)}>
-                            <Shield className="h-4 w-4" />
+                            <UserRoundCheck className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>

@@ -88,6 +88,29 @@ public class AppointmentService {
         cancelAppointment(appointmentId);
     }
 
+    @Transactional
+    public AppointmentResponse updateAppointmentStatus(Long appointmentId, String statusStr) {
+        Optional<Appointment> opt = appointmentRepository.findById(appointmentId);
+        if (opt.isEmpty()) {
+            throw new IllegalArgumentException("Appointment not found");
+        }
+        
+        AppointmentStatus newStatus;
+        try {
+            newStatus = AppointmentStatus.valueOf(statusStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid status: " + statusStr + ". Valid values are: " +
+                String.join(", ", java.util.Arrays.stream(AppointmentStatus.values())
+                    .map(Enum::name)
+                    .toArray(String[]::new)));
+        }
+        
+        Appointment appointment = opt.get();
+        appointment.setStatus(newStatus);
+        Appointment updated = appointmentRepository.save(appointment);
+        return toResponse(updated);
+    }
+
     @Transactional(readOnly = true)
     public List<AppointmentResponse> getDoctorAppointments(Long doctorId, LocalDate date) {
         LocalDateTime start = date.atStartOfDay();

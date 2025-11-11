@@ -65,7 +65,6 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
   const [dateFilter, setDateFilter] = useState('all'); // all | today | week | month
   const ITEMS_PER_PAGE = 10;
 
-
   useEffect(() => {
     const loadData = async () => {
       if (!clinicId) {
@@ -234,7 +233,6 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       show(error?.userMessage || 'Unable to register walk-in.', 'error');
     }
   };
-  
 
   const handleStaffCancel = async (appointmentId) => {
     try {
@@ -302,7 +300,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
 
   const applyDateFilter = (list) => {
     if (dateFilter === 'today') {
-      return list.filter(a => {
+      return list.filter((a) => {
         const d = new Date(a.dateTime);
         return (
           d.getFullYear() === now.getFullYear() &&
@@ -315,17 +313,14 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       start.setDate(now.getDate() - now.getDay());
       const end = new Date(start);
       end.setDate(start.getDate() + 7);
-      return list.filter(a => {
+      return list.filter((a) => {
         const d = new Date(a.dateTime);
         return d >= start && d < end;
       });
     } else if (dateFilter === 'month') {
-      return list.filter(a => {
+      return list.filter((a) => {
         const d = new Date(a.dateTime);
-        return (
-          d.getFullYear() === now.getFullYear() &&
-          d.getMonth() === now.getMonth()
-        );
+        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
       });
     }
     return list;
@@ -354,7 +349,6 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
-
 
   const isSameDay = (a, b) => {
     const da = new Date(a);
@@ -451,7 +445,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
   const appointmentStatusStyles = {
     SCHEDULED: 'border-blue-200 bg-blue-50 text-blue-700',
     CHECKED_IN: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    IN_SERVICE: 'border-sky-200 bg-sky-50 text-sky-700',
+    IN_PROGRESS: 'border-sky-200 bg-sky-50 text-sky-700',
     COMPLETED: 'border-slate-200 bg-slate-100 text-slate-600',
     CANCELLED: 'border-rose-200 bg-rose-50 text-rose-700',
     NO_SHOW: 'border-orange-200 bg-orange-50 text-orange-700',
