@@ -276,7 +276,16 @@ export default function PatientDashboard({ patientId, userName }) {
     };
 
     loadSlots();
-  }, [selectedClinic, selectedDoctor, selectedDate, clinics, selectedSlot, show]);
+  }, [
+    selectedClinic,
+    selectedDoctor,
+    selectedDate,
+    clinics,
+    selectedSlot,
+    show,
+    selectionType,
+    specialists,
+  ]);
 
   // helper used above to generate available time strings
   function buildSlotsFromTimes(openTime, closeTime, slotInterval, dateStr, occupiedList) {
@@ -293,6 +302,8 @@ export default function PatientDashboard({ patientId, userName }) {
     const end = new Date(
       `${dateStr}T${String(close.hh).padStart(2, '0')}:${String(close.mm).padStart(2, '0')}:00`
     );
+    const now = new Date();
+
     for (
       let timeCursor = new Date(start);
       timeCursor < end;
@@ -302,7 +313,11 @@ export default function PatientDashboard({ patientId, userName }) {
         .toISOString()
         .slice(0, 16);
       const timeOnly = isoLocal.slice(11, 16);
-      if (!occupiedList.includes(isoLocal)) slots.push(timeOnly);
+
+      // Only include slots that are not occupied AND are in the future
+      if (!occupiedList.includes(isoLocal) && timeCursor > now) {
+        slots.push(timeOnly);
+      }
     }
     return slots;
   }
@@ -350,6 +365,8 @@ export default function PatientDashboard({ patientId, userName }) {
             close.mm
           ).padStart(2, '0')}:00`
         );
+        const now = new Date();
+
         for (
           let timeCursor = new Date(start);
           timeCursor < end;
@@ -359,7 +376,9 @@ export default function PatientDashboard({ patientId, userName }) {
             .toISOString()
             .slice(0, 16);
           const timeOnly = isoLocal.slice(11, 16);
-          if (!occupied.includes(isoLocal)) {
+
+          // Only include slots that are not occupied AND are in the future
+          if (!occupied.includes(isoLocal) && timeCursor > now) {
             slots.push(timeOnly);
           }
         }
@@ -598,7 +617,7 @@ export default function PatientDashboard({ patientId, userName }) {
     }
     // specialist mode -> filter by specialistId
     return doctors.filter((doctor) => doctor.specialistId === Number(rescheduleClinic));
-  }, [doctors, rescheduleClinic]);
+  }, [doctors, rescheduleClinic, rescheduleSelectionType]);
 
   // normalize appointments for display:
   // - mark as NO_SHOW any scheduled appointment that is > 3 hours past appointment time
@@ -852,7 +871,7 @@ export default function PatientDashboard({ patientId, userName }) {
             <div>
               <h1 className="text-2xl font-bold text-slate-900">Patient Portal</h1>
               <p className="text-sm text-slate-600 mt-1">
-                Welcome back{userName ? `, ${userName}` : ''}
+                {userName ? `Welcome back, ${userName}` : 'Welcome back'}
               </p>
             </div>
             <Button
@@ -1735,7 +1754,6 @@ export default function PatientDashboard({ patientId, userName }) {
 }
 
 // Stat Card Component
-// eslint-disable-next-line no-unused-vars
 function StatCard({ title, value, icon: Icon, color }) {
   const colorClasses = {
     blue: 'bg-blue-50 text-blue-600 border-blue-200',

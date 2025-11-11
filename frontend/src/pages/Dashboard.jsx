@@ -49,6 +49,7 @@ export default function Dashboard() {
           clinicId={clinicId}
           staffProfileId={user.staffProfileId}
           doctorProfileId={user.doctorProfileId}
+          staffName={user.name}
         />
       ),
     });
