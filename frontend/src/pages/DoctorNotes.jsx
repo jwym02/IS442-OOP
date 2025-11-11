@@ -1,33 +1,21 @@
 ﻿/* eslint-disable no-unused-vars */
-import { useContext, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import {
-  ClipboardList,
-  NotebookPen,
-  PencilLine,
-  RefreshCw,
-  ArrowLeft,
-} from "lucide-react";
-import { appointmentAPI, doctorAPI, patientAPI } from "../services/api";
-import { useToast } from "../context/useToast";
-import AuthContext from "../context/AuthContext.jsx";
-import { useAuth } from "../context/useAuth";
-import { AppShell } from "../components/layout/AppShell";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
-import { Textarea } from "../components/ui/textarea";
-import { Badge } from "../components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
+import { useContext, useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ClipboardList, NotebookPen, PencilLine, RefreshCw, ArrowLeft } from 'lucide-react';
+import { appointmentAPI, doctorAPI, patientAPI } from '../services/api';
+import { useToast } from '../context/useToast';
+import AuthContext from '../context/AuthContext.jsx';
+import { useAuth } from '../context/useAuth';
+import { AppShell } from '../components/layout/AppShell';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
+import { Badge } from '../components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
 
-const editableStatuses = ["IN_PROGRESS", "COMPLETED", "SERVED", "CALLED"];
+const editableStatuses = ['IN_PROGRESS', 'COMPLETED', 'SERVED', 'CALLED'];
 
 export default function DoctorNotes() {
   const { show } = useToast();
@@ -39,10 +27,11 @@ export default function DoctorNotes() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
-  const [notes, setNotes] = useState("");
-  const [originalNotes, setOriginalNotes] = useState("");
-  const [filterPatientId, setFilterPatientId] = useState("");
-  const [filterDate, setFilterDate] = useState("");
+  const [notes, setNotes] = useState('');
+  const [originalNotes, setOriginalNotes] = useState('');
+  const [filterPatientId, setFilterPatientId] = useState('');
+  const [filterPatientName, setFilterPatientName] = useState('');
+  const [filterDate, setFilterDate] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -60,7 +49,7 @@ export default function DoctorNotes() {
         );
         setAppointments(filtered);
       } catch (error) {
-        show("Unable to load appointments.", "error");
+        show('Unable to load appointments.', 'error');
       } finally {
         setLoading(false);
       }
@@ -74,18 +63,24 @@ export default function DoctorNotes() {
       if (filterPatientId && String(appointment.patientId) !== String(filterPatientId)) {
         return false;
       }
+      if (filterPatientName && appointment.patientName) {
+        const nameMatch = appointment.patientName
+          .toLowerCase()
+          .includes(filterPatientName.toLowerCase());
+        if (!nameMatch) return false;
+      }
       if (filterDate) {
         const appointmentDate = new Date(appointment.dateTime).toISOString().slice(0, 10);
         if (appointmentDate !== filterDate) return false;
       }
       return true;
     });
-  }, [appointments, filterPatientId, filterDate]);
+  }, [appointments, filterPatientId, filterPatientName, filterDate]);
 
   const startEdit = (appointment) => {
     setSelected(appointment);
-    setNotes("");
-    setOriginalNotes("");
+    setNotes('');
+    setOriginalNotes('');
   };
 
   useEffect(() => {
@@ -97,15 +92,15 @@ export default function DoctorNotes() {
           (record) => Number(record.appointmentId) === Number(selected.id)
         );
         if (found) {
-          setNotes(found.notes || "");
-          setOriginalNotes(found.notes || "");
+          setNotes(found.notes || '');
+          setOriginalNotes(found.notes || '');
         } else {
-          setNotes("");
-          setOriginalNotes("");
+          setNotes('');
+          setOriginalNotes('');
         }
       } catch {
-        setNotes("");
-        setOriginalNotes("");
+        setNotes('');
+        setOriginalNotes('');
       }
     };
 
@@ -115,7 +110,7 @@ export default function DoctorNotes() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!selected) {
-      show("Select an appointment first", "error");
+      show('Select an appointment first', 'error');
       return;
     }
     setSubmitting(true);
@@ -125,9 +120,9 @@ export default function DoctorNotes() {
         appointmentId: Number(selected.id),
         notes,
       });
-      show("Notes saved.", "success");
+      show('Notes saved.', 'success');
       setSelected(null);
-      setNotes("");
+      setNotes('');
       const res = await appointmentAPI.listForDoctor(doctorId);
       setAppointments(
         (res.data || []).filter((appointment) =>
@@ -135,7 +130,7 @@ export default function DoctorNotes() {
         )
       );
     } catch (error) {
-      show("Unable to save notes.", "error");
+      show('Unable to save notes.', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -152,7 +147,7 @@ export default function DoctorNotes() {
         )
       );
     } catch (error) {
-      show("Unable to refresh appointments.", "error");
+      show('Unable to refresh appointments.', 'error');
     } finally {
       setLoading(false);
     }
@@ -163,7 +158,9 @@ export default function DoctorNotes() {
       <Card className="mx-auto mt-10 max-w-xl">
         <CardHeader>
           <CardTitle>Doctor access required</CardTitle>
-          <CardDescription>Sign in with a doctor account to manage consultation notes.</CardDescription>
+          <CardDescription>
+            Sign in with a doctor account to manage consultation notes.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Button asChild>
@@ -191,7 +188,7 @@ export default function DoctorNotes() {
                   Appointments ready for notes
                 </CardTitle>
                 <CardDescription>
-                  Filter by patient or date, then select a consultation to add notes.
+                  Filter by patient ID, name, or date, then select a consultation to add notes.
                 </CardDescription>
               </div>
               <Button variant="outline" size="sm" className="gap-2" onClick={refreshList}>
@@ -213,6 +210,16 @@ export default function DoctorNotes() {
                   />
                 </div>
                 <div className="space-y-1.5">
+                  <Label htmlFor="filter-patient-name">Filter by patient name</Label>
+                  <Input
+                    id="filter-patient-name"
+                    type="text"
+                    value={filterPatientName}
+                    onChange={(event) => setFilterPatientName(event.target.value)}
+                    placeholder="e.g. John Doe"
+                  />
+                </div>
+                <div className="space-y-1.5">
                   <Label htmlFor="filter-date">Filter by date</Label>
                   <Input
                     id="filter-date"
@@ -226,10 +233,14 @@ export default function DoctorNotes() {
               {loading ? (
                 <p className="text-sm text-muted-foreground">Loading appointments...</p>
               ) : filteredAppointments.length === 0 ? (
-                <Alert variant="default" className="border border-dashed border-slate-300 bg-slate-50">
+                <Alert
+                  variant="default"
+                  className="border border-dashed border-slate-300 bg-slate-50"
+                >
                   <AlertTitle>No appointments match your filters</AlertTitle>
                   <AlertDescription>
-                    Try adjusting the patient ID or date to find the consultation you want to update.
+                    Try adjusting the patient ID, name, or date to find the consultation you want to
+                    update.
                   </AlertDescription>
                 </Alert>
               ) : (
@@ -243,9 +254,9 @@ export default function DoctorNotes() {
                         <p className="font-semibold text-slate-900">
                           {new Date(appointment.dateTime).toLocaleString()}
                         </p>
-                        <p>Patient #{appointment.patientId}</p>
+                        <p>{appointment.patientName || `Patient #${appointment.patientId}`}</p>
                         <Badge variant="secondary" className="capitalize">
-                          {String(appointment.status).replace(/_/g, " ").toLowerCase()}
+                          {String(appointment.status).replace(/_/g, ' ').toLowerCase()}
                         </Badge>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -274,8 +285,10 @@ export default function DoctorNotes() {
               </CardTitle>
               <CardDescription>
                 {selected
-                  ? `Editing appointment #${selected.id} for patient #${selected.patientId}`
-                  : "Choose an appointment to add or update notes."}
+                  ? `Editing appointment #${selected.id} for ${
+                      selected.patientName || `patient #${selected.patientId}`
+                    }`
+                  : 'Choose an appointment to add or update notes.'}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -285,7 +298,7 @@ export default function DoctorNotes() {
                     <p className="font-medium text-slate-900">
                       {new Date(selected.dateTime).toLocaleString()}
                     </p>
-                    <p>Patient #{selected.patientId}</p>
+                    <p>{selected.patientName || `Patient #${selected.patientId}`}</p>
                   </div>
 
                   <div className="space-y-2">
@@ -301,11 +314,14 @@ export default function DoctorNotes() {
                   </div>
 
                   {originalNotes && originalNotes !== notes ? (
-                    <Alert variant="default" className="border border-dashed border-slate-200 bg-slate-50">
+                    <Alert
+                      variant="default"
+                      className="border border-dashed border-slate-200 bg-slate-50"
+                    >
                       <AlertTitle>Previously recorded notes</AlertTitle>
                       <AlertDescription className="text-sm text-slate-700">
                         {originalNotes.slice(0, 300)}
-                        {originalNotes.length > 300 ? "…" : ""}
+                        {originalNotes.length > 300 ? '…' : ''}
                       </AlertDescription>
                     </Alert>
                   ) : null}
@@ -316,15 +332,19 @@ export default function DoctorNotes() {
                       className="gap-2"
                       disabled={submitting || notes === originalNotes}
                     >
-                      {submitting ? "Saving..." : notes === originalNotes ? "No changes" : "Save notes"}
+                      {submitting
+                        ? 'Saving...'
+                        : notes === originalNotes
+                        ? 'No changes'
+                        : 'Save notes'}
                     </Button>
                     <Button
                       type="button"
                       variant="outline"
                       onClick={() => {
                         setSelected(null);
-                        setNotes("");
-                        setOriginalNotes("");
+                        setNotes('');
+                        setOriginalNotes('');
                       }}
                     >
                       Cancel

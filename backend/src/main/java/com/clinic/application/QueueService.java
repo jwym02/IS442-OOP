@@ -15,6 +15,8 @@ import com.clinic.domain.enums.QueueState;
 import com.clinic.domain.enums.QueueStatus;
 import com.clinic.domain.queue.Queue;
 import com.clinic.infrastructure.persistence.AppointmentRepository;
+import com.clinic.infrastructure.persistence.DoctorProfileRepository;
+import com.clinic.infrastructure.persistence.PatientProfileRepository;
 import com.clinic.infrastructure.persistence.QueueEntryRepository;
 import com.clinic.infrastructure.persistence.QueueSessionRepository;
 import org.springframework.http.HttpStatus;
@@ -39,17 +41,23 @@ public class QueueService {
     private final QueueSessionRepository queueSessionRepository;
     private final NotificationService notificationService;
     private final MedicalRecordService medicalRecordService;
+    private final PatientProfileRepository patientProfileRepository;
+    private final DoctorProfileRepository doctorProfileRepository;
 
     public QueueService(AppointmentRepository appointmentRepository,
                         QueueEntryRepository queueEntryRepository,
                         QueueSessionRepository queueSessionRepository,
                         NotificationService notificationService,
-                        MedicalRecordService medicalRecordService) {
+                        MedicalRecordService medicalRecordService,
+                        PatientProfileRepository patientProfileRepository,
+                        DoctorProfileRepository doctorProfileRepository) {
         this.appointmentRepository = appointmentRepository;
         this.queueEntryRepository = queueEntryRepository;
         this.queueSessionRepository = queueSessionRepository;
         this.notificationService = notificationService;
         this.medicalRecordService = medicalRecordService;
+        this.patientProfileRepository = patientProfileRepository;
+        this.doctorProfileRepository = doctorProfileRepository;
     }
 
     @Transactional
@@ -318,6 +326,10 @@ public class QueueService {
                         if (appointment != null) {
                             response.setPatientId(appointment.getPatientId());
                             response.setDoctorId(appointment.getDoctorId());
+                            patientProfileRepository.findById(appointment.getPatientId())
+                                .ifPresent(profile -> response.setPatientName(profile.getFullName()));
+                            doctorProfileRepository.findById(appointment.getDoctorId())
+                                .ifPresent(profile -> response.setDoctorName(profile.getFullName()));
                         }
                     }
                     return response;

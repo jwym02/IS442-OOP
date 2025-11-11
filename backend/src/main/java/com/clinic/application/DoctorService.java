@@ -10,6 +10,7 @@ import com.clinic.domain.entity.Schedule;
 import com.clinic.infrastructure.persistence.AppointmentRepository;
 import com.clinic.infrastructure.persistence.ClinicRepository;
 import com.clinic.infrastructure.persistence.DoctorProfileRepository;
+import com.clinic.infrastructure.persistence.PatientProfileRepository;
 import com.clinic.infrastructure.persistence.ScheduleRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -30,17 +31,20 @@ public class DoctorService {
     private final ClinicRepository clinicRepository;
     private final AppointmentService appointmentService;
     private final AppointmentRepository appointmentRepository;
+    private final PatientProfileRepository patientProfileRepository;
 
     public DoctorService(ScheduleRepository scheduleRepository,
                          DoctorProfileRepository doctorProfileRepository,
                          ClinicRepository clinicRepository,
                          AppointmentService appointmentService,
-                         AppointmentRepository appointmentRepository) {
+                         AppointmentRepository appointmentRepository,
+                         PatientProfileRepository patientProfileRepository) {
         this.scheduleRepository = scheduleRepository;
         this.doctorProfileRepository = doctorProfileRepository;
         this.clinicRepository = clinicRepository;
         this.appointmentService = appointmentService;
         this.appointmentRepository = appointmentRepository;
+        this.patientProfileRepository = patientProfileRepository;
     }
 
     @Transactional(readOnly = true)
@@ -108,6 +112,9 @@ public class DoctorService {
                 response.setClinicId(appt.getClinicId());
                 response.setDateTime(appt.getDateTime());
                 response.setStatus(appt.getStatus());
+                // Fetch and set patient name
+                patientProfileRepository.findById(appt.getPatientId())
+                    .ifPresent(patient -> response.setPatientName(patient.getFullName()));
                 return response;
             })
             .collect(Collectors.toList());
