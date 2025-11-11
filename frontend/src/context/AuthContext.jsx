@@ -46,24 +46,28 @@ export const AuthProvider = ({ children }) => {
   const [activeRole, setActiveRole] = useState(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem(STORAGE_KEY);
-    const token = localStorage.getItem(TOKEN_KEY);
-    const storedRole = localStorage.getItem('activeRole');
-    if (storedUser && token) {
+    const restoreSession = async () => {
+      setLoading(true);
       try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        if (storedRole && parsedUser.roles?.includes(storedRole)) {
-          setActiveRole(storedRole);
-        } else if (parsedUser.roles?.length > 0) {
-          setActiveRole(parsedUser.roles[0]);
+        const storedUser = localStorage.getItem(STORAGE_KEY);
+        const token = localStorage.getItem(TOKEN_KEY);
+        const storedRole = localStorage.getItem('activeRole');
+        if (storedUser && token) {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+          if (storedRole && parsedUser.roles?.includes(storedRole)) {
+            setActiveRole(storedRole);
+          } else if (parsedUser.roles?.length > 0) {
+            setActiveRole(parsedUser.roles[0]);
+          }
         }
-      } catch {
-        clearSession();
+      } finally {
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    };
+    restoreSession();
   }, []);
+  
 
   const login = useCallback(async (email, password) => {
     try {

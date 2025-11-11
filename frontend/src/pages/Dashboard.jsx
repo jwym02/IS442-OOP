@@ -8,7 +8,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Card, CardContent } from '../components/ui/card';
 
 export default function Dashboard() {
-  const { user, logout, hasRole, activeRole } = useAuth();
+  const { user, loading, logout, hasRole, activeRole } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen text-muted-foreground">
+        Loading session...
+      </div>
+    );
+  }
 
   if (!user) {
     return <Navigate to="/login" replace />;
