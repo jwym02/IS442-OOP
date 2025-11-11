@@ -519,18 +519,17 @@ export default function PatientDashboard({ patientId, userName }) {
     });
   }, [appointments]);
 
-  // upcoming: only appointments strictly after today's date (i.e. from tomorrow onwards)
+  // upcoming: include appointments from today onwards (was excluding today)
   const upcomingAppointments = useMemo(() => {
     const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const tomorrowStart = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
-    // include scheduled-like statuses for future appointments and exclude cancelled
-    const allowed = new Set(['SCHEDULED', 'CHECKED_IN', 'IN_SERVICE', 'MISSED']); // MISSED shouldn't appear (filtered by date) but kept safe
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // 00:00 local today
+    // include scheduled-like statuses for current/future appointments and exclude cancelled
+    const allowed = new Set(['SCHEDULED', 'CHECKED_IN', 'IN_SERVICE', 'MISSED']);
     return normalizedAppointments
       .slice()
       .filter((appointment) => {
         const apptDate = new Date(appointment.dateTime);
-        if (apptDate < tomorrowStart) return false; // exclude today and past
+        if (apptDate < todayStart) return false; // keep only today+future
         const status = String(appointment.status || '').toUpperCase();
         return status !== 'CANCELLED' && allowed.has(status);
       })
@@ -538,12 +537,19 @@ export default function PatientDashboard({ patientId, userName }) {
   }, [normalizedAppointments]);
 
   // past: include COMPLETED and MISSED, newest-first
-  const pastAppointments = useMemo(() => {
+const pastAppointments = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // 00:00 local today
     return normalizedAppointments
       .slice()
       .filter((appointment) => {
         const status = String(appointment.status || '').toUpperCase();
-        return status === 'COMPLETED' || status === 'MISSED';
+        if (status === 'COMPLETED' || status === 'MISSED') return true;
+        if (status === 'CANCELLED') {
+          const apptDate = new Date(appointment.dateTime);
+          return apptDate < todayStart; // only show cancelled appointments that are strictly in the past
+        }
+        return false;
       })
       .sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
   }, [normalizedAppointments]);
