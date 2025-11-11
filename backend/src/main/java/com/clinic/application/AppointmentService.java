@@ -82,10 +82,6 @@ public class AppointmentService {
         return toResponse(updated);
     }
 
-    /**
-     * Called by staff flows to cancel an appointment.
-     * Kept separate in case staff-specific logic is needed later.
-     */
     @Transactional
     public void cancelAppointmentAsStaff(Long appointmentId) {
         cancelAppointment(appointmentId);
