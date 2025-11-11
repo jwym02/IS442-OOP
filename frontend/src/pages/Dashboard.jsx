@@ -39,11 +39,11 @@ export default function Dashboard() {
   if (
     (isStaff || isDoctor) &&
     clinicId &&
-    (!activeRole || activeRole === 'STAFF' || activeRole === 'DOCTOR')
+    (!activeRole || activeRole === 'CLINIC_STAFF' || activeRole === 'DOCTOR')
   ) {
     views.push({
       key: 'clinic',
-      label: isDoctor && !isStaff ? 'Doctor Workspace' : 'Clinic Operations',
+      label: isDoctor ? 'Doctor Workspace' : 'Clinic Operations',
       component: (
         <StaffDashboard
           clinicId={clinicId}

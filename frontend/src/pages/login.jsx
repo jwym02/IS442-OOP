@@ -156,6 +156,7 @@ export default function Login() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 className="pl-9"
+                placeholder="••••••••"
               />
             </div>
           </div>
@@ -190,7 +191,7 @@ export default function Login() {
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => handleDevBypass('STAFF')}
+                  onClick={() => handleDevBypass('CLINIC_STAFF')}
                   disabled={busy}
                 >
                   Staff
