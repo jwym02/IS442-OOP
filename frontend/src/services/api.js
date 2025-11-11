@@ -82,6 +82,9 @@ export const appointmentAPI = {
 
   // Optional staff cancel
   staffCancel: (appointmentId) => apiClient.delete(`/staff/appointments/${appointmentId}`),
+
+  updateStatus: (appointmentId, status) =>
+    apiClient.patch(`/appointments/${appointmentId}/status`, { status }),
 };
 
 export const patientAPI = {
