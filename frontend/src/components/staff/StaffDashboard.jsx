@@ -191,6 +191,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
     try {
       const res = await queueAPI.staffQueueStatus(clinicId);
       setQueueStatus(res.data || null);
+      console.log(queueStatus)
     } catch (error) {
       show(error?.userMessage || 'Unable to refresh queue status.', 'error');
     }
@@ -797,7 +798,13 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                       <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">
                         Queue State
                       </p>
-                      <p className="text-2xl font-bold text-slate-900">
+                      <p 
+                      className={cn(
+                        'text-2xl font-bold text-slate-900',
+                        queueStatus?.state === 'ACTIVE'
+                          ? 'text-green-700'
+                          : queueStatus?.state === 'PAUSED' ? 'text-orange-700' : 'text-slate-600'
+                      )}>
                         {queueStatus?.state || 'IDLE'}
                       </p>
                     </div>
@@ -1280,7 +1287,13 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                     <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">
                       Queue State
                     </p>
-                    <p className="text-2xl font-bold text-slate-900">
+                    <p 
+                    className={cn(
+                      'text-2xl font-bold text-slate-900',
+                      queueStatus?.state === 'ACTIVE'
+                        ? 'text-green-700'
+                        : queueStatus?.state === 'PAUSED' ? 'text-orange-700' : 'text-slate-600'
+                    )}>
                       {queueStatus?.state || 'IDLE'}
                     </p>
                   </div>
