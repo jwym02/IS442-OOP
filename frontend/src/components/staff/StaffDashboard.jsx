@@ -82,7 +82,40 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
               doctorAPI.getAll(),
               clinicAPI.getAll(),
             ]);
-          setAppointments(appointmentRes.data || []);
+
+          const appointmentsData = appointmentRes.data || [];
+
+          // Mark appointments as NO_SHOW if > 3 hours past appointment time
+          const now = new Date();
+          const threeHoursInMs = 3 * 60 * 60 * 1000;
+          const updatePromises = [];
+
+          appointmentsData.forEach((appt) => {
+            if (appt.status === 'SCHEDULED') {
+              const apptTime = new Date(appt.dateTime);
+              const timeDiff = now - apptTime;
+              if (timeDiff > threeHoursInMs) {
+                // Update status to NO_SHOW in backend
+                updatePromises.push(
+                  appointmentAPI.updateStatus(appt.id, 'NO_SHOW').catch((err) => {
+                    console.error(`Failed to update appointment ${appt.id} to NO_SHOW:`, err);
+                    return null;
+                  })
+                );
+              }
+            }
+          });
+
+          // Wait for all status updates to complete
+          if (updatePromises.length > 0) {
+            await Promise.all(updatePromises);
+            // Re-fetch appointments to get updated statuses
+            const updatedRes = await appointmentAPI.listForClinic(clinicId, null, 'upcoming');
+            setAppointments(updatedRes.data || []);
+          } else {
+            setAppointments(appointmentsData);
+          }
+
           setQueueStatus(queueRes.data || null);
           setDailyReport(reportRes.data || null);
           setQueueEntries(entriesRes.data || []);
@@ -94,7 +127,40 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
             appointmentAPI.listForDoctor(doctorProfileId),
             queueAPI.staffQueueStatus(clinicId),
           ]);
-          setAppointments(appointmentRes.data || []);
+
+          const appointmentsData = appointmentRes.data || [];
+
+          // Mark appointments as NO_SHOW if > 3 hours past appointment time
+          const now = new Date();
+          const threeHoursInMs = 3 * 60 * 60 * 1000;
+          const updatePromises = [];
+
+          appointmentsData.forEach((appt) => {
+            if (appt.status === 'SCHEDULED') {
+              const apptTime = new Date(appt.dateTime);
+              const timeDiff = now - apptTime;
+              if (timeDiff > threeHoursInMs) {
+                // Update status to NO_SHOW in backend
+                updatePromises.push(
+                  appointmentAPI.updateStatus(appt.id, 'NO_SHOW').catch((err) => {
+                    console.error(`Failed to update appointment ${appt.id} to NO_SHOW:`, err);
+                    return null;
+                  })
+                );
+              }
+            }
+          });
+
+          // Wait for all status updates to complete
+          if (updatePromises.length > 0) {
+            await Promise.all(updatePromises);
+            // Re-fetch appointments to get updated statuses
+            const updatedRes = await appointmentAPI.listForDoctor(doctorProfileId);
+            setAppointments(updatedRes.data || []);
+          } else {
+            setAppointments(appointmentsData);
+          }
+
           setQueueStatus(queueRes.data || null);
         }
       } catch (error) {
@@ -259,46 +325,48 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
 
   const handleRescheduleSubmit = async (event) => {
     event.preventDefault();
-  
+
     if (!rescheduleTarget || !rescheduleDoctorId || !rescheduleDateTime) {
       show('Please choose the new doctor and timeslot.', 'error');
       return;
     }
-  
+
     const newDate = new Date(rescheduleDateTime);
     const now = new Date();
     if (newDate < now) {
       show('You cannot reschedule to a past date/time.', 'error');
       return;
     }
-  
+
     try {
-      // 🔹 Fetch clinic hours
+      // Fetch clinic hours
       const clinicRes = await clinicAPI.getAll();
-      const currentClinic = (clinicRes.data || []).find(c => c.id === clinicId);
+      const currentClinic = (clinicRes.data || []).find((c) => c.id === clinicId);
       const openTime = currentClinic?.openTime || '09:00';
       const closeTime = currentClinic?.closeTime || '17:00';
-  
-      // 🔹 Fetch doctor schedule
+
+      // Fetch doctor schedule
       const doctorScheduleRes = await doctorAPI.getSchedule(Number(rescheduleDoctorId));
       const slotInterval = doctorScheduleRes.data?.slotIntervalMinutes || 15;
       const doctorOpen = doctorScheduleRes.data?.openTime || openTime;
       const doctorClose = doctorScheduleRes.data?.closeTime || closeTime;
-  
-      // 🔹 Parse time range and validate
+
+      // Parse time range and validate
       const [clinicOpenHour, clinicOpenMin] = openTime.split(':').map(Number);
       const [clinicCloseHour, clinicCloseMin] = closeTime.split(':').map(Number);
       const [doctorOpenHour, doctorOpenMin] = doctorOpen.split(':').map(Number);
       const [doctorCloseHour, doctorCloseMin] = doctorClose.split(':').map(Number);
-  
+
       const hour = newDate.getHours();
       const minute = newDate.getMinutes();
-  
+
       const withinClinic =
-        hour > clinicOpenHour && (hour < clinicCloseHour || (hour === clinicCloseHour && minute < clinicCloseMin));
+        hour > clinicOpenHour &&
+        (hour < clinicCloseHour || (hour === clinicCloseHour && minute < clinicCloseMin));
       const withinDoctor =
-        hour > doctorOpenHour && (hour < doctorCloseHour || (hour === doctorCloseHour && minute < doctorCloseMin));
-  
+        hour > doctorOpenHour &&
+        (hour < doctorCloseHour || (hour === doctorCloseHour && minute < doctorCloseMin));
+
       if (!withinClinic) {
         show(`Time must be within clinic hours (${openTime}–${closeTime}).`, 'error');
         return;
@@ -307,13 +375,13 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
         show(`Time must be within doctor’s hours (${doctorOpen}–${doctorClose}).`, 'error');
         return;
       }
-  
+
       const selectedDoctor = doctors.find((d) => d.id === Number(rescheduleDoctorId));
       if (!selectedDoctor || selectedDoctor.clinicId !== clinicId) {
         show('Selected doctor does not belong to this clinic.', 'error');
         return;
       }
-  
+
       const conflict = appointments.some((a) => {
         return (
           Number(a.doctorId) === Number(rescheduleDoctorId) &&
@@ -327,14 +395,14 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
         show('The selected doctor already has an appointment at this time.', 'error');
         return;
       }
-  
+
       const iso = newDate.toISOString();
       await appointmentAPI.staffReschedule(rescheduleTarget.id, {
         clinicId,
         doctorId: Number(rescheduleDoctorId),
         dateTime: iso,
       });
-  
+
       show('Appointment rescheduled.', 'success');
       cancelRescheduleForm();
       refreshAppointments();
@@ -343,8 +411,6 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       show(error?.userMessage || 'Unable to reschedule appointment.', 'error');
     }
   };
-  
-  
 
   const toLocalInputValue = (value) => {
     const date = new Date(value);
@@ -364,6 +430,29 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
   }, [doctors, filterClinic]);
 
   const now = new Date();
+
+  // Normalize appointments for display - mark as NO_SHOW if > 3 hours past appointment time
+  const normalizedAppointments = useMemo(() => {
+    const currentTime = new Date();
+    const threeHoursInMs = 3 * 60 * 60 * 1000;
+
+    return (appointments || []).map((appt) => {
+      const copy = { ...appt };
+      const apptDate = new Date(appt.dateTime);
+      const statusUpper = String(appt.status || '').toUpperCase();
+
+      // Check if appointment should be marked as NO_SHOW
+      // (scheduled appointment that is more than 3 hours past)
+      if (statusUpper === 'SCHEDULED') {
+        const timeDiff = currentTime - apptDate;
+        if (timeDiff > threeHoursInMs) {
+          copy.status = 'NO_SHOW';
+        }
+      }
+
+      return copy;
+    });
+  }, [appointments]);
 
   const applyDateFilter = (list) => {
     if (dateFilter === 'today') {
@@ -394,7 +483,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
   };
 
   const filteredAppointments = useMemo(() => {
-    let list = appointments || [];
+    let list = normalizedAppointments || [];
     if (filterClinic) {
       list = list.filter((a) => Number(a.clinicId) === Number(filterClinic));
     }
@@ -409,7 +498,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
     }
     list = applyDateFilter(list);
     return list.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
-  }, [appointments, filterClinic, filterDoctor, filterDate, dateFilter]);
+  }, [normalizedAppointments, filterClinic, filterDoctor, filterDate, dateFilter, applyDateFilter]);
 
   const totalPages = Math.ceil(filteredAppointments.length / ITEMS_PER_PAGE);
   const paginatedAppointments = filteredAppointments.slice(
@@ -432,8 +521,8 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
   );
 
   const todayAppointments = useMemo(() => {
-    return (appointments || []).filter((apt) => isSameDay(apt.dateTime, new Date()));
-  }, [appointments]);
+    return (normalizedAppointments || []).filter((apt) => isSameDay(apt.dateTime, new Date()));
+  }, [normalizedAppointments]);
 
   useEffect(() => {
     const loadWalkInSlots = async () => {
