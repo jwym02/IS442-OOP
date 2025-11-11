@@ -98,11 +98,6 @@ public class AppointmentService {
     }
 
     @Transactional
-    public void cancelAppointmentAsStaff(Long appointmentId) {
-        cancelAppointment(appointmentId);
-    }
-
-    @Transactional
     public AppointmentResponse updateAppointmentStatus(Long appointmentId, String statusStr) {
         Optional<Appointment> opt = appointmentRepository.findById(appointmentId);
         if (opt.isEmpty()) {
