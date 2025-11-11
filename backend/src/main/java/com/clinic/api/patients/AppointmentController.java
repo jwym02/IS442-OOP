@@ -2,6 +2,7 @@ package com.clinic.api.patients;
 
 import com.clinic.api.patients.dto.AppointmentRequest;
 import com.clinic.api.patients.dto.AppointmentResponse;
+import com.clinic.api.patients.dto.AppointmentStatusUpdateRequest;
 import com.clinic.application.AppointmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -82,5 +83,19 @@ public class AppointmentController {
             @PathVariable long appointmentId,
             @RequestBody @Valid AppointmentRequest request) {
         return ResponseEntity.ok(appointmentService.rescheduleAppointment(appointmentId, request));
+    }
+
+    @PatchMapping("/appointments/{appointmentId}/status")
+    @Operation(summary = "Update appointment status", description = "Update the status of an appointment (e.g., mark as NO_SHOW)")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Appointment status updated successfully",
+            content = @Content(schema = @Schema(implementation = AppointmentResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid status value"),
+        @ApiResponse(responseCode = "404", description = "Appointment not found")
+    })
+    public ResponseEntity<AppointmentResponse> updateAppointmentStatus(
+            @PathVariable Long appointmentId,
+            @RequestBody @Valid AppointmentStatusUpdateRequest request) {
+        return ResponseEntity.ok(appointmentService.updateAppointmentStatus(appointmentId, request.getStatus()));
     }
 }

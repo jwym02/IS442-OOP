@@ -65,7 +65,6 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
   const [dateFilter, setDateFilter] = useState('all'); // all | today | week | month
   const ITEMS_PER_PAGE = 10;
 
-
   useEffect(() => {
     const loadData = async () => {
       if (!clinicId) {
@@ -234,7 +233,6 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       show(error?.userMessage || 'Unable to register walk-in.', 'error');
     }
   };
-  
 
   const handleStaffCancel = async (appointmentId) => {
     try {
@@ -261,17 +259,82 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
 
   const handleRescheduleSubmit = async (event) => {
     event.preventDefault();
+  
     if (!rescheduleTarget || !rescheduleDoctorId || !rescheduleDateTime) {
       show('Please choose the new doctor and timeslot.', 'error');
       return;
     }
+  
+    const newDate = new Date(rescheduleDateTime);
+    const now = new Date();
+    if (newDate < now) {
+      show('You cannot reschedule to a past date/time.', 'error');
+      return;
+    }
+  
     try {
-      const iso = new Date(rescheduleDateTime).toISOString();
+      // 🔹 Fetch clinic hours
+      const clinicRes = await clinicAPI.getAll();
+      const currentClinic = (clinicRes.data || []).find(c => c.id === clinicId);
+      const openTime = currentClinic?.openTime || '09:00';
+      const closeTime = currentClinic?.closeTime || '17:00';
+  
+      // 🔹 Fetch doctor schedule
+      const doctorScheduleRes = await doctorAPI.getSchedule(Number(rescheduleDoctorId));
+      const slotInterval = doctorScheduleRes.data?.slotIntervalMinutes || 15;
+      const doctorOpen = doctorScheduleRes.data?.openTime || openTime;
+      const doctorClose = doctorScheduleRes.data?.closeTime || closeTime;
+  
+      // 🔹 Parse time range and validate
+      const [clinicOpenHour, clinicOpenMin] = openTime.split(':').map(Number);
+      const [clinicCloseHour, clinicCloseMin] = closeTime.split(':').map(Number);
+      const [doctorOpenHour, doctorOpenMin] = doctorOpen.split(':').map(Number);
+      const [doctorCloseHour, doctorCloseMin] = doctorClose.split(':').map(Number);
+  
+      const hour = newDate.getHours();
+      const minute = newDate.getMinutes();
+  
+      const withinClinic =
+        hour > clinicOpenHour && (hour < clinicCloseHour || (hour === clinicCloseHour && minute < clinicCloseMin));
+      const withinDoctor =
+        hour > doctorOpenHour && (hour < doctorCloseHour || (hour === doctorCloseHour && minute < doctorCloseMin));
+  
+      if (!withinClinic) {
+        show(`Time must be within clinic hours (${openTime}–${closeTime}).`, 'error');
+        return;
+      }
+      if (!withinDoctor) {
+        show(`Time must be within doctor’s hours (${doctorOpen}–${doctorClose}).`, 'error');
+        return;
+      }
+  
+      const selectedDoctor = doctors.find((d) => d.id === Number(rescheduleDoctorId));
+      if (!selectedDoctor || selectedDoctor.clinicId !== clinicId) {
+        show('Selected doctor does not belong to this clinic.', 'error');
+        return;
+      }
+  
+      const conflict = appointments.some((a) => {
+        return (
+          Number(a.doctorId) === Number(rescheduleDoctorId) &&
+          new Date(a.dateTime).getTime() === newDate.getTime() &&
+          a.id !== rescheduleTarget.id &&
+          a.status !== 'CANCELLED' &&
+          a.status !== 'COMPLETED'
+        );
+      });
+      if (conflict) {
+        show('The selected doctor already has an appointment at this time.', 'error');
+        return;
+      }
+  
+      const iso = newDate.toISOString();
       await appointmentAPI.staffReschedule(rescheduleTarget.id, {
         clinicId,
         doctorId: Number(rescheduleDoctorId),
         dateTime: iso,
       });
+  
       show('Appointment rescheduled.', 'success');
       cancelRescheduleForm();
       refreshAppointments();
@@ -280,6 +343,8 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       show(error?.userMessage || 'Unable to reschedule appointment.', 'error');
     }
   };
+  
+  
 
   const toLocalInputValue = (value) => {
     const date = new Date(value);
@@ -302,7 +367,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
 
   const applyDateFilter = (list) => {
     if (dateFilter === 'today') {
-      return list.filter(a => {
+      return list.filter((a) => {
         const d = new Date(a.dateTime);
         return (
           d.getFullYear() === now.getFullYear() &&
@@ -315,17 +380,14 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       start.setDate(now.getDate() - now.getDay());
       const end = new Date(start);
       end.setDate(start.getDate() + 7);
-      return list.filter(a => {
+      return list.filter((a) => {
         const d = new Date(a.dateTime);
         return d >= start && d < end;
       });
     } else if (dateFilter === 'month') {
-      return list.filter(a => {
+      return list.filter((a) => {
         const d = new Date(a.dateTime);
-        return (
-          d.getFullYear() === now.getFullYear() &&
-          d.getMonth() === now.getMonth()
-        );
+        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
       });
     }
     return list;
@@ -354,7 +416,6 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
-
 
   const isSameDay = (a, b) => {
     const da = new Date(a);
@@ -451,7 +512,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
   const appointmentStatusStyles = {
     SCHEDULED: 'border-blue-200 bg-blue-50 text-blue-700',
     CHECKED_IN: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    IN_SERVICE: 'border-sky-200 bg-sky-50 text-sky-700',
+    IN_PROGRESS: 'border-sky-200 bg-sky-50 text-sky-700',
     COMPLETED: 'border-slate-200 bg-slate-100 text-slate-600',
     CANCELLED: 'border-rose-200 bg-rose-50 text-rose-700',
     NO_SHOW: 'border-orange-200 bg-orange-50 text-orange-700',

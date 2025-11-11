@@ -36,8 +36,7 @@ apiClient.interceptors.response.use(
         error.userMessage = pd.title || 'An error occurred';
       } else if (resp && resp.data) {
         // fallback to common patterns
-        error.userMessage =
-          resp.data.message || resp.data.title || error.message;
+        error.userMessage = resp.data.message || resp.data.title || error.message;
       } else {
         error.userMessage = error.message;
       }
@@ -57,7 +56,6 @@ export const authAPI = {
 export const appointmentAPI = {
   listForPatient: (patientId) => apiClient.get(`/patients/${patientId}/appointments`),
 
-  // accept optional (clinicId, date, when). If when === 'upcoming' call without date param.
   listForClinic: (clinicId, date, when) =>
     when === 'upcoming'
       ? apiClient.get(`/clinics/${clinicId}/appointments`)
@@ -66,23 +64,27 @@ export const appointmentAPI = {
   listForSpecialist: (specialistId, date) =>
     apiClient.get(`/specialists/${specialistId}/appointments`, { params: { date } }),
 
-  // list appointments for a doctor (used by StaffDashboard)
   listForDoctor: (doctorId, date) =>
     apiClient.get(`/doctors/${doctorId}/appointments`, { params: { date } }),
 
+  // Book/cancel
   book: (patientId, payload) => apiClient.post(`/patients/${patientId}/appointments`, payload),
-  reschedule: (appointmentId, payload) => apiClient.put(`/appointments/${appointmentId}`, payload),
-
-  // delete alias used by StaffDashboard
   cancel: (appointmentId) => apiClient.delete(`/appointments/${appointmentId}`),
-  staffCancel: (appointmentId) => apiClient.delete(`/appointments/${appointmentId}`),
 
-  // alias used by StaffDashboard for reschedule
-  staffReschedule: (appointmentId, payload) => apiClient.put(`/appointments/${appointmentId}`, payload),
+  reschedule: (appointmentId, payload) =>
+    apiClient.patch(`/staff/appointments/${appointmentId}/reschedule`, payload),
 
-  // staff walk-in: payload must include patientId; post to same booking endpoint
-  staffWalkIn: (payload) =>
-    apiClient.post(`/patients/${payload.patientId}/appointments`, payload),
+  staffReschedule: (appointmentId, payload) =>
+    apiClient.patch(`/staff/appointments/${appointmentId}/reschedule`, payload),
+
+  // Staff walk-in
+  staffWalkIn: (payload) => apiClient.post(`/staff/appointments/walk-in`, payload),
+
+  // Optional staff cancel
+  staffCancel: (appointmentId) => apiClient.delete(`/staff/appointments/${appointmentId}`),
+
+  updateStatus: (appointmentId, status) =>
+    apiClient.patch(`/appointments/${appointmentId}/status`, { status }),
 };
 
 export const patientAPI = {
@@ -138,7 +140,8 @@ export const adminAPI = {
   updateUser: (userId, payload) => apiClient.put(`/admin/users/${userId}`, payload),
   deleteUser: (userId) => apiClient.delete(`/admin/users/${userId}`),
   assignRole: (userId, role) => apiClient.post(`/admin/users/${userId}/roles`, { role }),
-  removeRole: (userId, role) => apiClient.delete(`/admin/users/${userId}/roles`, { data: { role } }),
+  removeRole: (userId, role) =>
+    apiClient.delete(`/admin/users/${userId}/roles`, { data: { role } }),
   listUsers: () => apiClient.get('/admin/users'),
 };
 
