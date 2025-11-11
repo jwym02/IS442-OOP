@@ -55,15 +55,33 @@ export const authAPI = {
 
 export const appointmentAPI = {
   listForPatient: (patientId) => apiClient.get(`/patients/${patientId}/appointments`),
-  listForClinic: (clinicId, date) =>
-    apiClient.get(`/clinics/${clinicId}/appointments`, { params: { date } }),
+
+  listForClinic: (clinicId, date, when) =>
+    when === 'upcoming'
+      ? apiClient.get(`/clinics/${clinicId}/appointments`)
+      : apiClient.get(`/clinics/${clinicId}/appointments`, { params: { date } }),
+
   listForSpecialist: (specialistId, date) =>
     apiClient.get(`/specialists/${specialistId}/appointments`, { params: { date } }),
+
+  listForDoctor: (doctorId, date) =>
+    apiClient.get(`/doctors/${doctorId}/appointments`, { params: { date } }),
+
+  // Book/cancel
   book: (patientId, payload) => apiClient.post(`/patients/${patientId}/appointments`, payload),
-  reschedule: (appointmentId, payload) => apiClient.put(`/appointments/${appointmentId}`, payload),
   cancel: (appointmentId) => apiClient.delete(`/appointments/${appointmentId}`),
-  updateStatus: (appointmentId, status) =>
-    apiClient.patch(`/appointments/${appointmentId}/status`, { status }),
+
+  reschedule: (appointmentId, payload) =>
+    apiClient.patch(`/staff/appointments/${appointmentId}/reschedule`, payload),
+
+  staffReschedule: (appointmentId, payload) =>
+    apiClient.patch(`/staff/appointments/${appointmentId}/reschedule`, payload),
+
+  // Staff walk-in
+  staffWalkIn: (payload) => apiClient.post(`/staff/appointments/walk-in`, payload),
+
+  // Optional staff cancel
+  staffCancel: (appointmentId) => apiClient.delete(`/staff/appointments/${appointmentId}`),
 };
 
 export const patientAPI = {

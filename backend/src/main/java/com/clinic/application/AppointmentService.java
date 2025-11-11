@@ -10,9 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.*;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Objects;
@@ -24,17 +21,28 @@ public class AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final SpecialistRepository specialistRepository;
 
+    // sentinel clinic id used for "specialist / external - no clinic"
+    private static final Long SPECIALIST_ONLY_CLINIC_ID = 99999L;
+
     public AppointmentService(AppointmentRepository appointmentRepository,
-                              SpecialistRepository specialistRepository) {
+            SpecialistRepository specialistRepository) {
         this.appointmentRepository = appointmentRepository;
         this.specialistRepository = specialistRepository;
     }
 
     @Transactional
     public AppointmentResponse bookAppointment(Long patientId, AppointmentRequest req) {
+        LocalDateTime appointmentTime = parseToLocalDateTime(req.getDateTime());
+
+        // Validate that appointment is not in the past
+        if (appointmentTime.isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Cannot book appointments in the past");
+        }
+
         Appointment a = new Appointment();
         a.setPatientId(patientId);
-        // If booking a specialist appointment, attach specialistId and leave clinicId null
+        // If booking a specialist appointment, attach specialistId and leave clinicId
+        // null
         if (req.getSpecialistId() != null) {
             a.setSpecialistId(req.getSpecialistId());
             a.setClinicId(null);
@@ -42,9 +50,7 @@ public class AppointmentService {
             a.setClinicId(req.getClinicId());
         }
         a.setDoctorId(req.getDoctorId());
-        // parse date/time from request (assume ISO local or offset formats)
-        a.setDateTime(parseToLocalDateTime(req.getDateTime()));
-        // ensure status is set for new appointments to avoid DB NOT NULL constraint
+        a.setDateTime(appointmentTime);
         a.setStatus(AppointmentStatus.SCHEDULED);
         // persist
         Appointment saved = appointmentRepository.save(a);
@@ -60,7 +66,7 @@ public class AppointmentService {
         Appointment a = opt.get();
         if (req.getSpecialistId() != null) {
             a.setSpecialistId(req.getSpecialistId());
-            a.setClinicId(null);
+            a.setClinicId(SPECIALIST_ONLY_CLINIC_ID);
         } else {
             a.setClinicId(req.getClinicId());
             a.setSpecialistId(null);
@@ -71,6 +77,15 @@ public class AppointmentService {
         return toResponse(updated);
     }
 
+    /**
+     * Called by staff flows to cancel an appointment.
+     * Kept separate in case staff-specific logic is needed later.
+     */
+    @Transactional
+    public void cancelAppointmentAsStaff(Long appointmentId) {
+        cancelAppointment(appointmentId);
+    }
+
     @Transactional
     public void cancelAppointment(Long appointmentId) {
         var opt = appointmentRepository.findById(appointmentId);
@@ -78,7 +93,6 @@ public class AppointmentService {
             throw new IllegalArgumentException("Appointment not found");
         }
         Appointment appointment = opt.get();
-        // mark as cancelled and persist
         appointment.setStatus(AppointmentStatus.CANCELLED);
         appointmentRepository.save(appointment);
     }
@@ -116,13 +130,13 @@ public class AppointmentService {
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = start.plusDays(1);
         return appointmentRepository.findAll().stream()
-            .filter(a -> a.getDoctorId() != null && a.getDoctorId().equals(doctorId))
-            .filter(a -> {
-                LocalDateTime dt = a.getDateTime();
-                return dt != null && (!dt.isBefore(start) && dt.isBefore(end));
-            })
-            .map(this::toResponse)
-            .collect(Collectors.toList());
+                .filter(a -> a.getDoctorId() != null && a.getDoctorId().equals(doctorId))
+                .filter(a -> {
+                    LocalDateTime dt = a.getDateTime();
+                    return dt != null && (!dt.isBefore(start) && dt.isBefore(end));
+                })
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -130,26 +144,26 @@ public class AppointmentService {
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = start.plusDays(1);
         return appointmentRepository.findAll().stream()
-            .filter(a -> a.getClinicId() != null && a.getClinicId().equals(clinicId))
-            .filter(a -> {
-                LocalDateTime dt = a.getDateTime();
-                return dt != null && (!dt.isBefore(start) && dt.isBefore(end));
-            })
-            .map(this::toResponse)
-            .collect(Collectors.toList());
+                .filter(a -> a.getClinicId() != null && a.getClinicId().equals(clinicId))
+                .filter(a -> {
+                    LocalDateTime dt = a.getDateTime();
+                    return dt != null && (!dt.isBefore(start) && dt.isBefore(end));
+                })
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<AppointmentResponse> getUpcomingClinicAppointments(Long clinicId) {
         LocalDateTime now = LocalDateTime.now();
         return appointmentRepository.findAll().stream()
-            .filter(a -> a.getClinicId() != null && a.getClinicId().equals(clinicId))
-            .filter(a -> {
-                LocalDateTime dt = a.getDateTime();
-                return dt != null && dt.isAfter(now);
-            })
-            .map(this::toResponse)
-            .collect(Collectors.toList());
+                .filter(a -> a.getClinicId() != null && a.getClinicId().equals(clinicId))
+                .filter(a -> {
+                    LocalDateTime dt = a.getDateTime();
+                    return dt != null && dt.isAfter(now);
+                })
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -157,13 +171,32 @@ public class AppointmentService {
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = start.plusDays(1);
         return appointmentRepository.findAll().stream()
-            .filter(a -> a.getSpecialistId() != null && a.getSpecialistId().equals(specialistId))
-            .filter(a -> {
-                LocalDateTime dt = a.getDateTime();
-                return dt != null && (!dt.isBefore(start) && dt.isBefore(end));
-            })
-            .map(this::toResponse)
-            .collect(Collectors.toList());
+                .filter(a -> a.getSpecialistId() != null && a.getSpecialistId().equals(specialistId))
+                .filter(a -> {
+                    LocalDateTime dt = a.getDateTime();
+                    return dt != null && (!dt.isBefore(start) && dt.isBefore(end));
+                })
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<AppointmentResponse> listForSpecialist(Long specialistId, String when) {
+        LocalDateTime now = LocalDateTime.now();
+        List<Appointment> appts = appointmentRepository.findBySpecialistId(specialistId);
+        if ("upcoming".equalsIgnoreCase(when)) {
+            return appts.stream()
+                    .filter(a -> a.getDateTime() != null && a.getDateTime().isAfter(now))
+                    .map(this::toResponse)
+                    .collect(Collectors.toList());
+        } else if ("past".equalsIgnoreCase(when)) {
+            return appts.stream()
+                    .filter(a -> a.getDateTime() != null && a.getDateTime().isBefore(now))
+                    .map(this::toResponse)
+                    .collect(Collectors.toList());
+        } else {
+            return appts.stream().map(this::toResponse).collect(Collectors.toList());
+        }
     }
 
     @Transactional(readOnly = true)
@@ -171,24 +204,32 @@ public class AppointmentService {
         LocalDateTime start = startDate != null ? startDate.atStartOfDay() : LocalDateTime.MIN;
         LocalDateTime end = endDate != null ? endDate.plusDays(1).atStartOfDay() : LocalDateTime.MAX;
         return appointmentRepository.findAll().stream()
-            .filter(a -> a.getPatientId() != null && a.getPatientId().equals(patientId))
-            .filter(a -> {
-                LocalDateTime dt = a.getDateTime();
-                return dt != null && (!dt.isBefore(start) && dt.isBefore(end));
-            })
-            .map(this::toResponse)
-            .collect(Collectors.toList());
+                .filter(a -> a.getPatientId() != null && a.getPatientId().equals(patientId))
+                .filter(a -> {
+                    LocalDateTime dt = a.getDateTime();
+                    return dt != null && (!dt.isBefore(start) && dt.isBefore(end));
+                })
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     /**
      * Return appointments for a clinic (no date filter).
-     * Simple implementation that fetches all appointments and filters in-memory.
-     * This avoids adding repository methods and is safe for the small dataset used by the app.
      */
     public List<AppointmentResponse> listForClinic(Long clinicId) {
         return appointmentRepository.findAll().stream()
                 .filter(a -> Objects.equals(a.getClinicId(), clinicId))
-                .sorted((a, b) -> a.getDateTime().compareTo(b.getDateTime()))
+                .sorted((a, b) -> {
+                    LocalDateTime adt = a.getDateTime();
+                    LocalDateTime bdt = b.getDateTime();
+                    if (adt == null && bdt == null)
+                        return 0;
+                    if (adt == null)
+                        return 1;
+                    if (bdt == null)
+                        return -1;
+                    return adt.compareTo(bdt);
+                })
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
@@ -212,33 +253,35 @@ public class AppointmentService {
                 .collect(Collectors.toList());
     }
 
-    // map entity -> DTO
     private AppointmentResponse toResponse(Appointment a) {
         AppointmentResponse r = new AppointmentResponse();
         r.setId(a.getId());
-        r.setClinicId(a.getClinicId());
+        Long clinicId = a.getClinicId();
+        r.setClinicId(clinicId != null && clinicId.equals(SPECIALIST_ONLY_CLINIC_ID) ? null : clinicId);
         r.setSpecialistId(a.getSpecialistId());
         r.setDoctorId(a.getDoctorId());
         r.setPatientId(a.getPatientId());
-        // keep the LocalDateTime object (AppointmentResponse.dateTime is LocalDateTime)
         r.setDateTime(a.getDateTime());
-        r.setStatus(a.getStatus() != null ? a.getStatus().name() : null);
+        try {
+            Object status = a.getStatus();
+            r.setStatus(status != null ? status.toString() : null);
+        } catch (Throwable ignored) {
+            r.setStatus(null);
+        }
         return r;
     }
 
     private LocalDateTime parseToLocalDateTime(Object value) {
-        if (value == null) return null;
+        if (value == null)
+            return null;
         String s = value.toString();
         try {
-            // If string contains 'Z' or explicit offset, parse as OffsetDateTime then convert to system zone
             if (s.endsWith("Z") || s.matches(".*[+-]\\d{2}:?\\d{2}$")) {
                 OffsetDateTime odt = OffsetDateTime.parse(s);
                 return odt.atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime();
             }
-            // otherwise treat as plain local datetime (YYYY-MM-DDTHH:mm:ss)
             return LocalDateTime.parse(s);
         } catch (DateTimeParseException e) {
-            // fallback: try parsing OffsetDateTime more leniently
             try {
                 OffsetDateTime odt = OffsetDateTime.parse(s);
                 return odt.atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime();
@@ -248,7 +291,3 @@ public class AppointmentService {
         }
     }
 }
-
-
-
-
