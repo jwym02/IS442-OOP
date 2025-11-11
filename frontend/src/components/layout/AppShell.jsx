@@ -1,16 +1,17 @@
 import { Stethoscope, LogOut } from 'lucide-react';
+import { useAuth } from '../../context/useAuth'; 
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 
 const roleLabels = {
   PATIENT: 'Patient',
-  STAFF: 'Clinic Staff',
+  CLINIC_STAFF: 'Clinic Staff',
   DOCTOR: 'Doctor',
   SYSTEM_ADMINISTRATOR: 'System Admin',
 };
 
 export function AppShell({ user, onLogout, children }) {
-  const roles = Array.isArray(user?.roles) ? user.roles : [];
+  const activeRole = localStorage.getItem("activeRole")
   const displayName = user?.name || user?.email || 'Signed in user';
 
   return (
@@ -37,13 +38,11 @@ export function AppShell({ user, onLogout, children }) {
               ) : null}
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              {roles
-                .filter((role) => role in roleLabels)
-                .map((role) => (
-                  <Badge key={role} variant="secondary">
-                    {roleLabels[role]}
+              {activeRole && roleLabels[activeRole] && (
+                  <Badge variant="secondary">
+                    {roleLabels[activeRole]}
                   </Badge>
-                ))}
+                )}
               <Button
                 type="button"
                 variant="outline"

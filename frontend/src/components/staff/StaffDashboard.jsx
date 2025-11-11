@@ -58,7 +58,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
   const [filterDate, setFilterDate] = useState('');
 
   const isStaff = Boolean(staffProfileId);
-  const isDoctor = Boolean(doctorProfileId) && !isStaff;
+  const isDoctor = Boolean(doctorProfileId)
 
   // Appointments tab
   const [currentPage, setCurrentPage] = useState(1);

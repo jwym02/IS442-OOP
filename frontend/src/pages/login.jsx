@@ -190,7 +190,7 @@ export default function Login() {
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => handleDevBypass('STAFF')}
+                  onClick={() => handleDevBypass('CLINIC_STAFF')}
                   disabled={busy}
                 >
                   Staff
