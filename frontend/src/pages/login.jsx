@@ -156,6 +156,7 @@ export default function Login() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 className="pl-9"
+                placeholder="••••••••"
               />
             </div>
           </div>
