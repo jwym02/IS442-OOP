@@ -67,7 +67,6 @@ export const AuthProvider = ({ children }) => {
     };
     restoreSession();
   }, []);
-  
 
   const login = useCallback(async (email, password) => {
     try {
@@ -122,20 +121,63 @@ export const AuthProvider = ({ children }) => {
   // Bypass real auth and create a fake session
   const devBypassLogin = useCallback(async (role = 'PATIENT') => {
     const normalizedRole = role === 'ADMIN' ? 'SYSTEM_ADMINISTRATOR' : role;
+
+    // Map to real user profiles from seed data (all from Clinic 1 - Evergreen Family Clinic)
+    const profileMap = {
+      PATIENT: {
+        userId: 1,
+        email: 'peter.patient@example.com',
+        name: 'Peter Patient',
+        patientProfileId: 1,
+        staffProfileId: null,
+        doctorProfileId: null,
+        adminProfileId: null,
+        staffClinicId: null,
+        doctorClinicId: null,
+      },
+      CLINIC_STAFF: {
+        userId: 2,
+        email: 'sam.staff@evergreen.clinic',
+        name: 'Sam Staff',
+        patientProfileId: null,
+        staffProfileId: 1,
+        doctorProfileId: null,
+        adminProfileId: null,
+        staffClinicId: 1,
+        doctorClinicId: null,
+      },
+      DOCTOR: {
+        userId: 3,
+        email: 'd.tan@evergreen.clinic',
+        name: 'Dr. David Tan',
+        patientProfileId: null,
+        staffProfileId: null,
+        doctorProfileId: 1,
+        adminProfileId: null,
+        staffClinicId: null,
+        doctorClinicId: 1,
+      },
+      SYSTEM_ADMINISTRATOR: {
+        userId: 4,
+        email: 'alice.admin@demo.clinic',
+        name: 'Alice Admin',
+        patientProfileId: null,
+        staffProfileId: null,
+        doctorProfileId: null,
+        adminProfileId: 1,
+        staffClinicId: null,
+        doctorClinicId: null,
+      },
+    };
+
+    const userProfile = profileMap[normalizedRole];
+
     const fake = {
       token: `dev-token-${Date.now()}`,
       refreshToken: `dev-refresh-${Date.now()}`,
       user: {
-        userId: 1,
-        email: `${normalizedRole.toLowerCase()}.1@example.com`,
-        name: `${normalizedRole} 1`,
+        ...userProfile,
         roles: [normalizedRole],
-        patientProfileId: normalizedRole === 'PATIENT' ? 1 : null,
-        staffProfileId: normalizedRole === 'CLINIC_STAFF' ? 1 : null,
-        doctorProfileId: normalizedRole === 'DOCTOR' ? 1 : null,
-        adminProfileId: normalizedRole === 'SYSTEM_ADMINISTRATOR' ? 1 : null,
-        staffClinicId: normalizedRole === 'CLINIC_STAFF' ? 1 : null,
-        doctorClinicId: normalizedRole === 'DOCTOR' ? 1 : null,
       },
     };
     persistSession(fake);
