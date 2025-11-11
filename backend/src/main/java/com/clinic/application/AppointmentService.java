@@ -25,25 +25,34 @@ public class AppointmentService {
     private static final Long SPECIALIST_ONLY_CLINIC_ID = 99999L;
 
     public AppointmentService(AppointmentRepository appointmentRepository,
-                              SpecialistRepository specialistRepository) {
+            SpecialistRepository specialistRepository) {
         this.appointmentRepository = appointmentRepository;
         this.specialistRepository = specialistRepository;
     }
 
     @Transactional
     public AppointmentResponse bookAppointment(Long patientId, AppointmentRequest req) {
+        LocalDateTime appointmentTime = parseToLocalDateTime(req.getDateTime());
+
+        // Validate that appointment is not in the past
+        if (appointmentTime.isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Cannot book appointments in the past");
+        }
+
         Appointment a = new Appointment();
         a.setPatientId(patientId);
+        // If booking a specialist appointment, attach specialistId and leave clinicId
+        // null
         if (req.getSpecialistId() != null) {
             a.setSpecialistId(req.getSpecialistId());
-            a.setClinicId(SPECIALIST_ONLY_CLINIC_ID);
+            a.setClinicId(null);
         } else {
             a.setClinicId(req.getClinicId());
-            a.setSpecialistId(null);
         }
         a.setDoctorId(req.getDoctorId());
-        a.setDateTime(parseToLocalDateTime(req.getDateTime()));
+        a.setDateTime(appointmentTime);
         a.setStatus(AppointmentStatus.SCHEDULED);
+        // persist
         Appointment saved = appointmentRepository.save(a);
         return toResponse(saved);
     }
@@ -67,8 +76,6 @@ public class AppointmentService {
         Appointment updated = appointmentRepository.save(a);
         return toResponse(updated);
     }
-
-
 
     /**
      * Called by staff flows to cancel an appointment.
@@ -95,13 +102,13 @@ public class AppointmentService {
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = start.plusDays(1);
         return appointmentRepository.findAll().stream()
-            .filter(a -> a.getDoctorId() != null && a.getDoctorId().equals(doctorId))
-            .filter(a -> {
-                LocalDateTime dt = a.getDateTime();
-                return dt != null && (!dt.isBefore(start) && dt.isBefore(end));
-            })
-            .map(this::toResponse)
-            .collect(Collectors.toList());
+                .filter(a -> a.getDoctorId() != null && a.getDoctorId().equals(doctorId))
+                .filter(a -> {
+                    LocalDateTime dt = a.getDateTime();
+                    return dt != null && (!dt.isBefore(start) && dt.isBefore(end));
+                })
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -109,26 +116,26 @@ public class AppointmentService {
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = start.plusDays(1);
         return appointmentRepository.findAll().stream()
-            .filter(a -> a.getClinicId() != null && a.getClinicId().equals(clinicId))
-            .filter(a -> {
-                LocalDateTime dt = a.getDateTime();
-                return dt != null && (!dt.isBefore(start) && dt.isBefore(end));
-            })
-            .map(this::toResponse)
-            .collect(Collectors.toList());
+                .filter(a -> a.getClinicId() != null && a.getClinicId().equals(clinicId))
+                .filter(a -> {
+                    LocalDateTime dt = a.getDateTime();
+                    return dt != null && (!dt.isBefore(start) && dt.isBefore(end));
+                })
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<AppointmentResponse> getUpcomingClinicAppointments(Long clinicId) {
         LocalDateTime now = LocalDateTime.now();
         return appointmentRepository.findAll().stream()
-            .filter(a -> a.getClinicId() != null && a.getClinicId().equals(clinicId))
-            .filter(a -> {
-                LocalDateTime dt = a.getDateTime();
-                return dt != null && dt.isAfter(now);
-            })
-            .map(this::toResponse)
-            .collect(Collectors.toList());
+                .filter(a -> a.getClinicId() != null && a.getClinicId().equals(clinicId))
+                .filter(a -> {
+                    LocalDateTime dt = a.getDateTime();
+                    return dt != null && dt.isAfter(now);
+                })
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -136,13 +143,13 @@ public class AppointmentService {
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = start.plusDays(1);
         return appointmentRepository.findAll().stream()
-            .filter(a -> a.getSpecialistId() != null && a.getSpecialistId().equals(specialistId))
-            .filter(a -> {
-                LocalDateTime dt = a.getDateTime();
-                return dt != null && (!dt.isBefore(start) && dt.isBefore(end));
-            })
-            .map(this::toResponse)
-            .collect(Collectors.toList());
+                .filter(a -> a.getSpecialistId() != null && a.getSpecialistId().equals(specialistId))
+                .filter(a -> {
+                    LocalDateTime dt = a.getDateTime();
+                    return dt != null && (!dt.isBefore(start) && dt.isBefore(end));
+                })
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -169,13 +176,13 @@ public class AppointmentService {
         LocalDateTime start = startDate != null ? startDate.atStartOfDay() : LocalDateTime.MIN;
         LocalDateTime end = endDate != null ? endDate.plusDays(1).atStartOfDay() : LocalDateTime.MAX;
         return appointmentRepository.findAll().stream()
-            .filter(a -> a.getPatientId() != null && a.getPatientId().equals(patientId))
-            .filter(a -> {
-                LocalDateTime dt = a.getDateTime();
-                return dt != null && (!dt.isBefore(start) && dt.isBefore(end));
-            })
-            .map(this::toResponse)
-            .collect(Collectors.toList());
+                .filter(a -> a.getPatientId() != null && a.getPatientId().equals(patientId))
+                .filter(a -> {
+                    LocalDateTime dt = a.getDateTime();
+                    return dt != null && (!dt.isBefore(start) && dt.isBefore(end));
+                })
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -187,9 +194,12 @@ public class AppointmentService {
                 .sorted((a, b) -> {
                     LocalDateTime adt = a.getDateTime();
                     LocalDateTime bdt = b.getDateTime();
-                    if (adt == null && bdt == null) return 0;
-                    if (adt == null) return 1;
-                    if (bdt == null) return -1;
+                    if (adt == null && bdt == null)
+                        return 0;
+                    if (adt == null)
+                        return 1;
+                    if (bdt == null)
+                        return -1;
                     return adt.compareTo(bdt);
                 })
                 .map(this::toResponse)
@@ -234,7 +244,8 @@ public class AppointmentService {
     }
 
     private LocalDateTime parseToLocalDateTime(Object value) {
-        if (value == null) return null;
+        if (value == null)
+            return null;
         String s = value.toString();
         try {
             if (s.endsWith("Z") || s.matches(".*[+-]\\d{2}:?\\d{2}$")) {
@@ -252,7 +263,3 @@ public class AppointmentService {
         }
     }
 }
-
-
-
-
