@@ -13,6 +13,7 @@ INSERT INTO roles (name)
 VALUES ('PATIENT'), ('CLINIC_STAFF'), ('SYSTEM_ADMINISTRATOR')
 ON DUPLICATE KEY UPDATE name = VALUES(name);
 
+-- Initial 3 test clinics
 INSERT INTO clinics (id, name, address, open_time, close_time, default_slot_interval_minutes)
 VALUES
   (1, 'Evergreen Family Clinic', '123 Evergreen Ave, #01-01, Singapore', '09:00:00', '17:30:00', 15),
@@ -74,13 +75,47 @@ JOIN (
 WHERE r.name = 'PATIENT';
 
 -- Profiles
-INSERT INTO patient_profiles (user_id)
-SELECT u.id FROM users u
-WHERE u.id IN (
-  UNHEX(REPLACE('d0000000-0000-0000-0000-000000000001','-','')), UNHEX(REPLACE('d0000000-0000-0000-0000-000000000002','-','')),
-  UNHEX(REPLACE('d0000000-0000-0000-0000-000000000003','-','')), UNHEX(REPLACE('d0000000-0000-0000-0000-000000000004','-','')),
-  UNHEX(REPLACE('d0000000-0000-0000-0000-000000000005','-','')), UNHEX(REPLACE('d0000000-0000-0000-0000-000000000006','-',''))
-) AND NOT EXISTS (SELECT 1 FROM patient_profiles p WHERE p.user_id = u.id);
+INSERT INTO admin_profiles (user_id, full_name)
+SELECT u.id, u.full_name
+FROM users u
+WHERE u.email = 'alice.admin@demo.clinic'
+AND NOT EXISTS (SELECT 1 FROM admin_profiles a WHERE a.user_id = u.id);
+
+INSERT INTO patient_profiles (user_id, full_name, birth_date)
+SELECT u.id, u.full_name, '1990-01-15'
+FROM users u
+WHERE u.email = 'peter.patient@example.com'
+AND NOT EXISTS (SELECT 1 FROM patient_profiles p WHERE p.user_id = u.id);
+
+INSERT INTO patient_profiles (user_id, full_name, birth_date)
+SELECT u.id, u.full_name, '1992-03-22'
+FROM users u
+WHERE u.email = 'jiaying.patient@example.com'
+AND NOT EXISTS (SELECT 1 FROM patient_profiles p WHERE p.user_id = u.id);
+
+INSERT INTO patient_profiles (user_id, full_name, birth_date)
+SELECT u.id, u.full_name, '1988-07-10'
+FROM users u
+WHERE u.email = 'rahul.patient@example.com'
+AND NOT EXISTS (SELECT 1 FROM patient_profiles p WHERE p.user_id = u.id);
+
+INSERT INTO patient_profiles (user_id, full_name, birth_date)
+SELECT u.id, u.full_name, '1995-11-05'
+FROM users u
+WHERE u.email = 'siti.patient@example.com'
+AND NOT EXISTS (SELECT 1 FROM patient_profiles p WHERE p.user_id = u.id);
+
+INSERT INTO patient_profiles (user_id, full_name, birth_date)
+SELECT u.id, u.full_name, '1985-09-18'
+FROM users u
+WHERE u.email = 'marcus.patient@example.com'
+AND NOT EXISTS (SELECT 1 FROM patient_profiles p WHERE p.user_id = u.id);
+
+INSERT INTO patient_profiles (user_id, full_name, birth_date)
+SELECT u.id, u.full_name, '1993-12-25'
+FROM users u
+WHERE u.email = 'chloe.patient@example.com'
+AND NOT EXISTS (SELECT 1 FROM patient_profiles p WHERE p.user_id = u.id);
 
 INSERT INTO clinic_staff_profiles (user_id, clinic_id, full_name)
 SELECT u.id, c.id, u.full_name
@@ -275,21 +310,21 @@ AND NOT EXISTS (
 
 -- Notifications
 INSERT INTO notifications (user_id, type, message, created_at)
-SELECT UNHEX(REPLACE('d0000000-0000-0000-0000-000000000001','-','')), 'EMAIL', 'Your appointment is confirmed for 21 Oct 2025, 9:15 AM.', '2025-10-19 09:00:00'
+SELECT UNHEX(REPLACE('d0000000-0000-0000-0000-000000000001','-','')), 'APPT_CONFIRMATION', 'Your appointment is confirmed for 21 Oct 2025, 9:15 AM.', '2025-10-19 09:00:00'
 FROM dual
 WHERE NOT EXISTS (
   SELECT 1 FROM notifications n WHERE n.user_id = UNHEX(REPLACE('d0000000-0000-0000-0000-000000000001','-','')) AND n.message LIKE 'Your appointment is confirmed%'
 );
 
 INSERT INTO notifications (user_id, type, message, created_at)
-SELECT UNHEX(REPLACE('d0000000-0000-0000-0000-000000000002','-','')), 'SMS', 'Reminder: appointment tomorrow at 10:00 AM.', '2025-10-20 09:00:00'
+SELECT UNHEX(REPLACE('d0000000-0000-0000-0000-000000000002','-','')), 'REMINDER', 'Reminder: appointment tomorrow at 10:00 AM.', '2025-10-20 09:00:00'
 FROM dual
 WHERE NOT EXISTS (
   SELECT 1 FROM notifications n WHERE n.user_id = UNHEX(REPLACE('d0000000-0000-0000-0000-000000000002','-','')) AND n.message LIKE 'Reminder: appointment tomorrow%'
 );
 
 INSERT INTO notifications (user_id, type, message, created_at)
-SELECT UNHEX(REPLACE('b0000000-0000-0000-0000-000000000001','-','')), 'PUSH', 'Queue E-002 is ready. Please call next patient.', '2025-10-20 09:20:00'
+SELECT UNHEX(REPLACE('b0000000-0000-0000-0000-000000000001','-','')), 'QUEUE_CALLED', 'Queue E-002 is ready. Please call next patient.', '2025-10-20 09:20:00'
 FROM dual
 WHERE NOT EXISTS (
   SELECT 1 FROM notifications n WHERE n.user_id = UNHEX(REPLACE('b0000000-0000-0000-0000-000000000001','-','')) AND n.message LIKE 'Queue E-002 is ready%'
@@ -309,483 +344,109 @@ AND NOT EXISTS (
 );
 
 
+-- Additional clinics (4-100) with basic data
 INSERT INTO clinics (id, name, address, phone, open_time, close_time, default_slot_interval_minutes) VALUES
-    (1, 'Clinic 1', '57 GEYLANG BAHRU #01-3505, SINGAPORE, 330057', '66947078', NULL, NULL, 15),
-    (2, 'Clinic 2', '32 CASSIA CRESCENT #01-62, SINGAPORE 390032', '65189262', NULL, NULL, 15),
-    (3, 'Clinic 3', 'SINGAPORE 730166', '65399236', NULL, NULL, 15),
-    (4, 'Clinic 4', '618 YISHUN RING ROAD #01-3238, SINGAPORE, 760618', '62353490', NULL, NULL, 15),
-    (5, 'Clinic 5', 'SINGAPORE 730888', '63688762', NULL, NULL, 15),
-    (6, 'Clinic 6', '111 WOODLANDS STREET 13 #01-78, SINGAPORE 730111', '63627789', NULL, NULL, 15),
-    (7, 'Clinic 7', 'POLYVIEW, SINGAPORE 520801', '62231070', NULL, NULL, 15)
+    (4, 'Clinic 4', '618 YISHUN RING ROAD #01-3238, SINGAPORE, 760618', '62353490', '09:00:00', '17:00:00', 15),
+    (5, 'Clinic 5', 'SINGAPORE 730888', '63688762', '09:00:00', '17:00:00', 15),
+    (6, 'Clinic 6', '111 WOODLANDS STREET 13 #01-78, SINGAPORE 730111', '63627789', '09:00:00', '17:00:00', 15),
+    (7, 'Clinic 7', 'POLYVIEW, SINGAPORE 520801', '62231070', '09:00:00', '17:00:00', 15),
+    (8, 'Clinic 8', 'STATION, SINGAPORE 649846', '65159919', '09:00:00', '17:00:00', 15),
+    (9, 'Clinic 9', 'SINGAPORE 460214', '64438077', '09:00:00', '17:00:00', 15),
+    (10, 'Clinic 10', '64 YUNG KUANG ROAD #01-107, SINGAPORE 610064', '62656422', '09:00:00', '17:00:00', 15),
+    (11, 'Clinic 11', '38 TEBAN GARDENS ROAD #01-318, SINGAPORE 600038', '65619366', '09:00:00', '17:00:00', 15),
+    (12, 'Clinic 12', '1 JURONG WEST CENTRAL 2 #B1A-19E JURONG POINT SHOPPING CENTRE JP1, SINGAPORE 648886', '67923822', '09:00:00', '17:00:00', 15),
+    (13, 'Clinic 13', '215C COMPASSVALE DRIVE #01-02, SINGAPORE 543215', '63850113', '09:00:00', '17:00:00', 15),
+    (14, 'Clinic 14', '7 WALLICH STREET #B1-15 GUOCO TOWER, SINGAPORE 078884', '63868980', '09:00:00', '17:00:00', 15),
+    (15, 'Clinic 15', '71 PIONEER ROAD #01-06 TUAS AMENITY CENTRE, SINGAPORE 639591', '68615996', '09:00:00', '17:00:00', 15),
+    (16, 'Clinic 16', '1 JOO KOON CIRCLE #01-23 FAIRPRICE HUB, SINGAPORE 629117', '68615755', '09:00:00', '17:00:00', 15),
+    (17, 'Clinic 17', '253 SERANGOON CENTRAL DRIVE #01-187, SINGAPORE 550253', '62808080', '09:00:00', '17:00:00', 15),
+    (18, 'Clinic 18', '370 TANJONG KATONG ROAD, SINGAPORE 437127', '63457810', '09:00:00', '17:00:00', 15),
+    (19, 'Clinic 19', '221 BALESTIER RD #02-06, SINGAPORE 329928', '60254975', '09:00:00', '17:00:00', 15),
+    (20, 'Clinic 20', '709 ANG MO KIO AVENUE 8 #01-2583, SINGAPORE 560709', '64286084', '09:00:00', '17:00:00', 15),
+    (21, 'Clinic 21', '152 BEACH ROAD #03-08 GATEWAY EAST, SINGAPORE 189721', '62995398', '09:00:00', '17:00:00', 15),
+    (22, 'Clinic 22', '601 MACPHERSON ROAD #01-03/04 GRANTRAL COMPLEX, SINGAPORE 368242', '69046678', '09:00:00', '17:00:00', 15),
+    (23, 'Clinic 23', '38 MARGARET DRIVE #02-01, SINGAPORE 141038', '63223886', '09:00:00', '17:00:00', 15),
+    (24, 'Clinic 24', '858 WOODLANDS DRIVE 50 #01-739 888 PLAZA, SINGAPORE 730888', '63688762', '09:00:00', '17:00:00', 15),
+    (25, 'Clinic 25', '111 WOODLANDS STREET 13 #01-78, SINGAPORE 730111', '63627789', '09:00:00', '17:00:00', 15),
+    (26, 'Clinic 26', '801 TAMPINES AVENUE 4 #01-269 TAMPINES, SINGAPORE 520801', '62231070', '09:00:00', '17:00:00', 15),
+    (27, 'Clinic 27', '301 BOON LAY WAY #01-18/19 BOON LAY MRT STATION, SINGAPORE 649846', '65159919', '09:00:00', '17:00:00', 15),
+    (28, 'Clinic 28', '214 BEDOK NORTH STREET 1 #01-165, SINGAPORE 460214', '64438077', '09:00:00', '17:00:00', 15),
+    (29, 'Clinic 29', '64 YUNG KUANG ROAD #01-107, SINGAPORE 610064', '62656422', '09:00:00', '17:00:00', 15),
+    (30, 'Clinic 30', '38 TEBAN GARDENS ROAD #01-318, SINGAPORE 600038', '65619366', '09:00:00', '17:00:00', 15),
+    (31, 'Clinic 31', '1 JURONG WEST CENTRAL 2 #B1A-19E JURONG POINT SHOPPING CENTRE JP1, SINGAPORE 648886', '67923822', '09:00:00', '17:00:00', 15),
+    (32, 'Clinic 32', '215C COMPASSVALE DRIVE #01-02, SINGAPORE 543215', '63850113', '09:00:00', '17:00:00', 15),
+    (33, 'Clinic 33', '7 WALLICH STREET #B1-15 GUOCO TOWER, SINGAPORE 078884', '63868980', '09:00:00', '17:00:00', 15),
+    (34, 'Clinic 34', '71 PIONEER ROAD #01-06 TUAS AMENITY CENTRE, SINGAPORE 639591', '68615996', '09:00:00', '17:00:00', 15),
+    (35, 'Clinic 35', '1 JOO KOON CIRCLE #01-23 FAIRPRICE HUB, SINGAPORE 629117', '68615755', '09:00:00', '17:00:00', 15),
+    (36, 'Clinic 36', '253 SERANGOON CENTRAL DRIVE #01-187, SINGAPORE 550253', '62808080', '09:00:00', '17:00:00', 15),
+    (37, 'Clinic 37', '370 TANJONG KATONG ROAD, SINGAPORE 437127', '63457810', '09:00:00', '17:00:00', 15),
+    (38, 'Clinic 38', '221 BALESTIER RD #02-06, SINGAPORE 329928', '60254975', '09:00:00', '17:00:00', 15),
+    (39, 'Clinic 39', '709 ANG MO KIO AVENUE 8 #01-2583, SINGAPORE 560709', '64286084', '09:00:00', '17:00:00', 15),
+    (40, 'Clinic 40', '152 BEACH ROAD #03-08 GATEWAY EAST, SINGAPORE 189721', '62995398', '09:00:00', '17:00:00', 15),
+    (41, 'Clinic 41', '601 MACPHERSON ROAD #01-03/04 GRANTRAL COMPLEX, SINGAPORE 368242', '69046678', '09:00:00', '17:00:00', 15),
+    (42, 'Clinic 42', '38 MARGARET DRIVE #02-01, SINGAPORE 141038', '63223886', '09:00:00', '17:00:00', 15),
+    (43, 'Clinic 43', '57 GEYLANG BAHRU #01-3505, SINGAPORE, 330057', '66947078', '09:00:00', '17:00:00', 15),
+    (44, 'Clinic 44', '32 CASSIA CRESCENT #01-62, SINGAPORE 390032', '65189262', '09:00:00', '17:00:00', 15),
+    (45, 'Clinic 45', 'SINGAPORE 730166', '65399236', '09:00:00', '17:00:00', 15),
+    (46, 'Clinic 46', '618 YISHUN RING ROAD #01-3238, SINGAPORE, 760618', '62353490', '09:00:00', '17:00:00', 15),
+    (47, 'Clinic 47', 'SINGAPORE 730888', '63688762', '09:00:00', '17:00:00', 15),
+    (48, 'Clinic 48', '111 WOODLANDS STREET 13 #01-78, SINGAPORE 730111', '63627789', '09:00:00', '17:00:00', 15),
+    (49, 'Clinic 49', 'POLYVIEW, SINGAPORE 520801', '62231070', '09:00:00', '17:00:00', 15),
+    (50, 'Clinic 50', 'STATION, SINGAPORE 649846', '65159919', '09:00:00', '17:00:00', 15),
+    (51, 'Clinic 51', 'SINGAPORE 460214', '64438077', '09:00:00', '17:00:00', 15),
+    (52, 'Clinic 52', '64 YUNG KUANG ROAD #01-107, SINGAPORE 610064', '62656422', '09:00:00', '17:00:00', 15),
+    (53, 'Clinic 53', '38 TEBAN GARDENS ROAD #01-318, SINGAPORE 600038', '65619366', '09:00:00', '17:00:00', 15),
+    (54, 'Clinic 54', '1 JURONG WEST CENTRAL 2 #B1A-19E JURONG POINT SHOPPING CENTRE JP1, SINGAPORE 648886', '67923822', '09:00:00', '17:00:00', 15),
+    (55, 'Clinic 55', '215C COMPASSVALE DRIVE #01-02, SINGAPORE 543215', '63850113', '09:00:00', '17:00:00', 15),
+    (56, 'Clinic 56', '7 WALLICH STREET #B1-15 GUOCO TOWER, SINGAPORE 078884', '63868980', '09:00:00', '17:00:00', 15),
+    (57, 'Clinic 57', '71 PIONEER ROAD #01-06 TUAS AMENITY CENTRE, SINGAPORE 639591', '68615996', '09:00:00', '17:00:00', 15),
+    (58, 'Clinic 58', '1 JOO KOON CIRCLE #01-23 FAIRPRICE HUB, SINGAPORE 629117', '68615755', '09:00:00', '17:00:00', 15),
+    (59, 'Clinic 59', '253 SERANGOON CENTRAL DRIVE #01-187, SINGAPORE 550253', '62808080', '09:00:00', '17:00:00', 15),
+    (60, 'Clinic 60', '370 TANJONG KATONG ROAD, SINGAPORE 437127', '63457810', '09:00:00', '17:00:00', 15),
+    (61, 'Clinic 61', '221 BALESTIER RD #02-06, SINGAPORE 329928', '60254975', '09:00:00', '17:00:00', 15),
+    (62, 'Clinic 62', '709 ANG MO KIO AVENUE 8 #01-2583, SINGAPORE 560709', '64286084', '09:00:00', '17:00:00', 15),
+    (63, 'Clinic 63', '152 BEACH ROAD #03-08 GATEWAY EAST, SINGAPORE 189721', '62995398', '09:00:00', '17:00:00', 15),
+    (64, 'Clinic 64', '601 MACPHERSON ROAD #01-03/04 GRANTRAL COMPLEX, SINGAPORE 368242', '69046678', '09:00:00', '17:00:00', 15),
+    (65, 'Clinic 65', '38 MARGARET DRIVE #02-01, SINGAPORE 141038', '63223886', '09:00:00', '17:00:00', 15),
+    (66, 'Clinic 66', '57 GEYLANG BAHRU #01-3505, SINGAPORE, 330057', '66947078', '09:00:00', '17:00:00', 15),
+    (67, 'Clinic 67', '32 CASSIA CRESCENT #01-62, SINGAPORE 390032', '65189262', '09:00:00', '17:00:00', 15),
+    (68, 'Clinic 68', 'SINGAPORE 730166', '65399236', '09:00:00', '17:00:00', 15),
+    (69, 'Clinic 69', '618 YISHUN RING ROAD #01-3238, SINGAPORE, 760618', '62353490', '09:00:00', '17:00:00', 15),
+    (70, 'Clinic 70', 'SINGAPORE 730888', '63688762', '09:00:00', '17:00:00', 15),
+    (71, 'Clinic 71', '111 WOODLANDS STREET 13 #01-78, SINGAPORE 730111', '63627789', '09:00:00', '17:00:00', 15),
+    (72, 'Clinic 72', 'POLYVIEW, SINGAPORE 520801', '62231070', '09:00:00', '17:00:00', 15),
+    (73, 'Clinic 73', 'STATION, SINGAPORE 649846', '65159919', '09:00:00', '17:00:00', 15),
+    (74, 'Clinic 74', 'SINGAPORE 460214', '64438077', '09:00:00', '17:00:00', 15),
+    (75, 'Clinic 75', '64 YUNG KUANG ROAD #01-107, SINGAPORE 610064', '62656422', '09:00:00', '17:00:00', 15),
+    (76, 'Clinic 76', '38 TEBAN GARDENS ROAD #01-318, SINGAPORE 600038', '65619366', '09:00:00', '17:00:00', 15),
+    (77, 'Clinic 77', '1 JURONG WEST CENTRAL 2 #B1A-19E JURONG POINT SHOPPING CENTRE JP1, SINGAPORE 648886', '67923822', '09:00:00', '17:00:00', 15),
+    (78, 'Clinic 78', '215C COMPASSVALE DRIVE #01-02, SINGAPORE 543215', '63850113', '09:00:00', '17:00:00', 15),
+    (79, 'Clinic 79', '7 WALLICH STREET #B1-15 GUOCO TOWER, SINGAPORE 078884', '63868980', '09:00:00', '17:00:00', 15),
+    (80, 'Clinic 80', '71 PIONEER ROAD #01-06 TUAS AMENITY CENTRE, SINGAPORE 639591', '68615996', '09:00:00', '17:00:00', 15),
+    (81, 'Clinic 81', '1 JOO KOON CIRCLE #01-23 FAIRPRICE HUB, SINGAPORE 629117', '68615755', '09:00:00', '17:00:00', 15),
+    (82, 'Clinic 82', '253 SERANGOON CENTRAL DRIVE #01-187, SINGAPORE 550253', '62808080', '09:00:00', '17:00:00', 15),
+    (83, 'Clinic 83', '370 TANJONG KATONG ROAD, SINGAPORE 437127', '63457810', '09:00:00', '17:00:00', 15),
+    (84, 'Clinic 84', '221 BALESTIER RD #02-06, SINGAPORE 329928', '60254975', '09:00:00', '17:00:00', 15),
+    (85, 'Clinic 85', '709 ANG MO KIO AVENUE 8 #01-2583, SINGAPORE 560709', '64286084', '09:00:00', '17:00:00', 15),
+    (86, 'Clinic 86', '152 BEACH ROAD #03-08 GATEWAY EAST, SINGAPORE 189721', '62995398', '09:00:00', '17:00:00', 15),
+    (87, 'Clinic 87', '601 MACPHERSON ROAD #01-03/04 GRANTRAL COMPLEX, SINGAPORE 368242', '69046678', '09:00:00', '17:00:00', 15),
+    (88, 'Clinic 88', '38 MARGARET DRIVE #02-01, SINGAPORE 141038', '63223886', '09:00:00', '17:00:00', 15),
+    (89, 'Clinic 89', '57 GEYLANG BAHRU #01-3505, SINGAPORE, 330057', '66947078', '09:00:00', '17:00:00', 15),
+    (90, 'Clinic 90', '32 CASSIA CRESCENT #01-62, SINGAPORE 390032', '65189262', '09:00:00', '17:00:00', 15),
+    (91, 'Clinic 91', 'SINGAPORE 730166', '65399236', '09:00:00', '17:00:00', 15),
+    (92, 'Clinic 92', '618 YISHUN RING ROAD #01-3238, SINGAPORE, 760618', '62353490', '09:00:00', '17:00:00', 15),
+    (93, 'Clinic 93', 'SINGAPORE 730888', '63688762', '09:00:00', '17:00:00', 15),
+    (94, 'Clinic 94', '111 WOODLANDS STREET 13 #01-78, SINGAPORE 730111', '63627789', '09:00:00', '17:00:00', 15),
+    (95, 'Clinic 95', 'POLYVIEW, SINGAPORE 520801', '62231070', '09:00:00', '17:00:00', 15),
+    (96, 'Clinic 96', 'STATION, SINGAPORE 649846', '65159919', '09:00:00', '17:00:00', 15),
+    (97, 'Clinic 97', 'SINGAPORE 460214', '64438077', '09:00:00', '17:00:00', 15),
+    (98, 'Clinic 98', '64 YUNG KUANG ROAD #01-107, SINGAPORE 610064', '62656422', '09:00:00', '17:00:00', 15),
+    (99, 'Clinic 99', '38 TEBAN GARDENS ROAD #01-318, SINGAPORE 600038', '65619366', '09:00:00', '17:00:00', 15),
+    (100, 'Clinic 100', '1 JURONG WEST CENTRAL 2 #B1A-19E JURONG POINT SHOPPING CENTRE JP1, SINGAPORE 648886', '67923822', '09:00:00', '17:00:00', 15)
 ON DUPLICATE KEY UPDATE
   name = VALUES(name),
   address = VALUES(address),
   phone = VALUES(phone),
-  open_time = COALESCE(VALUES(open_time), open_time),
-  close_time = COALESCE(VALUES(close_time), close_time),
+  open_time = VALUES(open_time),
+  close_time = VALUES(close_time),
   default_slot_interval_minutes = VALUES(default_slot_interval_minutes);
-INSERT INTO clinics (id, name, address, phone) VALUES (8, 'Clinic 8', 'STATION, SINGAPORE 649846', '65159919')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (9, 'Clinic 9', 'SINGAPORE 460214', '64438077')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (10, 'Clinic 10', '64 YUNG KUANG ROAD #01-107, SINGAPORE 610064', '62656422')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (11, 'Clinic 11', '38 TEBAN GARDENS ROAD #01-318, SINGAPORE 600038', '65619366')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (12, 'Clinic 12', '1 JURONG WEST CENTRAL 2 #B1A-19E JURONG POINT SHOPPING CENTRE JP1, SINGAPORE 648886', '67923822')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (13, 'Clinic 13', '215C COMPASSVALE DRIVE #01-02, SINGAPORE 543215', '63850113')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (14, 'Clinic 14', '7 WALLICH STREET #B1-15 GUOCO TOWER, SINGAPORE 078884', '63868980')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (15, 'Clinic 15', '71 PIONEER ROAD #01-06 TUAS AMENITY CENTRE, SINGAPORE 639591', '68615996')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (16, 'Clinic 16', '1 JOO KOON CIRCLE #01-23 FAIRPRICE HUB, SINGAPORE 629117', '68615755')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (17, 'Clinic 17', '253 SERANGOON CENTRAL DRIVE #01-187, SINGAPORE 550253', '62808080')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (18, 'Clinic 18', '370 TANJONG KATONG ROAD, SINGAPORE 437127', '63457810')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (19, 'Clinic 19', '221 BALESTIER RD #02-06, SINGAPORE 329928', '60254975')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (20, 'Clinic 20', '709 ANG MO KIO AVENUE 8 #01-2583, SINGAPORE 560709', '64286084')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (21, 'Clinic 21', '152 BEACH ROAD #03-08 GATEWAY EAST, SINGAPORE 189721', '62995398')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (22, 'Clinic 22', '601 MACPHERSON ROAD #01-03/04 GRANTRAL COMPLEX, SINGAPORE 368242', '69046678')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (23, 'Clinic 23', '38 MARGARET DRIVE #02-01, SINGAPORE 141038', '63223886')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (24, 'Clinic 24', '858 WOODLANDS DRIVE 50 #01-739 888 PLAZA, SINGAPORE 730888', '63688762')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (25, 'Clinic 25', '111 WOODLANDS STREET 13 #01-78, SINGAPORE 730111', '63627789')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (26, 'Clinic 26', '801 TAMPINES AVENUE 4 #01-269 TAMPINES, SINGAPORE 520801', '62231070')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (27, 'Clinic 27', '301 BOON LAY WAY #01-18/19 BOON LAY MRT STATION, SINGAPORE 649846', '65159919')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (28, 'Clinic 28', '214 BEDOK NORTH STREET 1 #01-165, SINGAPORE 460214', '64438077')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (29, 'Clinic 29', '64 YUNG KUANG ROAD #01-107, SINGAPORE 610064', '62656422')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (30, 'Clinic 30', '38 TEBAN GARDENS ROAD #01-318, SINGAPORE 600038', '65619366')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (31, 'Clinic 31', '1 JURONG WEST CENTRAL 2 #B1A-19E JURONG POINT SHOPPING CENTRE JP1, SINGAPORE 648886', '67923822')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (32, 'Clinic 32', '215C COMPASSVALE DRIVE #01-02, SINGAPORE 543215', '63850113')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (33, 'Clinic 33', '7 WALLICH STREET #B1-15 GUOCO TOWER, SINGAPORE 078884', '63868980')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (34, 'Clinic 34', '71 PIONEER ROAD #01-06 TUAS AMENITY CENTRE, SINGAPORE 639591', '68615996')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (35, 'Clinic 35', '1 JOO KOON CIRCLE #01-23 FAIRPRICE HUB, SINGAPORE 629117', '68615755')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (36, 'Clinic 36', '253 SERANGOON CENTRAL DRIVE #01-187, SINGAPORE 550253', '62808080')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (37, 'Clinic 37', '370 TANJONG KATONG ROAD, SINGAPORE 437127', '63457810')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (38, 'Clinic 38', '221 BALESTIER RD #02-06, SINGAPORE 329928', '60254975')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (39, 'Clinic 39', '709 ANG MO KIO AVENUE 8 #01-2583, SINGAPORE 560709', '64286084')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (40, 'Clinic 40', '152 BEACH ROAD #03-08 GATEWAY EAST, SINGAPORE 189721', '62995398')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (41, 'Clinic 41', '601 MACPHERSON ROAD #01-03/04 GRANTRAL COMPLEX, SINGAPORE 368242', '69046678')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (42, 'Clinic 42', '38 MARGARET DRIVE #02-01, SINGAPORE 141038', '63223886')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (43, 'Clinic 43', '57 GEYLANG BAHRU #01-3505, SINGAPORE, 330057', '66947078')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (44, 'Clinic 44', '32 CASSIA CRESCENT #01-62, SINGAPORE 390032', '65189262')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (45, 'Clinic 45', 'SINGAPORE 730166', '65399236')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (46, 'Clinic 46', '618 YISHUN RING ROAD #01-3238, SINGAPORE, 760618', '62353490')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (47, 'Clinic 47', 'SINGAPORE 730888', '63688762')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (48, 'Clinic 48', '111 WOODLANDS STREET 13 #01-78, SINGAPORE 730111', '63627789')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (49, 'Clinic 49', 'POLYVIEW, SINGAPORE 520801', '62231070')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (50, 'Clinic 50', 'STATION, SINGAPORE 649846', '65159919')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (51, 'Clinic 51', 'SINGAPORE 460214', '64438077')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (52, 'Clinic 52', '64 YUNG KUANG ROAD #01-107, SINGAPORE 610064', '62656422')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (53, 'Clinic 53', '38 TEBAN GARDENS ROAD #01-318, SINGAPORE 600038', '65619366')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (54, 'Clinic 54', '1 JURONG WEST CENTRAL 2 #B1A-19E JURONG POINT SHOPPING CENTRE JP1, SINGAPORE 648886', '67923822')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (55, 'Clinic 55', '215C COMPASSVALE DRIVE #01-02, SINGAPORE 543215', '63850113')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (56, 'Clinic 56', '7 WALLICH STREET #B1-15 GUOCO TOWER, SINGAPORE 078884', '63868980')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (57, 'Clinic 57', '71 PIONEER ROAD #01-06 TUAS AMENITY CENTRE, SINGAPORE 639591', '68615996')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (58, 'Clinic 58', '1 JOO KOON CIRCLE #01-23 FAIRPRICE HUB, SINGAPORE 629117', '68615755')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (59, 'Clinic 59', '253 SERANGOON CENTRAL DRIVE #01-187, SINGAPORE 550253', '62808080')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (60, 'Clinic 60', '370 TANJONG KATONG ROAD, SINGAPORE 437127', '63457810')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (61, 'Clinic 61', '221 BALESTIER RD #02-06, SINGAPORE 329928', '60254975')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (62, 'Clinic 62', '709 ANG MO KIO AVENUE 8 #01-2583, SINGAPORE 560709', '64286084')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (63, 'Clinic 63', '152 BEACH ROAD #03-08 GATEWAY EAST, SINGAPORE 189721', '62995398')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (64, 'Clinic 64', '601 MACPHERSON ROAD #01-03/04 GRANTRAL COMPLEX, SINGAPORE 368242', '69046678')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (65, 'Clinic 65', '38 MARGARET DRIVE #02-01, SINGAPORE 141038', '63223886')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (66, 'Clinic 66', '57 GEYLANG BAHRU #01-3505, SINGAPORE, 330057', '66947078')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (67, 'Clinic 67', '32 CASSIA CRESCENT #01-62, SINGAPORE 390032', '65189262')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (68, 'Clinic 68', 'SINGAPORE 730166', '65399236')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (69, 'Clinic 69', '618 YISHUN RING ROAD #01-3238, SINGAPORE, 760618', '62353490')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (70, 'Clinic 70', 'SINGAPORE 730888', '63688762')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (71, 'Clinic 71', '111 WOODLANDS STREET 13 #01-78, SINGAPORE 730111', '63627789')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (72, 'Clinic 72', 'POLYVIEW, SINGAPORE 520801', '62231070')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (73, 'Clinic 73', 'STATION, SINGAPORE 649846', '65159919')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (74, 'Clinic 74', 'SINGAPORE 460214', '64438077')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (75, 'Clinic 75', '64 YUNG KUANG ROAD #01-107, SINGAPORE 610064', '62656422')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (76, 'Clinic 76', '38 TEBAN GARDENS ROAD #01-318, SINGAPORE 600038', '65619366')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (77, 'Clinic 77', '1 JURONG WEST CENTRAL 2 #B1A-19E JURONG POINT SHOPPING CENTRE JP1, SINGAPORE 648886', '67923822')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (78, 'Clinic 78', '215C COMPASSVALE DRIVE #01-02, SINGAPORE 543215', '63850113')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (79, 'Clinic 79', '7 WALLICH STREET #B1-15 GUOCO TOWER, SINGAPORE 078884', '63868980')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (80, 'Clinic 80', '71 PIONEER ROAD #01-06 TUAS AMENITY CENTRE, SINGAPORE 639591', '68615996')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (81, 'Clinic 81', '1 JOO KOON CIRCLE #01-23 FAIRPRICE HUB, SINGAPORE 629117', '68615755')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (82, 'Clinic 82', '253 SERANGOON CENTRAL DRIVE #01-187, SINGAPORE 550253', '62808080')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (83, 'Clinic 83', '370 TANJONG KATONG ROAD, SINGAPORE 437127', '63457810')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (84, 'Clinic 84', '221 BALESTIER RD #02-06, SINGAPORE 329928', '60254975')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (85, 'Clinic 85', '709 ANG MO KIO AVENUE 8 #01-2583, SINGAPORE 560709', '64286084')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (86, 'Clinic 86', '152 BEACH ROAD #03-08 GATEWAY EAST, SINGAPORE 189721', '62995398')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (87, 'Clinic 87', '601 MACPHERSON ROAD #01-03/04 GRANTRAL COMPLEX, SINGAPORE 368242', '69046678')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (88, 'Clinic 88', '38 MARGARET DRIVE #02-01, SINGAPORE 141038', '63223886')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (89, 'Clinic 89', '57 GEYLANG BAHRU #01-3505, SINGAPORE, 330057', '66947078')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (90, 'Clinic 90', '32 CASSIA CRESCENT #01-62, SINGAPORE 390032', '65189262')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (91, 'Clinic 91', 'SINGAPORE 730166', '65399236')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (92, 'Clinic 92', '618 YISHUN RING ROAD #01-3238, SINGAPORE, 760618', '62353490')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (93, 'Clinic 93', 'SINGAPORE 730888', '63688762')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (94, 'Clinic 94', '111 WOODLANDS STREET 13 #01-78, SINGAPORE 730111', '63627789')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (95, 'Clinic 95', 'POLYVIEW, SINGAPORE 520801', '62231070')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (96, 'Clinic 96', 'STATION, SINGAPORE 649846', '65159919')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (97, 'Clinic 97', 'SINGAPORE 460214', '64438077')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (98, 'Clinic 98', '64 YUNG KUANG ROAD #01-107, SINGAPORE 610064', '62656422')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (99, 'Clinic 99', '38 TEBAN GARDENS ROAD #01-318, SINGAPORE 600038', '65619366')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);
-INSERT INTO clinics (id, name, address, phone) VALUES (100, 'Clinic 100', '1 JURONG WEST CENTRAL 2 #B1A-19E JURONG POINT SHOPPING CENTRE JP1, SINGAPORE 648886', '67923822')
-ON DUPLICATE KEY UPDATE
-  name = VALUES(name),
-  address = VALUES(address),
-  phone = VALUES(phone);

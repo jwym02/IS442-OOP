@@ -1,12 +1,3 @@
--- Align legacy notification rows with current enum values
-UPDATE notifications
-SET type = 'APPT_CONFIRMATION'
-WHERE type = 'EMAIL';
-
-UPDATE notifications
-SET type = 'REMINDER'
-WHERE type = 'SMS';
-
 -- Additional time slots for 22 Oct 2025
 INSERT INTO time_slots (schedule_id, start_time, end_time, available)
 SELECT s.id, '2025-10-22 11:00:00', '2025-10-22 11:15:00', TRUE

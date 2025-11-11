@@ -18,28 +18,38 @@ VALUES
   (2,'NOVENA SPECIALIST CENTRE SINGAPORE 329563','CENTRAL NOVENA ISLAND ORTHOPAEDIC CONSULTANTS PTE LTD (MT E NOVENA) 38 IRRAWADDY ROAD #05-42 MOUNT E','63520529','09:00:00','17:00:00',15)
 ON DUPLICATE KEY UPDATE id = id; -- no-op if row exists
 
--- If you want all 1..100 entries from clinicdb.sql, append them to the VALUES list above.
-
--- 4 specialist user accounts: insert only if email missing (generate binary id with UUID_TO_BIN)
+-- 4 specialist user accounts: insert only if email missing (use deterministic UUIDs)
 INSERT INTO users (id, email, password_hash, enabled, created_at, full_name, phone_number)
-SELECT UUID_TO_BIN(UUID()), 'j.lee@chpoh.specialist', '$2a$10$Zz3gKcPgvpEBRvIUj/9dGuioWyhrc4pdazVephs8qAH90u1KZt94K', 1, '2025-11-09 17:01:01', 'Dr. Jonathan Lee', '+65 8000 0205'
+SELECT UNHEX(REPLACE('c0000000-0000-0000-0000-000000000005','-','')), 'j.lee@chpoh.specialist', '$2a$10$Zz3gKcPgvpEBRvIUj/9dGuioWyhrc4pdazVephs8qAH90u1KZt94K', 1, '2025-11-09 17:01:01', 'Dr. Jonathan Lee', '+65 8000 0205'
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'j.lee@chpoh.specialist');
 
 INSERT INTO users (id, email, password_hash, enabled, created_at, full_name, phone_number)
-SELECT UUID_TO_BIN(UUID()), 'm.tan@chpoh.specialist', '$2a$10$Zz3gKcPgvpEBRvIUj/9dGuioWyhrc4pdazVephs8qAH90u1KZt94K', 1, '2025-11-09 17:01:01', 'Dr. Melissa Tan', '+65 8000 0206'
+SELECT UNHEX(REPLACE('c0000000-0000-0000-0000-000000000006','-','')), 'm.tan@chpoh.specialist', '$2a$10$Zz3gKcPgvpEBRvIUj/9dGuioWyhrc4pdazVephs8qAH90u1KZt94K', 1, '2025-11-09 17:01:01', 'Dr. Melissa Tan', '+65 8000 0206'
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'm.tan@chpoh.specialist');
 
 INSERT INTO users (id, email, password_hash, enabled, created_at, full_name, phone_number)
-SELECT UUID_TO_BIN(UUID()), 'aar.ng@chpoh.specialist', '$2a$10$Zz3gKcPgvpEBRvIUj/9dGuioWyhrc4pdazVephs8qAH90u1KZt94K', 1, '2025-11-09 17:01:01', 'Dr. Aaron Ng', '+65 8000 0207'
+SELECT UNHEX(REPLACE('c0000000-0000-0000-0000-000000000007','-','')), 'aar.ng@chpoh.specialist', '$2a$10$Zz3gKcPgvpEBRvIUj/9dGuioWyhrc4pdazVephs8qAH90u1KZt94K', 1, '2025-11-09 17:01:01', 'Dr. Aaron Ng', '+65 8000 0207'
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'aar.ng@chpoh.specialist');
 
 INSERT INTO users (id, email, password_hash, enabled, created_at, full_name, phone_number)
-SELECT UUID_TO_BIN(UUID()), 'g.chew@chpoh.specialist', '$2a$10$Zz3gKcPgvpEBRvIUj/9dGuioWyhrc4pdazVephs8qAH90u1KZt94K', 1, '2025-11-09 17:01:01', 'Dr. Grace Chew', '+65 8000 0208'
+SELECT UNHEX(REPLACE('c0000000-0000-0000-0000-000000000008','-','')), 'g.chew@chpoh.specialist', '$2a$10$Zz3gKcPgvpEBRvIUj/9dGuioWyhrc4pdazVephs8qAH90u1KZt94K', 1, '2025-11-09 17:01:01', 'Dr. Grace Chew', '+65 8000 0208'
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'g.chew@chpoh.specialist');
+
+-- Assign CLINIC_STAFF role to specialist doctors
+INSERT IGNORE INTO user_roles (user_id, role_id)
+SELECT u.id, r.id
+FROM roles r
+JOIN (
+  SELECT UNHEX(REPLACE('c0000000-0000-0000-0000-000000000005','-','')) AS id UNION ALL
+  SELECT UNHEX(REPLACE('c0000000-0000-0000-0000-000000000006','-','')) UNION ALL
+  SELECT UNHEX(REPLACE('c0000000-0000-0000-0000-000000000007','-','')) UNION ALL
+  SELECT UNHEX(REPLACE('c0000000-0000-0000-0000-000000000008','-',''))
+) u ON 1=1
+WHERE r.name = 'CLINIC_STAFF';
 
 -- create doctor_profiles for those users and link specialist_id
 INSERT INTO doctor_profiles (user_id, full_name, specialty, clinic_id, specialist_id)

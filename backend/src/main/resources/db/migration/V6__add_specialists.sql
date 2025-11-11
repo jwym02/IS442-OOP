@@ -33,24 +33,24 @@ SET @sql_stmt := IF(@has_specid = 0,
                    "SELECT 1");
 PREPARE stmt FROM @sql_stmt; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- 4) Insert specialist users (id uses UUID_TO_BIN to produce binary(16)); no-op if email exists
+-- 4) Insert specialist users (id uses fixed UUIDs for deterministic references)
 INSERT INTO `users` (id, email, password_hash, enabled, created_at, full_name, phone_number)
-SELECT UUID_TO_BIN(UUID()), 'j.lee@chpoh.specialist',
+SELECT UNHEX(REPLACE('c0000000-0000-0000-0000-000000000005','-','')), 'j.lee@chpoh.specialist',
        '$2a$10$Zz3gKcPgvpEBRvIUj/9dGuioWyhrc4pdazVephs8qAH90u1KZt94K', 1, NOW(), 'Dr. Jonathan Lee', '+65 8000 0205'
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'j.lee@chpoh.specialist');
 
 INSERT INTO `users` (id, email, password_hash, enabled, created_at, full_name, phone_number)
-SELECT UUID_TO_BIN(UUID()), 'm.tan@chpoh.specialist',
+SELECT UNHEX(REPLACE('c0000000-0000-0000-0000-000000000006','-','')), 'm.tan@chpoh.specialist',
        '$2a$10$Zz3gKcPgvpEBRvIUj/9dGuioWyhrc4pdazVephs8qAH90u1KZt94K', 1, NOW(), 'Dr. Melissa Tan', '+65 8000 0206'
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'm.tan@chpoh.specialist');
 
 INSERT INTO `users` (id, email, password_hash, enabled, created_at, full_name, phone_number)
-SELECT UUID_TO_BIN(UUID()), 'aar.ng@chpoh.specialist',
+SELECT UNHEX(REPLACE('c0000000-0000-0000-0000-000000000007','-','')), 'aar.ng@chpoh.specialist',
        '$2a$10$Zz3gKcPgvpEBRvIUj/9dGuioWyhrc4pdazVephs8qAH90u1KZt94K', 1, NOW(), 'Dr. Aaron Ng', '+65 8000 0207'
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'aar.ng@chpoh.specialist');
 
 INSERT INTO `users` (id, email, password_hash, enabled, created_at, full_name, phone_number)
-SELECT UUID_TO_BIN(UUID()), 'g.chew@chpoh.specialist',
+SELECT UNHEX(REPLACE('c0000000-0000-0000-0000-000000000008','-','')), 'g.chew@chpoh.specialist',
        '$2a$10$Zz3gKcPgvpEBRvIUj/9dGuioWyhrc4pdazVephs8qAH90u1KZt94K', 1, NOW(), 'Dr. Grace Chew', '+65 8000 0208'
 FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'g.chew@chpoh.specialist');
 
