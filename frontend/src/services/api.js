@@ -55,9 +55,9 @@ export const authAPI = {
 };
 
 export const appointmentAPI = {
-  listForPatient: (patientId) => apiClient.get(`/patients/${patientId}/appointments`),
+  listForPatient: (patientId) =>
+    apiClient.get(`/patients/${patientId}/appointments`),
 
-  // accept optional (clinicId, date, when). If when === 'upcoming' call without date param.
   listForClinic: (clinicId, date, when) =>
     when === 'upcoming'
       ? apiClient.get(`/clinics/${clinicId}/appointments`)
@@ -66,24 +66,30 @@ export const appointmentAPI = {
   listForSpecialist: (specialistId, date) =>
     apiClient.get(`/specialists/${specialistId}/appointments`, { params: { date } }),
 
-  // list appointments for a doctor (used by StaffDashboard)
   listForDoctor: (doctorId, date) =>
     apiClient.get(`/doctors/${doctorId}/appointments`, { params: { date } }),
 
-  book: (patientId, payload) => apiClient.post(`/patients/${patientId}/appointments`, payload),
-  reschedule: (appointmentId, payload) => apiClient.put(`/appointments/${appointmentId}`, payload),
+  // Book/cancel
+  book: (patientId, payload) =>
+    apiClient.post(`/patients/${patientId}/appointments`, payload),
+  cancel: (appointmentId) =>
+    apiClient.delete(`/appointments/${appointmentId}`),
 
-  // delete alias used by StaffDashboard
-  cancel: (appointmentId) => apiClient.delete(`/appointments/${appointmentId}`),
-  staffCancel: (appointmentId) => apiClient.delete(`/appointments/${appointmentId}`),
+  reschedule: (appointmentId, payload) =>
+    apiClient.patch(`/staff/appointments/${appointmentId}/reschedule`, payload),
 
-  // alias used by StaffDashboard for reschedule
-  staffReschedule: (appointmentId, payload) => apiClient.put(`/appointments/${appointmentId}`, payload),
+  staffReschedule: (appointmentId, payload) =>
+    apiClient.patch(`/staff/appointments/${appointmentId}/reschedule`, payload),
 
-  // staff walk-in: payload must include patientId; post to same booking endpoint
+  // Staff walk-in
   staffWalkIn: (payload) =>
-    apiClient.post(`/patients/${payload.patientId}/appointments`, payload),
+    apiClient.post(`/staff/appointments/walk-in`, payload),
+
+  // Optional staff cancel
+  staffCancel: (appointmentId) =>
+    apiClient.delete(`/staff/appointments/${appointmentId}`),
 };
+
 
 export const patientAPI = {
   medicalRecords: (patientId) => apiClient.get(`/patients/${patientId}/medical-records`),

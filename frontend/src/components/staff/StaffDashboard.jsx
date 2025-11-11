@@ -261,17 +261,82 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
 
   const handleRescheduleSubmit = async (event) => {
     event.preventDefault();
+  
     if (!rescheduleTarget || !rescheduleDoctorId || !rescheduleDateTime) {
       show('Please choose the new doctor and timeslot.', 'error');
       return;
     }
+  
+    const newDate = new Date(rescheduleDateTime);
+    const now = new Date();
+    if (newDate < now) {
+      show('You cannot reschedule to a past date/time.', 'error');
+      return;
+    }
+  
     try {
-      const iso = new Date(rescheduleDateTime).toISOString();
+      // 🔹 Fetch clinic hours
+      const clinicRes = await clinicAPI.getAll();
+      const currentClinic = (clinicRes.data || []).find(c => c.id === clinicId);
+      const openTime = currentClinic?.openTime || '09:00';
+      const closeTime = currentClinic?.closeTime || '17:00';
+  
+      // 🔹 Fetch doctor schedule
+      const doctorScheduleRes = await doctorAPI.getSchedule(Number(rescheduleDoctorId));
+      const slotInterval = doctorScheduleRes.data?.slotIntervalMinutes || 15;
+      const doctorOpen = doctorScheduleRes.data?.openTime || openTime;
+      const doctorClose = doctorScheduleRes.data?.closeTime || closeTime;
+  
+      // 🔹 Parse time range and validate
+      const [clinicOpenHour, clinicOpenMin] = openTime.split(':').map(Number);
+      const [clinicCloseHour, clinicCloseMin] = closeTime.split(':').map(Number);
+      const [doctorOpenHour, doctorOpenMin] = doctorOpen.split(':').map(Number);
+      const [doctorCloseHour, doctorCloseMin] = doctorClose.split(':').map(Number);
+  
+      const hour = newDate.getHours();
+      const minute = newDate.getMinutes();
+  
+      const withinClinic =
+        hour > clinicOpenHour && (hour < clinicCloseHour || (hour === clinicCloseHour && minute < clinicCloseMin));
+      const withinDoctor =
+        hour > doctorOpenHour && (hour < doctorCloseHour || (hour === doctorCloseHour && minute < doctorCloseMin));
+  
+      if (!withinClinic) {
+        show(`Time must be within clinic hours (${openTime}–${closeTime}).`, 'error');
+        return;
+      }
+      if (!withinDoctor) {
+        show(`Time must be within doctor’s hours (${doctorOpen}–${doctorClose}).`, 'error');
+        return;
+      }
+  
+      const selectedDoctor = doctors.find((d) => d.id === Number(rescheduleDoctorId));
+      if (!selectedDoctor || selectedDoctor.clinicId !== clinicId) {
+        show('Selected doctor does not belong to this clinic.', 'error');
+        return;
+      }
+  
+      const conflict = appointments.some((a) => {
+        return (
+          Number(a.doctorId) === Number(rescheduleDoctorId) &&
+          new Date(a.dateTime).getTime() === newDate.getTime() &&
+          a.id !== rescheduleTarget.id &&
+          a.status !== 'CANCELLED' &&
+          a.status !== 'COMPLETED'
+        );
+      });
+      if (conflict) {
+        show('The selected doctor already has an appointment at this time.', 'error');
+        return;
+      }
+  
+      const iso = newDate.toISOString();
       await appointmentAPI.staffReschedule(rescheduleTarget.id, {
         clinicId,
         doctorId: Number(rescheduleDoctorId),
         dateTime: iso,
       });
+  
       show('Appointment rescheduled.', 'success');
       cancelRescheduleForm();
       refreshAppointments();
@@ -280,6 +345,8 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
       show(error?.userMessage || 'Unable to reschedule appointment.', 'error');
     }
   };
+  
+  
 
   const toLocalInputValue = (value) => {
     const date = new Date(value);
