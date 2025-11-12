@@ -195,7 +195,7 @@ export default function PatientDashboard({ patientId, userName }) {
           const scheduleRes = await doctorAPI.getSchedule(Number(selectedDoctor));
           const slotInterval = scheduleRes.data?.slotIntervalMinutes || 15;
 
-          const apptRes = await appointmentAPI.listForClinic(Number(actualClinicId), selectedDate);
+          const apptRes = await appointmentAPI.listForDoctor(Number(selectedDoctor), selectedDate);
           const occupied = (apptRes.data || []).map((appointment) =>
             toLocalInputValue(appointment.dateTime)
           );
