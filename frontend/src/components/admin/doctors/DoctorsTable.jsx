@@ -17,9 +17,9 @@ export default function DoctorsTable({
   onSaveSchedule,
 }) {
   const [page, setPage] = useState(1);
-
   const totalPages = Math.ceil(doctors.length / PAGE_SIZE) || 1;
   const paginated = doctors.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  console.log(paginated)
 
   return (
     <div className="space-y-6">
@@ -45,7 +45,7 @@ export default function DoctorsTable({
                       <TableHead>Doctor Name</TableHead>
                       <TableHead>Assigned Clinic</TableHead>
                       <TableHead>Current Slot Interval</TableHead>
-                      <TableHead>Update Schedule</TableHead>
+                      <TableHead className="text-right">Update Schedule</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

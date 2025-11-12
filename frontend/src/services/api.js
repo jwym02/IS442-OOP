@@ -125,8 +125,7 @@ export const specialistAPI = {
 export const doctorAPI = {
   getSchedule: (id) => apiClient.get(`/doctors/${id}/schedule`),
   updateSchedule: (id, data) => apiClient.put(`/doctors/${id}/schedule`, data),
-  // point to the new non-conflicting backend route
-  getAll: () => apiClient.get('/admin/doctors/all'),
+  getAll: () => apiClient.get('/admin/doctors'),
   postNotes: (doctorId, payload) =>
     apiClient.post(`/doctors/${doctorId}/appointments/notes`, payload),
 };

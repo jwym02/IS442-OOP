@@ -128,13 +128,18 @@ public class DoctorService {
     }
 
     private DoctorAdminResponse toAdminResponse(DoctorProfile d) {
-        // DoctorProfile uses the "specialty" column/name — call getSpecialty()
-        return new DoctorAdminResponse(
+        var schedule = scheduleRepository.findByDoctorId(d.getId()).orElse(null);
+        Integer interval = (schedule != null) ? schedule.getSlotIntervalMinutes() : null;
+    
+        DoctorAdminResponse response = new DoctorAdminResponse(
             d.getId(),
             d.getFullName(),
             d.getSpecialty(),
             d.getClinicId(),
             d.getSpecialistId()
         );
+    
+        response.setSlotIntervalMinutes(interval);
+        return response;
     }
 }
