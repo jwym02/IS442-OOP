@@ -5,6 +5,7 @@ import com.clinic.domain.entity.*;
 import com.clinic.domain.enums.AppointmentStatus;
 import com.clinic.domain.enums.Roles;
 import com.clinic.domain.stats.SystemStats;
+import com.clinic.domain.value.BackupMetadata;
 import com.clinic.infrastructure.persistence.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,6 +36,7 @@ public class AdminService {
     private final QueueEntryRepository queueEntryRepository;
     private final PasswordEncoder passwordEncoder;
     private final ReportService reportService;
+    private final BackupService backupService;
 
     public AdminService(ClinicRepository clinicRepository,
                         ScheduleRepository scheduleRepository,
@@ -47,7 +49,8 @@ public class AdminService {
                         AppointmentRepository appointmentRepository,
                         QueueEntryRepository queueEntryRepository,
                         PasswordEncoder passwordEncoder,
-                        ReportService reportService) {
+                        ReportService reportService,
+                        BackupService backupService) {
         this.clinicRepository = clinicRepository;
         this.scheduleRepository = scheduleRepository;
         this.userAccountRepository = userAccountRepository;
@@ -60,6 +63,7 @@ public class AdminService {
         this.queueEntryRepository = queueEntryRepository;
         this.passwordEncoder = passwordEncoder;
         this.reportService = reportService;
+        this.backupService = backupService;
     }
 
     @Transactional
@@ -291,12 +295,16 @@ public class AdminService {
         clinicRepository.save(clinic);
     }
 
-    public void backup() {
-        // Placeholder for future integration with storage backup solution.
+    public BackupMetadata backup() {
+        return backupService.createSnapshot();
     }
 
-    public void restore() {
-        // Placeholder for future integration with storage restore solution.
+    public List<BackupMetadata> listBackups() {
+        return backupService.listSnapshots();
+    }
+
+    public void restore(String backupId) {
+        backupService.restoreSnapshot(backupId);
     }
 
     public SystemStatsResponse getSystemStats() {

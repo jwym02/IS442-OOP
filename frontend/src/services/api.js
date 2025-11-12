@@ -144,4 +144,10 @@ export const adminAPI = {
   listUsers: () => apiClient.get('/admin/users'),
 };
 
+export const maintenanceAPI = {
+  listBackups: () => apiClient.get('/admin/maintenance/backups'),
+  createBackup: () => apiClient.post('/admin/maintenance/backup'),
+  restoreBackup: (backupId) => apiClient.post('/admin/maintenance/restore', { backupId }),
+};
+
 export default apiClient;

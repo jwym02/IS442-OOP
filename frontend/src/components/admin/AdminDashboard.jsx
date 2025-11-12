@@ -1,8 +1,8 @@
 /* eslint-disable no-unused-vars */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { BarChart3, Users, Building2, Stethoscope, RefreshCw } from 'lucide-react';
+import { BarChart3, Users, Building2, Stethoscope, RefreshCw, Shield } from 'lucide-react';
 
-import { adminAPI, clinicAPI, doctorAPI, statsAPI } from '../../services/api';
+import { adminAPI, clinicAPI, doctorAPI, maintenanceAPI, statsAPI } from '../../services/api';
 import { useToast } from '../../context/useToast';
 
 import { Button } from '../ui/button';
@@ -13,6 +13,7 @@ import ClinicsTable from './clinics/ClinicsTable';
 import DoctorsTable from './doctors/DoctorsTable';
 import UserForm from './users/UserForm';
 import UsersTable from './users/UsersTable';
+import MaintenancePanel from './MaintenancePanel';
 
 export default function AdminDashboard() {
   const { show } = useToast();
@@ -25,6 +26,11 @@ export default function AdminDashboard() {
   const [doctors, setDoctors] = useState([]);
   const [systemStats, setSystemStats] = useState(null);
   const [users, setUsers] = useState([]);
+  const [backups, setBackups] = useState([]);
+  const [backupsLoading, setBackupsLoading] = useState(false);
+  const [creatingBackup, setCreatingBackup] = useState(false);
+  const [restoringBackupId, setRestoringBackupId] = useState(null);
+  const [hasLoadedBackups, setHasLoadedBackups] = useState(false);
 
   // User form
   const [userForm, setUserForm] = useState({
@@ -76,6 +82,19 @@ export default function AdminDashboard() {
     }
   }, [show]);
 
+  const loadBackups = useCallback(async () => {
+    setBackupsLoading(true);
+    try {
+      const res = await maintenanceAPI.listBackups();
+      setBackups(res.data || []);
+      setHasLoadedBackups(true);
+    } catch (error) {
+      show(error?.userMessage || 'Unable to load backups.', 'error');
+    } finally {
+      setBackupsLoading(false);
+    }
+  }, [show]);
+
   useEffect(() => {
     refreshAll();
   }, [refreshAll]);
@@ -89,6 +108,12 @@ export default function AdminDashboard() {
       return next;
     });
   }, [doctors]);
+
+  useEffect(() => {
+    if (activeTab === 'maintenance' && !hasLoadedBackups) {
+      loadBackups();
+    }
+  }, [activeTab, hasLoadedBackups, loadBackups]);
 
   // User management
   const resetUserForm = () => {
@@ -331,7 +356,33 @@ export default function AdminDashboard() {
   }, [clinics]);
 
   const getClinicName = (clinicId) =>
-    clinicMap.get(clinicId)?.name || (clinicId ? `Clinic #${clinicId}` : '—');
+    clinicMap.get(clinicId)?.name || (clinicId ? `Clinic #${clinicId}` : 'N/A');
+
+  const handleCreateBackup = async () => {
+    setCreatingBackup(true);
+    try {
+      await maintenanceAPI.createBackup();
+      show('Backup snapshot created.', 'success');
+      await loadBackups();
+    } catch (error) {
+      show(error?.userMessage || 'Unable to create backup.', 'error');
+    } finally {
+      setCreatingBackup(false);
+    }
+  };
+
+  const handleRestoreBackup = async (backupId) => {
+    if (!backupId) return;
+    setRestoringBackupId(backupId);
+    try {
+      await maintenanceAPI.restoreBackup(backupId);
+      show('Restore request accepted. The system will refresh shortly.', 'success');
+    } catch (error) {
+      show(error?.userMessage || 'Unable to restore backup.', 'error');
+    } finally {
+      setRestoringBackupId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -360,6 +411,7 @@ export default function AdminDashboard() {
               { id: 'users', label: 'User Management', icon: Users },
               { id: 'clinics', label: 'Clinic Management', icon: Building2 },
               { id: 'doctors', label: 'Doctor Management', icon: Stethoscope },
+              { id: 'maintenance', label: 'Maintenance', icon: Shield },
             ].map((tab) => {
               const Icon = tab.icon;
               const active = activeTab === tab.id;
@@ -442,6 +494,18 @@ export default function AdminDashboard() {
             savingDoctorId={savingDoctorId}
             onIntervalChange={handleDoctorIntervalChange}
             onSaveSchedule={handleDoctorScheduleSave}
+          />
+        )}
+
+        {activeTab === 'maintenance' && (
+          <MaintenancePanel
+            backups={backups}
+            loading={backupsLoading}
+            creating={creatingBackup}
+            restoringId={restoringBackupId}
+            onRefresh={loadBackups}
+            onCreateBackup={handleCreateBackup}
+            onRestore={handleRestoreBackup}
           />
         )}
       </div>

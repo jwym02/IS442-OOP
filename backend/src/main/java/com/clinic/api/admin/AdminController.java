@@ -1,16 +1,19 @@
 package com.clinic.api.admin;
 
 import com.clinic.api.admin.dto.AssignRoleRequest;
+import com.clinic.api.admin.dto.BackupMetadataResponse;
 import com.clinic.api.admin.dto.ClinicRequest;
 import com.clinic.api.admin.dto.ClinicResponse;
 import com.clinic.api.admin.dto.DoctorAdminResponse;
 import com.clinic.api.admin.dto.OperatingHoursRequest;
+import com.clinic.api.admin.dto.RestoreRequest;
 import com.clinic.api.admin.dto.ScheduleUpdateRequest;
 import com.clinic.api.admin.dto.SlotIntervalRequest;
 import com.clinic.api.admin.dto.SystemStatsResponse;
 import com.clinic.api.admin.dto.UserRequest;
 import com.clinic.api.admin.dto.UserResponse;
 import com.clinic.application.AdminService;
+import com.clinic.domain.value.BackupMetadata;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.UUID;
 
 @RestController
@@ -97,14 +101,20 @@ public class AdminController {
     }
 
     @PostMapping("/maintenance/backup")
-    public ResponseEntity<Void> backup() {
-        adminService.backup();
-        return ResponseEntity.accepted().build();
+    public ResponseEntity<BackupMetadataResponse> backup() {
+        BackupMetadata metadata = adminService.backup();
+        return ResponseEntity.ok(toResponse(metadata));
+    }
+
+    @GetMapping("/maintenance/backups")
+    public ResponseEntity<List<BackupMetadataResponse>> listBackups() {
+        List<BackupMetadata> backups = adminService.listBackups();
+        return ResponseEntity.ok(backups.stream().map(this::toResponse).collect(Collectors.toList()));
     }
 
     @PostMapping("/maintenance/restore")
-    public ResponseEntity<Void> restore() {
-        adminService.restore();
+    public ResponseEntity<Void> restore(@RequestBody @Valid RestoreRequest request) {
+        adminService.restore(request.getBackupId());
         return ResponseEntity.accepted().build();
     }
 
@@ -121,5 +131,15 @@ public class AdminController {
     @GetMapping("/doctors")
     public ResponseEntity<List<DoctorAdminResponse>> listDoctors() {
         return ResponseEntity.ok(adminService.listDoctors());
+    }
+
+    private BackupMetadataResponse toResponse(BackupMetadata metadata) {
+        BackupMetadataResponse response = new BackupMetadataResponse();
+        response.setId(metadata.getId());
+        response.setCreatedAt(metadata.getCreatedAt());
+        response.setSizeBytes(metadata.getSizeBytes());
+        response.setTotalRows(metadata.getTotalRows());
+        response.setTables(metadata.getTables());
+        return response;
     }
 }

@@ -40,3 +40,7 @@ springdoc:
     defaultModelsExpandDepth: 1
     defaultModelExpandDepth: 1
   show-actuator: false
+
+app:
+  backups:
+    dir: backups
