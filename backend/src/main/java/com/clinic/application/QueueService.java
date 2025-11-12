@@ -19,6 +19,7 @@ import com.clinic.infrastructure.persistence.DoctorProfileRepository;
 import com.clinic.infrastructure.persistence.PatientProfileRepository;
 import com.clinic.infrastructure.persistence.QueueEntryRepository;
 import com.clinic.infrastructure.persistence.QueueSessionRepository;
+import com.clinic.websocket.WebSocketHandler;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +27,10 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -43,14 +47,17 @@ public class QueueService {
     private final MedicalRecordService medicalRecordService;
     private final PatientProfileRepository patientProfileRepository;
     private final DoctorProfileRepository doctorProfileRepository;
+    private final WebSocketHandler webSocketHandler;
 
-    public QueueService(AppointmentRepository appointmentRepository,
-                        QueueEntryRepository queueEntryRepository,
-                        QueueSessionRepository queueSessionRepository,
-                        NotificationService notificationService,
-                        MedicalRecordService medicalRecordService,
-                        PatientProfileRepository patientProfileRepository,
-                        DoctorProfileRepository doctorProfileRepository) {
+    public QueueService(
+            QueueEntryRepository queueEntryRepository,
+            QueueSessionRepository queueSessionRepository,
+            AppointmentRepository appointmentRepository,
+            NotificationService notificationService,
+            MedicalRecordService medicalRecordService,
+            PatientProfileRepository patientProfileRepository,
+            DoctorProfileRepository doctorProfileRepository,
+            WebSocketHandler webSocketHandler) {
         this.appointmentRepository = appointmentRepository;
         this.queueEntryRepository = queueEntryRepository;
         this.queueSessionRepository = queueSessionRepository;
@@ -58,6 +65,7 @@ public class QueueService {
         this.medicalRecordService = medicalRecordService;
         this.patientProfileRepository = patientProfileRepository;
         this.doctorProfileRepository = doctorProfileRepository;
+        this.webSocketHandler = webSocketHandler;
     }
 
     @Transactional
@@ -234,6 +242,10 @@ public class QueueService {
 
         queueEntryRepository.save(nextEntry);
         notifyUpcomingPatients(clinicId, today, nextEntry.getQueueNumber());
+
+        // publish websocket snapshot so frontend updates immediately when queue advances
+        publishQueueSnapshot(clinicId);
+        
         return buildQueueAdvanceResponse(nextEntry);
     }
 
@@ -392,5 +404,131 @@ public class QueueService {
             request.setMessage(message);
             notificationService.sendNotification(request);
         });
+    }
+
+    // Staff functions
+
+    @Transactional
+    public void staffStart(Long clinicId) {
+        LocalDate today = LocalDate.now();
+        QueueSession session = queueSessionRepository.findByClinicIdAndQueueDate(clinicId, today)
+                .orElseGet(() -> {
+                    QueueSession created = new QueueSession();
+                    created.setClinicId(clinicId);
+                    created.setQueueDate(today);
+                    return created;
+                });
+        if (session.getState() == QueueState.ACTIVE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Queue session already started");
+        }
+        session.start();
+        queueSessionRepository.save(session);
+
+        // After starting, publish queue snapshot
+        publishQueueSnapshot(clinicId);
+    }
+
+    @Transactional
+    public void staffNext(Long clinicId) {
+        LocalDate today = LocalDate.now();
+        QueueSession session = queueSessionRepository.findByClinicIdAndQueueDate(clinicId, today)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Queue not started"));
+
+        if (session.getState() != QueueState.ACTIVE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Queue is paused");
+        }
+
+        List<QueueEntry> entries = queueEntryRepository.findByClinicIdAndQueueDateOrderByQueueNumberAsc(clinicId, today);
+        Queue queue = Queue.createOrMerge(clinicId, today, session, entries);
+
+        QueueEntry nextEntry = queue.callNext();
+        if (nextEntry == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No patients in queue");
+        }
+
+        queueEntryRepository.save(nextEntry);
+        notifyUpcomingPatients(clinicId, today, nextEntry.getQueueNumber());
+
+        // After moving to next, publish queue snapshot
+        publishQueueSnapshot(clinicId);
+    }
+
+    // Helper: assemble minimal queue snapshot and broadcast
+    private void publishQueueSnapshot(Long clinicId) {
+        LocalDate today = LocalDate.now();
+        List<QueueStatus> statuses = List.of(QueueStatus.WAITING, QueueStatus.FAST_TRACKED, QueueStatus.CALLED);
+        List<QueueEntry> entries = queueEntryRepository.findByClinicIdAndQueueDateAndStatusInOrderByQueueNumberAsc(clinicId, today, statuses);
+
+        int total = entries.size();
+
+        // batch-load appointments referenced by queue entries to obtain patientId/doctorId
+        List<Long> apptIds = entries.stream()
+                .map(QueueEntry::getAppointmentId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, Appointment> apptMap = new HashMap<>();
+        if (!apptIds.isEmpty()) {
+            appointmentRepository.findAllById(apptIds).forEach(a -> apptMap.put(a.getId(), a));
+        }
+
+        Map<String, Object> next = null;
+        if (!entries.isEmpty()) {
+            QueueEntry first = entries.get(0);
+            Map<String, Object> m = new HashMap<>();
+            m.put("queueNumber", first.getQueueNumber());
+            Appointment a = first.getAppointmentId() != null ? apptMap.get(first.getAppointmentId()) : null;
+
+            // resolve names (send names instead of IDs)
+            String patientName = null;
+            String doctorName = null;
+            if (a != null) {
+                Long pid = a.getPatientId();
+                Long did = a.getDoctorId();
+                if (pid != null) {
+                    var opt = patientProfileRepository.findById(pid);
+                    if (opt.isPresent()) patientName = opt.get().getFullName();
+                }
+                if (did != null) {
+                    var optD = doctorProfileRepository.findById(did);
+                    if (optD.isPresent()) doctorName = optD.get().getFullName();
+                }
+            }
+            m.put("patientName", patientName);
+            m.put("doctorName", doctorName);
+
+            m.put("status", first.getStatus() != null ? first.getStatus().name() : null);
+            next = m;
+        }
+
+        List<Map<String, Object>> queue = new ArrayList<>();
+        for (QueueEntry e : entries) {
+            Map<String, Object> m = new HashMap<>();
+            m.put("queueNumber", e.getQueueNumber());
+            Appointment a = e.getAppointmentId() != null ? apptMap.get(e.getAppointmentId()) : null;
+
+            // resolve names (send names instead of IDs)
+            String patientName = null;
+            String doctorName = null;
+            if (a != null) {
+                Long pid = a.getPatientId();
+                Long did = a.getDoctorId();
+                if (pid != null) {
+                    var opt = patientProfileRepository.findById(pid);
+                    if (opt.isPresent()) patientName = opt.get().getFullName();
+                }
+                if (did != null) {
+                    var optD = doctorProfileRepository.findById(did);
+                    if (optD.isPresent()) doctorName = optD.get().getFullName();
+                }
+            }
+            m.put("patientName", patientName);
+            m.put("doctorName", doctorName);
+
+            m.put("status", e.getStatus() != null ? e.getStatus().name() : null);
+            queue.add(m);
+        }
+
+        webSocketHandler.sendQueueUpdate(clinicId, total, next, queue);
     }
 }

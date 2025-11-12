@@ -22,4 +22,12 @@ public class NotificationController {
         notificationService.sendNotification(request);
         return ResponseEntity.accepted().build();
     }
+
+    @PostMapping("/welcome")
+    public ResponseEntity<Void> sendWelcomeNotification(@RequestBody @Valid NotificationRequest request) {
+        notificationService.sendWelcomeNotification(request);
+        return ResponseEntity.accepted().build();
+    }
 }
+
+

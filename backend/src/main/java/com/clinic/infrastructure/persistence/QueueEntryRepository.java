@@ -4,20 +4,24 @@ import com.clinic.domain.entity.QueueEntry;
 import com.clinic.domain.enums.QueueStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-@Repository
 public interface QueueEntryRepository extends JpaRepository<QueueEntry, Long> {
-    List<QueueEntry> findByClinicIdAndQueueDateOrderByQueueNumberAsc(Long clinicId, LocalDate date);
-    Optional<QueueEntry> findByClinicIdAndQueueDateAndQueueNumber(Long clinicId, LocalDate date, Integer queueNumber);
-    long countByClinicIdAndQueueDateAndStatusIn(Long clinicId, LocalDate date, List<QueueStatus> statuses);
+
     List<QueueEntry> findByQueueDate(LocalDate date);
     Optional<QueueEntry> findByAppointmentId(Long appointmentId);
 
-    @Query("select coalesce(max(q.queueNumber),0) from QueueEntry q where q.clinicId = :clinicId and q.queueDate = :date")
-    int findMaxQueueNumber(Long clinicId, LocalDate date);
+    // return 0 when no entries found
+    @Query("select coalesce(max(q.queueNumber), 0) from QueueEntry q where q.clinicId = :clinicId and q.queueDate = :date")
+    int findMaxQueueNumber(@Param("clinicId") Long clinicId, @Param("date") LocalDate date);
+
+    // used by publishQueueSnapshot to get entries for a clinic on a specific date
+    List<QueueEntry> findByClinicIdAndQueueDateAndStatusInOrderByQueueNumberAsc(Long clinicId, LocalDate queueDate, List<QueueStatus> statuses);
+
+    List<QueueEntry> findByClinicIdAndQueueDateOrderByQueueNumberAsc(Long clinicId, LocalDate queueDate);
+    Optional<QueueEntry> findByClinicIdAndQueueDateAndQueueNumber(Long clinicId, LocalDate queueDate, int queueNumber);
 }
