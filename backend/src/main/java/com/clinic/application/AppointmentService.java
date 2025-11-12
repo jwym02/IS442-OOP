@@ -3,6 +3,7 @@ package com.clinic.application;
 import com.clinic.api.patients.dto.AppointmentRequest;
 import com.clinic.api.patients.dto.AppointmentResponse;
 import com.clinic.application.dto.AppointmentDetails;
+import org.springframework.http.HttpStatus;
 import com.clinic.domain.entity.Appointment;
 import com.clinic.domain.entity.DoctorProfile;
 import com.clinic.domain.entity.PatientProfile;
@@ -14,6 +15,7 @@ import com.clinic.infrastructure.persistence.SpecialistRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -158,7 +160,10 @@ public class AppointmentService {
         }
     
         if (newDateTime.isBefore(now.plusHours(24))) {
-            throw new IllegalArgumentException("Cannot reschedule to a time within the next 24 hours.");
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Cannot reschedule to a time within the next 24 hours."
+            );
         }
     
         a.setClinicId(req.getClinicId());
