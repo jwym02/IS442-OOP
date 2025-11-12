@@ -21,7 +21,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -31,6 +34,8 @@ import java.util.List;
 public class StaffController {
     private final StaffService staffService;
     private final QueueService queueService;
+
+    private static final Logger log = LoggerFactory.getLogger(StaffController.class);
 
     public StaffController(StaffService staffService, QueueService queueService) {
         this.staffService = staffService;
@@ -93,8 +98,20 @@ public class StaffController {
     @PatchMapping("/queue/{queueNumber}/status")
     public ResponseEntity<Void> updateQueueStatus(@PathVariable Long queueNumber,
                                                   @RequestBody @Valid QueueStatusUpdateRequest request) {
-        queueService.markStatus(request.getClinicId(), queueNumber, request.getStatus());
-        return ResponseEntity.ok().build();
+        log.info("Request: updateQueueStatus queueNumber={} clinicId={} status={}",
+                 queueNumber, request != null ? request.getClinicId() : null, request != null ? request.getStatus() : null);
+        try {
+            queueService.markStatus(request.getClinicId(), queueNumber, request.getStatus());
+            return ResponseEntity.ok().build();
+        } catch (ResponseStatusException rse) {
+            // preserve expected HTTP responses thrown by service
+            log.warn("Known error updating queue status: {}", rse.getReason(), rse);
+            throw rse;
+        } catch (Exception ex) {
+            log.error("Unhandled error updating queue status for queueNumber={} clinicId={}",
+                      queueNumber, request != null ? request.getClinicId() : null, ex);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to update queue status", ex);
+        }
     }
 
     @PostMapping("/queue/{queueNumber}/fast-track")

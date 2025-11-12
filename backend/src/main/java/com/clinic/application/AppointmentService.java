@@ -2,6 +2,7 @@ package com.clinic.application;
 
 import com.clinic.api.patients.dto.AppointmentRequest;
 import com.clinic.api.patients.dto.AppointmentResponse;
+import com.clinic.application.dto.AppointmentDetails;
 import com.clinic.domain.entity.Appointment;
 import com.clinic.domain.entity.DoctorProfile;
 import com.clinic.domain.entity.PatientProfile;
@@ -10,15 +11,21 @@ import com.clinic.infrastructure.persistence.AppointmentRepository;
 import com.clinic.infrastructure.persistence.DoctorProfileRepository;
 import com.clinic.infrastructure.persistence.PatientProfileRepository;
 import com.clinic.infrastructure.persistence.SpecialistRepository;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.*;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.time.format.DateTimeFormatter;
 
 @Service
 public class AppointmentService {
@@ -26,18 +33,64 @@ public class AppointmentService {
     private final SpecialistRepository specialistRepository;
     private final PatientProfileRepository patientProfileRepository;
     private final DoctorProfileRepository doctorProfileRepository;
+    private final NotificationService notificationService;
+    private final JdbcTemplate jdbcTemplate;
 
     // sentinel clinic id used for "specialist / external - no clinic"
     private static final Long SPECIALIST_ONLY_CLINIC_ID = 99999L;
 
     public AppointmentService(AppointmentRepository appointmentRepository,
-            SpecialistRepository specialistRepository,
-            PatientProfileRepository patientProfileRepository,
-            DoctorProfileRepository doctorProfileRepository) {
+                              SpecialistRepository specialistRepository,
+                              NotificationService notificationService,
+                              JdbcTemplate jdbcTemplate,
+                              PatientProfileRepository patientProfileRepository,
+                              DoctorProfileRepository doctorProfileRepository) {
         this.appointmentRepository = appointmentRepository;
         this.specialistRepository = specialistRepository;
         this.patientProfileRepository = patientProfileRepository;
         this.doctorProfileRepository = doctorProfileRepository;
+        this.notificationService = notificationService;
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    private AppointmentDetails fetchAppointmentDetails(Long appointmentId) {
+        String sql = """
+          SELECT
+            a.id,
+            a.date_time,
+            a.status,
+            a.clinic_id,
+            c.name AS clinic_name,
+            a.doctor_id,
+            d.full_name AS doctor_name,
+            a.patient_id,
+            p.full_name AS patient_name,
+            q.queue_number AS queue_number
+          FROM appointments a
+          LEFT JOIN clinics c    ON a.clinic_id = c.id
+          LEFT JOIN doctor_profiles d    ON a.doctor_id = d.id
+          LEFT JOIN patient_profiles p   ON a.patient_id = p.id
+          LEFT JOIN queue_entries q ON q.appointment_id = a.id
+          WHERE a.id = ?
+          """;
+        return jdbcTemplate.queryForObject(sql, new Object[]{appointmentId}, (rs, rowNum) -> {
+            AppointmentDetails d = new AppointmentDetails();
+            d.id = rs.getLong("id");
+            Timestamp ts = rs.getTimestamp("date_time");
+            d.dateTime = ts != null ? ts.toLocalDateTime() : null;
+            d.status = rs.getString("status");
+            long clinicId = rs.getLong("clinic_id");
+            d.clinicId = rs.wasNull() ? null : clinicId;
+            d.clinicName = rs.getString("clinic_name");
+            long doctorId = rs.getLong("doctor_id");
+            d.doctorId = rs.wasNull() ? null : doctorId;
+            d.doctorName = rs.getString("doctor_name");
+            long patientId = rs.getLong("patient_id");
+            d.patientId = rs.wasNull() ? null : patientId;
+            d.patientName = rs.getString("patient_name");
+            d.queueNumber = rs.getString("queue_number");
+            return d;
+        });
     }
 
     @Transactional
@@ -64,6 +117,28 @@ public class AppointmentService {
         a.setStatus(AppointmentStatus.SCHEDULED);
         // persist
         Appointment saved = appointmentRepository.save(a);
+
+        // fetch human-friendly names and queue number and send email (non-fatal)
+        try {
+            AppointmentDetails details = fetchAppointmentDetails(saved.getId());
+            String patientName = details.patientName != null && !details.patientName.isBlank()
+                    ? details.patientName : ("Patient #" + saved.getPatientId());
+            String clinicName = details.clinicName != null && !details.clinicName.isBlank()
+                    ? details.clinicName : (details.clinicId != null ? "Clinic #" + details.clinicId : "Clinic");
+            String doctorName = details.doctorName != null && !details.doctorName.isBlank()
+                    ? details.doctorName : (details.doctorId != null ? "Doctor #" + details.doctorId : "Doctor");
+            String dateTimeLabel = details.dateTime != null
+                    ? details.dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+                    : "TBD";
+            String queueLabel = details.queueNumber != null && !details.queueNumber.isBlank() ? details.queueNumber : "TBD";
+            String message = String.format(
+                    "Dear %s,%n%nThank you for booking your appointment at %s.%n• Doctor: %s%n• Date & Time: %s%n• Queue Number: %s%n%nWe will notify you again when your turn is approaching. Please be present at the clinic when your queue number is called.",
+                    patientName, clinicName, doctorName, dateTimeLabel, queueLabel
+            );
+            notificationService.sendWelcomeNotification(saved.getPatientId(), message);
+        } catch (Exception ignored) {
+            // keep booking successful even if notification fails
+        }
         return toResponse(saved);
     }
 

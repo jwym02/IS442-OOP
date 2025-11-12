@@ -35,6 +35,10 @@ public class NotificationService {
         this.patientProfileRepository = patientProfileRepository;
         this.emailNotifier = emailNotifier;
     }
+     private Optional<UserAccount> resolveRecipient(Long patientId) {
+        if (patientId == null) return Optional.empty();
+        return patientProfileRepository.findById(patientId).map(PatientProfile::getUser);
+     }
 
     @Transactional
     public void sendNotification(NotificationRequest request) {
@@ -88,9 +92,25 @@ public class NotificationService {
         }
     }
 
-    private Optional<UserAccount> resolveRecipient(Long patientId) {
-        if (patientId == null) return Optional.empty();
-        return patientProfileRepository.findById(patientId).map(PatientProfile::getUser);
+    @Transactional
+    public void sendWelcomeNotification(NotificationRequest request) {
+        // Minimal implementation: reuse sendNotification to persist and send email.
+        // The request.message should be fully formatted by caller.
+        if (request == null) return;
+        // mark type as REMINDER/WELCOME if not set
+        if (request.getType() == null || request.getType().isBlank()) {
+            request.setType("REMINDER");
+        }
+        sendNotification(request);
+    }
+
+    @Transactional
+    public void sendWelcomeNotification(Long userId, String message) {
+        NotificationRequest r = new NotificationRequest();
+        r.setUserId(userId);
+        r.setMessage(message);
+        r.setType("REMINDER");
+        sendWelcomeNotification(r);
     }
 
     // Extract email safely from your UserAccount (adapt getter name if different)
