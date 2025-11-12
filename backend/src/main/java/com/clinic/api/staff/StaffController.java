@@ -47,7 +47,7 @@ public class StaffController {
         return ResponseEntity.ok(staffService.bookWalkIn(request));
     }
 
-    @PatchMapping("/appointments/{appointmentId}/reschedule")
+    @PatchMapping("/staff/appointments/{appointmentId}/reschedule")
     public ResponseEntity<AppointmentResponse> reschedule(@PathVariable Long appointmentId,
                                                           @RequestBody @Valid RescheduleRequest request) {
         return ResponseEntity.ok(staffService.rescheduleAppointment(appointmentId, request));

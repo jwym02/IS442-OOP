@@ -148,24 +148,45 @@ public class AppointmentService {
         if (opt.isEmpty()) {
             throw new IllegalArgumentException("Appointment not found");
         }
-
+    
         Appointment a = opt.get();
-
-        if (req.getSpecialistId() != null) {
-            a.setSpecialistId(req.getSpecialistId());
-            a.setClinicId(SPECIALIST_ONLY_CLINIC_ID);
-        } else {
-            a.setClinicId(req.getClinicId());
-            a.setSpecialistId(null);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime newDateTime = parseToLocalDateTime(req.getDateTime());
+    
+        if (a.getDateTime().isBefore(now.plusHours(24))) {
+            throw new IllegalArgumentException("Cannot reschedule an appointment within 24 hours of its scheduled time.");
         }
-
+    
+        if (newDateTime.isBefore(now.plusHours(24))) {
+            throw new IllegalArgumentException("Cannot reschedule to a time within the next 24 hours.");
+        }
+    
+        a.setClinicId(req.getClinicId());
         a.setDoctorId(req.getDoctorId());
-        a.setDateTime(parseToLocalDateTime(req.getDateTime()));
-
+        a.setDateTime(newDateTime);
         a.setStatus(AppointmentStatus.SCHEDULED);
+    
         Appointment updated = appointmentRepository.save(a);
         return toResponse(updated);
     }
+    
+    @Transactional
+    public AppointmentResponse staffRescheduleAppointment(Long appointmentId, AppointmentRequest req) {
+        Optional<Appointment> opt = appointmentRepository.findById(appointmentId);
+        if (opt.isEmpty()) {
+            throw new IllegalArgumentException("Appointment not found");
+        }
+    
+        Appointment a = opt.get();
+        a.setClinicId(req.getClinicId());
+        a.setDoctorId(req.getDoctorId());
+        a.setDateTime(parseToLocalDateTime(req.getDateTime()));
+        a.setStatus(AppointmentStatus.SCHEDULED);
+    
+        Appointment updated = appointmentRepository.save(a);
+        return toResponse(updated);
+    }
+    
 
     @Transactional
     public void cancelAppointmentAsStaff(Long appointmentId) {
