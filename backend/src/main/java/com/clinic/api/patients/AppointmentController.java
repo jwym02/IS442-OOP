@@ -85,6 +85,19 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.rescheduleAppointment(appointmentId, request));
     }
 
+    @PatchMapping("/staff/appointments/{appointmentId}/reschedule")
+    @Operation(summary = "Reschedule appointment (Staff)", description = "Allows staff to reschedule appointments without 24-hour restrictions")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Appointment rescheduled successfully",
+            content = @Content(schema = @Schema(implementation = AppointmentResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Appointment not found")
+    })
+    public ResponseEntity<AppointmentResponse> staffRescheduleAppointment(
+            @PathVariable long appointmentId,
+            @RequestBody @Valid AppointmentRequest request) {
+        return ResponseEntity.ok(appointmentService.staffRescheduleAppointment(appointmentId, request));
+    }
+
     @PatchMapping("/appointments/{appointmentId}/status")
     @Operation(summary = "Update appointment status", description = "Update the status of an appointment (e.g., mark as NO_SHOW)")
     @ApiResponses({

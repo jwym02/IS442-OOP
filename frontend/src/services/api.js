@@ -71,12 +71,14 @@ export const appointmentAPI = {
   book: (patientId, payload) => apiClient.post(`/patients/${patientId}/appointments`, payload),
   cancel: (appointmentId) => apiClient.delete(`/appointments/${appointmentId}`),
 
+  // Patient reschedule
   reschedule: (appointmentId, payload) =>
-    apiClient.patch(`/staff/appointments/${appointmentId}/reschedule`, payload),
+    apiClient.patch(`/appointments/${appointmentId}/reschedule`, payload),
 
+  // Staff reschedule
   staffReschedule: (appointmentId, payload) =>
     apiClient.patch(`/staff/appointments/${appointmentId}/reschedule`, payload),
-
+  
   // Staff walk-in
   staffWalkIn: (payload) => apiClient.post(`/staff/appointments/walk-in`, payload),
 
