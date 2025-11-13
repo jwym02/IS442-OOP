@@ -27,7 +27,7 @@ export default function UserForm({
         <form className="space-y-6" onSubmit={onSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="user-email">Email Address *</Label>
+              <Label htmlFor="user-email">Email Address <span className="text-red-500">*</span></Label>
               <Input
                 id="user-email"
                 type="email"
@@ -39,7 +39,7 @@ export default function UserForm({
 
             <div className="space-y-2">
               <Label htmlFor="user-password">
-                Password {editingUserId && "(leave blank to keep current)"}
+                Password {editingUserId ? "(leave blank to keep current)" : <span className="text-red-500">*</span>}
               </Label>
               <Input
                 id="user-password"
@@ -51,7 +51,7 @@ export default function UserForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="user-name">Full Name</Label>
+              <Label htmlFor="user-name">Full Name <span className="text-red-500">*</span></Label>
               <Input
                 id="user-name"
                 type="text"
@@ -71,7 +71,7 @@ export default function UserForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="user-role">Role *</Label>
+              <Label htmlFor="user-role">Role <span className="text-red-500">*</span></Label>
               <Select
                 id="user-role"
                 value={userForm.role}

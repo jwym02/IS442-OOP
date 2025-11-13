@@ -173,6 +173,13 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
     loadData();
   }, [clinicId, doctorProfileId, isDoctor, isStaff, show]);
 
+  useEffect(() => {
+    if (dateFilter === "today") {
+      const today = new Date().toISOString().slice(0, 10);
+      setFilterDate(today);
+    }
+  }, [dateFilter]);
+
   const refreshAppointments = async () => {
     try {
       if (isStaff) {
@@ -1047,10 +1054,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>{isDoctor ? 'Your Appointments' : 'All Appointments'}</CardTitle>
-                    <CardDescription>
-                      Total: {filteredAppointments.length} appointments
-                    </CardDescription>
+                    <CardTitle>{isDoctor ? 'Your Appointments' : 'All Appointments'} ({filteredAppointments.length})</CardTitle>
                   </div>
                   <Button variant="ghost" size="sm" className="gap-2" onClick={refreshAppointments}>
                     <RefreshCw className="h-4 w-4" />
@@ -1116,6 +1120,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                           setFilterClinic(String(clinicId || ''));
                           setFilterDoctor('');
                           setFilterDate('');
+                          setDateFilter("all");
                         }}
                       >
                         Reset Filters
@@ -1145,7 +1150,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                 {filteredAppointments.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center">
                     <Calendar className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-                    <p className="text-sm text-slate-600">No appointments found</p>
+                    <p className="text-sm text-slate-600">No upcoming appointments</p>
                   </div>
                 ) : (
                   <div className="rounded-xl border border-slate-200 overflow-hidden">
