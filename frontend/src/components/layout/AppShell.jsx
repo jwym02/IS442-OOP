@@ -1,5 +1,4 @@
-import { Stethoscope, LogOut } from 'lucide-react';
-import { useAuth } from '../../context/useAuth'; 
+import { LogOut } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 
@@ -19,11 +18,9 @@ export function AppShell({ user, onLogout, children }) {
       <header className="border-b border-slate-200 bg-white/80 backdrop-blur">
         <div className="mx-auto max-w-[1920px] flex flex-col gap-3 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Stethoscope className="h-6 w-6" aria-hidden />
-            </span>
+            <img src="/public/logo.png" alt="" className="w-16 h-12" />
             <div>
-              <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">
+              <h1 className="text-2xl font-semibold text-slate-900">
                 SingHealth Clinic System
               </h1>
             </div>
@@ -39,9 +36,20 @@ export function AppShell({ user, onLogout, children }) {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {activeRole && roleLabels[activeRole] && (
-                  <Badge variant="secondary">
-                    {roleLabels[activeRole]}
-                  </Badge>
+                  <Badge
+                  variant="secondary"
+                  className={
+                    {
+                      "System Admin": "bg-blue-500 text-white dark:bg-blue-600",
+                      "Doctor": "bg-green-500 text-white dark:bg-green-600",
+                      "Clinic Staff": "bg-red-500 text-white dark:bg-red-600",
+                    }[roleLabels[activeRole]] || ""
+                  }
+                >
+                  {roleLabels[activeRole]}
+                </Badge>
+                
+                
                 )}
               <Button
                 type="button"

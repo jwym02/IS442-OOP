@@ -1065,8 +1065,8 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
               <CardContent>
                 {/* Filters */}
                 {isStaff && (
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
-                    <div className="space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-7 gap-4 mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <div className="space-y-2 col-span-2">
                       <Label htmlFor="filter-clinic">Clinic</Label>
                       <Select
                         id="filter-clinic"
@@ -1085,7 +1085,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                       </Select>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2 col-span-2">
                       <Label htmlFor="filter-doctor">Doctor</Label>
                       <Select
                         id="filter-doctor"
@@ -1102,7 +1102,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                       </Select>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2 col-span-2">
                       <Label htmlFor="filter-date">Date</Label>
                       <Input
                         id="filter-date"
@@ -1161,7 +1161,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                           <TableHead>Patient</TableHead>
                           {isStaff && <TableHead>Doctor</TableHead>}
                           <TableHead>Status</TableHead>
-                          {isStaff && <TableHead className="text-right">Actions</TableHead>}
+                          {isStaff && <TableHead>Actions</TableHead>}
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1191,8 +1191,8 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                               </Badge>
                             </TableCell>
                             {isStaff && (
-                              <TableCell className="text-right">
-                                <div className="flex justify-end gap-2">
+                              <TableCell>
+                                <div className="flex gap-2">
                                   {appointment.status === 'SCHEDULED' &&
                                     isSameDay(appointment.dateTime, new Date()) && (
                                       <Button

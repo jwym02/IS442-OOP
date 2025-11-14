@@ -6,7 +6,7 @@ export function AuthLayout({ title, description, children, footer }) {
       <div className="absolute inset-0 bg-black/10 backdrop-blur-[1px]" aria-hidden />
       <div className="relative z-10 grid w-full max-w-5xl gap-10 rounded-3xl bg-white/95 p-6 shadow-2xl ring-1 ring-black/5 backdrop-blur">
         <div className="grid gap-4 text-center md:text-left">
-          <h1 className="flex items-center gap-4 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+          <h1 className="flex items-center gap-4 text-2xl font-semibold tracking-tight text-slate-900">
             <img src="/public/logo.png" alt="" className="w-16 h-12" />
             SingHealth Clinic System
           </h1>
