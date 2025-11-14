@@ -1,0 +1,7 @@
+{
+  "id" : "backup-20251112070528-bdd4de66",
+  "createdAt" : "2025-11-12T07:05:28.941748Z",
+  "sizeBytes" : 42631,
+  "totalRows" : 315,
+  "tables" : [ "admin_profiles", "appointments", "clinic_registry", "clinic_staff_profiles", "clinics", "doctor_profiles", "flyway_schema_history", "medical_records", "notifications", "patient_profiles", "queue_entries", "queue_sessions", "roles", "schedules", "specialists", "time_slots", "user_roles", "users" ]
+}

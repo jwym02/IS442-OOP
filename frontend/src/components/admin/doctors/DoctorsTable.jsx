@@ -71,7 +71,7 @@ export default function DoctorsTable({
                               step="5"
                               value={doctorEdits[doctor.id] ?? ""}
                               onChange={(e) => onIntervalChange(doctor.id, e.target.value)}
-                              placeholder="Minutes"
+                              placeholder=""
                               className="w-24 text-sm"
                             />
                             <Button

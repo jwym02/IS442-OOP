@@ -26,12 +26,17 @@ import {
 import { useToast } from '../../context/useToast';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { CalendarIcon } from 'lucide-react'
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select } from '../ui/select';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "../ui/radio-group"
 import { cn } from '../../lib/utils';
 
 export default function PatientDashboard({ patientId, userName }) {
@@ -1108,42 +1113,35 @@ export default function PatientDashboard({ patientId, userName }) {
               </CardHeader>
               <CardContent>
                 <form className="space-y-6" onSubmit={handleBookAppointment}>
-                  {/* Search by radio buttons */}
-                  <div className="space-y-2">
-                    <Label>Search by</Label>
-                    <div className="flex items-center gap-4">
-                      <label className="inline-flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="selectionType"
-                          value="clinic"
-                          checked={selectionType === 'clinic'}
-                          onChange={() => {
-                            setSelectionType('clinic');
-                            setSelectedClinic('');
-                            setSelectedDoctor('');
-                          }}
-                        />
-                        <span>Clinic</span>
-                      </label>
-                      <label className="inline-flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="selectionType"
-                          value="specialist"
-                          checked={selectionType === 'specialist'}
-                          onChange={() => {
-                            setSelectionType('specialist');
-                            setSelectedClinic('');
-                            setSelectedDoctor('');
-                          }}
-                        />
-                        <span>Specialist</span>
-                      </label>
+                  {/* Radio buttons */}
+                  <RadioGroup
+                    value={selectionType}
+                    onValueChange={(value) => {
+                      setSelectionType(value)
+                      setSelectedClinic('')
+                      setSelectedDoctor('')
+                    }}
+                  >
+                    <div className="space-y-2">
+                      <Label>Search by</Label>
+                      <div className="flex items-center gap-6">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="clinic" id="clinic" />
+                          <Label htmlFor="clinic" className="text-sm font-medium leading-none">
+                            Clinic
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="specialist" id="specialist" />
+                          <Label htmlFor="specialist" className="text-sm font-medium leading-none">
+                            Specialist
+                          </Label>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  </RadioGroup>
 
-                  {/* Clinic/Specialist and Doctor dropdowns inline */}
+                  {/* Clinic/Specialist and Doctor dropdowns */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="clinicOrSpecialist">
@@ -1196,19 +1194,25 @@ export default function PatientDashboard({ patientId, userName }) {
                     </div>
                   </div>
 
-                  {/* Date and Time Slot inline */}
+                  {/* Date and Time Slot */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="appointment-date">Date</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="appointment-date">Date</Label>
+                    <div className="relative">
                       <Input
                         id="appointment-date"
                         type="date"
                         value={selectedDate}
-                        onChange={(event) => setSelectedDate(event.target.value)}
-                        min={new Date().toISOString().slice(0, 10)}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        min={new Date().toISOString().split("T")[0]}
                         required
+                        className="pr-10" // ensures space for the icon
+                      />
+                      <CalendarIcon
+                        className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"
                       />
                     </div>
+                  </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="appointment-slot">Time Slot</Label>
@@ -1348,10 +1352,7 @@ export default function PatientDashboard({ patientId, userName }) {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>Upcoming Appointments</CardTitle>
-                    <CardDescription>
-                      Total: {upcomingAppointments.length} scheduled visits
-                    </CardDescription>
+                    <CardTitle>Upcoming Appointments ({upcomingAppointments.length})</CardTitle>
                   </div>
                   <Button variant="ghost" size="sm" className="gap-2" onClick={refreshAppointments}>
                     <RefreshCw className="h-4 w-4" />
