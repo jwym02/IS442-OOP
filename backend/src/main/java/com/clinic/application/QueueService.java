@@ -383,14 +383,14 @@ public class QueueService {
                 .findFirst()
                 .ifPresent(entry -> sendNotification(entry,
                         NotificationType.REMINDER,
-                        "You are 3 patients away. Please proceed closer to the consultation room."));
+                        "You are 3 patients away. Please proceed closer to the consultation room.%n%nWe look forward to serving you.%nWarm regards,%nSingHealth Clinic Team"));
 
         queueEntryRepository.findByClinicIdAndQueueDateOrderByQueueNumberAsc(clinicId, date).stream()
                 .filter(entry -> entry.getQueueNumber() == calledNumber)
                 .findFirst()
                 .ifPresent(entry -> sendNotification(entry,
                         NotificationType.QUEUE_CALLED,
-                        "It’s your turn. Kindly proceed to the consultation room."));
+                        "It’s your turn. Kindly proceed to the consultation room.%n%nWe look forward to serving you.%nWarm regards,%nSingHealth Clinic Team"));
     }
 
     private void sendNotification(QueueEntry entry, NotificationType type, String message) {

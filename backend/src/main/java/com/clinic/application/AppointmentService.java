@@ -132,7 +132,7 @@ public class AppointmentService {
                     : "TBD";
             String queueLabel = details.queueNumber != null && !details.queueNumber.isBlank() ? details.queueNumber : "TBD";
             String message = String.format(
-                    "Dear %s,%n%nThank you for booking your appointment at %s.%n• Doctor: %s%n• Date & Time: %s%n• Queue Number: %s%n%nWe will notify you again when your turn is approaching. Please be present at the clinic when your queue number is called.",
+                    "Dear %s,%n%nThank you for booking your appointment at %s.%n• Doctor: %s%n• Date & Time: %s%n• Queue Number: %s%n%nWe will notify you again when your turn is approaching. Please be present at the clinic when your queue number is called.%n%nWe look forward to serving you.%nWarm regards,%nSingHealth Clinic Team",
                     patientName, clinicName, doctorName, dateTimeLabel, queueLabel
             );
             notificationService.sendWelcomeNotification(saved.getPatientId(), message);

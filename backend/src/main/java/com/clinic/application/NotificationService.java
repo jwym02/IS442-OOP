@@ -116,8 +116,8 @@ public class NotificationService {
     // Extract email safely from your UserAccount (adapt getter name if different)
     private String safeEmail(UserAccount ua) {
         try {
-            return "jovanwang2002@gmail.com"; // change to user's email
-            // return ua.getEmail(); // <-- change if your field/method is different
+            // return "jovanwang2002@gmail.com"; // prof, pls change to your email if you wanna test
+            return ua.getEmail();  // <-- this is the proper function
         } catch (Exception e) {
             return null;
         }
@@ -138,7 +138,7 @@ public class NotificationService {
     private String subjectFor(NotificationType type) {
         return switch (type) {
             case QUEUE_CALLED -> "Queue Update – It’s Your Turn";
-            case REMINDER -> "Queue Update – 3 Patients Away";
+            // case REMINDER -> "Queue Update – 3 Patients Away";
             default -> "Notification from SingHealth Clinic";
         };
     }
