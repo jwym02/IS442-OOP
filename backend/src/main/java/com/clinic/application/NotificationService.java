@@ -117,7 +117,7 @@ public class NotificationService {
     private String safeEmail(UserAccount ua) {
         try {
             // return "jovanwang2002@gmail.com"; // prof, pls change to your email if you wanna test
-            return ua.getEmail();  // <-- this is the proper function
+            return ua.getEmail();
         } catch (Exception e) {
             return null;
         }

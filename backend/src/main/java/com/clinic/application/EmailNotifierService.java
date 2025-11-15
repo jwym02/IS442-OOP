@@ -1,4 +1,3 @@
-// com/clinic/application/notifications/EmailNotifier.java
 package com.clinic.application;
 
 import com.sendgrid.*;

@@ -1,5 +1,25 @@
 # IS442-G2T2 Clinic Appointment & Queue Management System
 
+## Key Assumptions Made
+
+- Patients are not allowed to reschedule or cancel appointments within 24 hours of the appointment time. Staff are not restricted to this rule.
+- Email is only notification channel, so valid patient emails are required.
+
+## Test Accounts
+
+- **Admin**
+  - Username: `alice.admin@demo.clinic`
+  - Password: `admintest`
+- **Staff**
+  - Username: `sam.staff@evergreen.clinic`
+  - Password: `stafftest`
+- **Doctor**
+  - Username: `d.tan@evergreen.clinic`
+  - Password: `doctortest`
+- **Patient**
+  - Username: `peter.patient@example.com`
+  - Password: `patienttest`
+
 ## Architecture Overview
 
 | Layer    | Tech                    | Responsibilities                                                |
@@ -9,16 +29,17 @@
 | Database | MySQL 8                 | Stores clinics, users, appointments, queue sessions, analytics  |
 
 ### Port allocation
+
 - Executable Jar: `http://localhost:8081`
 - MySQL: `localhost:3306`
-  
+
 #### Development Environment
+
 - Backend API: `http://localhost:8081`
 - Frontend Development Server: `http://localhost:5173` (proxies `/api` to port 8081)
 - MySQL: `localhost:3306`
 
 <br>
-
 
 ## Prerequisites
 
@@ -60,7 +81,14 @@
    Run the build script to compile and package the application:
 
    ```bash
-   build.sh
+   # macOS / Linux
+   ./build.sh
+
+   # Windows
+   build.bat
+
+   # or
+   ./mvnw.cmd -f backend/pom.xml -DskipTests clean package
    ```
 
    > Executable jar outputs to backend/target
@@ -69,15 +97,36 @@
 
 ## Running the application
 
+### Option 1: Using the build script
+
 1. **Make sure the MySQL server is running on port 3306.**
-   
 2. **Start the application using the generated JAR file:**
-   ```jar
-   java -jar <your-jar-file>.jar
+
+   ```bash
+   java -jar backend/target/clinic-*.jar
    ```
 
+3. **Start the frontend:**
 
-<!-- 2. **Build & run the API**
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+
+   The Vite dev server listens on `http://localhost:5173` and proxies `http://localhost:8081/api/*`.
+
+4. **WebSocket queue display**
+
+   - Endpoint: `ws://localhost:8081/ws/queue`
+   - Payloads: JSON `queue_update` messages with `clinicId`, `total`, `next`, and `queue` arrays.
+   - Triggered automatically when staff start the queue or call the next patient (future work: broadcast on manual status edits).
+
+5. **Interactive API docs** live at `http://localhost:8081/swagger-ui.html` once the backend is running.
+
+## Option 2: Using Maven Directly
+
+2. **Build & run the API**
 
 ```powershell
 cd backend
@@ -105,4 +154,4 @@ npm run build
 npm run preview
 ```
 
---- -->
+---
