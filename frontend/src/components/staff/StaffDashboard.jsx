@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Calendar,
@@ -173,13 +173,6 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
     loadData();
   }, [clinicId, doctorProfileId, isDoctor, isStaff, show]);
 
-  useEffect(() => {
-    if (dateFilter === "today") {
-      const today = new Date().toISOString().slice(0, 10);
-      setFilterDate(today);
-    }
-  }, [dateFilter]);
-
   const refreshAppointments = async () => {
     try {
       if (isStaff) {
@@ -198,7 +191,6 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
     try {
       const res = await queueAPI.staffQueueStatus(clinicId);
       setQueueStatus(res.data || null);
-      console.log(queueStatus)
     } catch (error) {
       show(error?.userMessage || 'Unable to refresh queue status.', 'error');
     }
@@ -437,8 +429,6 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
     return doctors.filter((d) => d.clinicId === Number(filterClinic));
   }, [doctors, filterClinic]);
 
-  const now = new Date();
-
   // Normalize appointments for display - mark as NO_SHOW if > 3 hours past appointment time
   const normalizedAppointments = useMemo(() => {
     const currentTime = new Date();
@@ -462,33 +452,41 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
     });
   }, [appointments]);
 
-  const applyDateFilter = (list) => {
-    if (dateFilter === 'today') {
-      return list.filter((a) => {
-        const d = new Date(a.dateTime);
-        return (
-          d.getFullYear() === now.getFullYear() &&
-          d.getMonth() === now.getMonth() &&
-          d.getDate() === now.getDate()
-        );
-      });
-    } else if (dateFilter === 'week') {
-      const start = new Date(now);
-      start.setDate(now.getDate() - now.getDay());
-      const end = new Date(start);
-      end.setDate(start.getDate() + 7);
-      return list.filter((a) => {
-        const d = new Date(a.dateTime);
-        return d >= start && d < end;
-      });
-    } else if (dateFilter === 'month') {
-      return list.filter((a) => {
-        const d = new Date(a.dateTime);
-        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-      });
-    }
-    return list;
-  };
+  const applyDateFilter = useCallback(
+    (list) => {
+      const referenceDate = new Date();
+
+      if (dateFilter === 'today') {
+        return list.filter((a) => {
+          const d = new Date(a.dateTime);
+          return (
+            d.getFullYear() === referenceDate.getFullYear() &&
+            d.getMonth() === referenceDate.getMonth() &&
+            d.getDate() === referenceDate.getDate()
+          );
+        });
+      } else if (dateFilter === 'week') {
+        const start = new Date(referenceDate);
+        start.setDate(referenceDate.getDate() - referenceDate.getDay());
+        const end = new Date(start);
+        end.setDate(start.getDate() + 7);
+        return list.filter((a) => {
+          const d = new Date(a.dateTime);
+          return d >= start && d < end;
+        });
+      } else if (dateFilter === 'month') {
+        return list.filter((a) => {
+          const d = new Date(a.dateTime);
+          return (
+            d.getFullYear() === referenceDate.getFullYear() &&
+            d.getMonth() === referenceDate.getMonth()
+          );
+        });
+      }
+      return list;
+    },
+    [dateFilter]
+  );
 
   const filteredAppointments = useMemo(() => {
     let list = normalizedAppointments || [];
@@ -506,7 +504,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
     }
     list = applyDateFilter(list);
     return list.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
-  }, [normalizedAppointments, filterClinic, filterDoctor, filterDate, dateFilter, applyDateFilter]);
+  }, [normalizedAppointments, filterClinic, filterDoctor, filterDate, applyDateFilter]);
 
   const totalPages = Math.ceil(filteredAppointments.length / ITEMS_PER_PAGE);
   const paginatedAppointments = filteredAppointments.slice(
@@ -805,13 +803,16 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                       <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">
                         Queue State
                       </p>
-                      <p 
-                      className={cn(
-                        'text-2xl font-bold text-slate-900',
-                        queueStatus?.state === 'ACTIVE'
-                          ? 'text-green-700'
-                          : queueStatus?.state === 'PAUSED' ? 'text-orange-700' : 'text-slate-600'
-                      )}>
+                      <p
+                        className={cn(
+                          'text-2xl font-bold text-slate-900',
+                          queueStatus?.state === 'ACTIVE'
+                            ? 'text-green-700'
+                            : queueStatus?.state === 'PAUSED'
+                            ? 'text-orange-700'
+                            : 'text-slate-600'
+                        )}
+                      >
                         {queueStatus?.state || 'IDLE'}
                       </p>
                     </div>
@@ -1054,7 +1055,10 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>{isDoctor ? 'Your Appointments' : 'All Appointments'} ({filteredAppointments.length})</CardTitle>
+                    <CardTitle>
+                      {isDoctor ? 'Your Appointments' : 'All Appointments'} (
+                      {filteredAppointments.length})
+                    </CardTitle>
                   </div>
                   <Button variant="ghost" size="sm" className="gap-2" onClick={refreshAppointments}>
                     <RefreshCw className="h-4 w-4" />
@@ -1120,7 +1124,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                           setFilterClinic(String(clinicId || ''));
                           setFilterDoctor('');
                           setFilterDate('');
-                          setDateFilter("all");
+                          setDateFilter('all');
                         }}
                       >
                         Reset Filters
@@ -1292,13 +1296,16 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                     <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">
                       Queue State
                     </p>
-                    <p 
-                    className={cn(
-                      'text-2xl font-bold text-slate-900',
-                      queueStatus?.state === 'ACTIVE'
-                        ? 'text-green-700'
-                        : queueStatus?.state === 'PAUSED' ? 'text-orange-700' : 'text-slate-600'
-                    )}>
+                    <p
+                      className={cn(
+                        'text-2xl font-bold text-slate-900',
+                        queueStatus?.state === 'ACTIVE'
+                          ? 'text-green-700'
+                          : queueStatus?.state === 'PAUSED'
+                          ? 'text-orange-700'
+                          : 'text-slate-600'
+                      )}
+                    >
                       {queueStatus?.state || 'IDLE'}
                     </p>
                   </div>
@@ -1730,7 +1737,6 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
 }
 
 // Stat Card Component
-// eslint-disable-next-line no-unused-vars
 function StatCard({ title, value, icon: Icon, color }) {
   const colorClasses = {
     blue: 'bg-blue-50 text-blue-600 border-blue-200',
