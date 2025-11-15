@@ -75,14 +75,4 @@ public class Queue {
             .findFirst();
     }
 
-    public QueueSnapshot snapshot() {
-        QueueSnapshot snapshot = new QueueSnapshot();
-        snapshot.setWaitingCount((int) entries.stream().filter(QueueEntry::isWaiting).count());
-        entries.stream()
-            .filter(entry -> entry.getStatus() == QueueStatus.CALLED)
-            .max(Comparator.comparingInt(QueueEntry::getQueueNumber))
-            .ifPresent(entry -> snapshot.setActiveTicket(String.valueOf(entry.getQueueNumber())));
-        snapshot.setEstimatedWaitMinutes(snapshot.getWaitingCount() * 5);
-        return snapshot;
-    }
 }
