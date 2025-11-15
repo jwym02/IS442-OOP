@@ -209,6 +209,8 @@ public class QueueService {
         }
         session.start();
         queueSessionRepository.save(session);
+
+        publishQueueSnapshot(clinicId);
     }
 
     @Transactional
@@ -404,53 +406,6 @@ public class QueueService {
             request.setMessage(message);
             notificationService.sendNotification(request);
         });
-    }
-
-    // Staff functions
-
-    @Transactional
-    public void staffStart(Long clinicId) {
-        LocalDate today = LocalDate.now();
-        QueueSession session = queueSessionRepository.findByClinicIdAndQueueDate(clinicId, today)
-                .orElseGet(() -> {
-                    QueueSession created = new QueueSession();
-                    created.setClinicId(clinicId);
-                    created.setQueueDate(today);
-                    return created;
-                });
-        if (session.getState() == QueueState.ACTIVE) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Queue session already started");
-        }
-        session.start();
-        queueSessionRepository.save(session);
-
-        // After starting, publish queue snapshot
-        publishQueueSnapshot(clinicId);
-    }
-
-    @Transactional
-    public void staffNext(Long clinicId) {
-        LocalDate today = LocalDate.now();
-        QueueSession session = queueSessionRepository.findByClinicIdAndQueueDate(clinicId, today)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Queue not started"));
-
-        if (session.getState() != QueueState.ACTIVE) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Queue is paused");
-        }
-
-        List<QueueEntry> entries = queueEntryRepository.findByClinicIdAndQueueDateOrderByQueueNumberAsc(clinicId, today);
-        Queue queue = Queue.createOrMerge(clinicId, today, session, entries);
-
-        QueueEntry nextEntry = queue.callNext();
-        if (nextEntry == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No patients in queue");
-        }
-
-        queueEntryRepository.save(nextEntry);
-        notifyUpcomingPatients(clinicId, today, nextEntry.getQueueNumber());
-
-        // After moving to next, publish queue snapshot
-        publishQueueSnapshot(clinicId);
     }
 
     // Helper: assemble minimal queue snapshot and broadcast

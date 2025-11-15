@@ -2,7 +2,6 @@ package com.clinic.application;
 
 import com.clinic.api.admin.dto.*;
 import com.clinic.domain.entity.*;
-import com.clinic.domain.enums.AppointmentStatus;
 import com.clinic.domain.enums.Roles;
 import com.clinic.domain.stats.SystemStats;
 import com.clinic.domain.value.BackupMetadata;
@@ -15,7 +14,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.*;
@@ -32,8 +30,6 @@ public class AdminService {
     private final ClinicStaffProfileRepository clinicStaffProfileRepository;
     private final DoctorProfileRepository doctorProfileRepository;
     private final AdminProfileRepository adminProfileRepository;
-    private final AppointmentRepository appointmentRepository;
-    private final QueueEntryRepository queueEntryRepository;
     private final PasswordEncoder passwordEncoder;
     private final ReportService reportService;
     private final BackupService backupService;
@@ -46,8 +42,6 @@ public class AdminService {
                         ClinicStaffProfileRepository clinicStaffProfileRepository,
                         DoctorProfileRepository doctorProfileRepository,
                         AdminProfileRepository adminProfileRepository,
-                        AppointmentRepository appointmentRepository,
-                        QueueEntryRepository queueEntryRepository,
                         PasswordEncoder passwordEncoder,
                         ReportService reportService,
                         BackupService backupService) {
@@ -59,8 +53,6 @@ public class AdminService {
         this.clinicStaffProfileRepository = clinicStaffProfileRepository;
         this.doctorProfileRepository = doctorProfileRepository;
         this.adminProfileRepository = adminProfileRepository;
-        this.appointmentRepository = appointmentRepository;
-        this.queueEntryRepository = queueEntryRepository;
         this.passwordEncoder = passwordEncoder;
         this.reportService = reportService;
         this.backupService = backupService;
@@ -459,29 +451,6 @@ public class AdminService {
         } catch (DateTimeParseException ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid time format. Use HH:mm.", ex);
         }
-    }
-
-    public SystemStatsResponse buildClinicSnapshot(Long clinicId) {
-        List<Appointment> todaysAppointments = appointmentRepository.findByClinicIdAndDateTimeBetween(
-            clinicId,
-            LocalDate.now().atStartOfDay(),
-            LocalDate.now().plusDays(1).atStartOfDay()
-        );
-        Map<AppointmentStatus, Long> statusCounts = todaysAppointments.stream()
-            .collect(Collectors.groupingBy(Appointment::getStatus, Collectors.counting()));
-
-        LocalDate today = LocalDate.now();
-        Map<String, Long> queueCounts = queueEntryRepository.findByQueueDate(today).stream()
-            .filter(entry -> Objects.equals(entry.getClinicId(), clinicId))
-            .collect(Collectors.groupingBy(entry -> entry.getStatus().name(), Collectors.counting()));
-
-        SystemStatsResponse snapshot = new SystemStatsResponse();
-        snapshot.setTotalAppointments(todaysAppointments.size());
-        snapshot.setCompletedAppointments(statusCounts.getOrDefault(AppointmentStatus.COMPLETED, 0L).intValue());
-        snapshot.setCancellations(statusCounts.getOrDefault(AppointmentStatus.CANCELLED, 0L).intValue());
-        snapshot.setQueueStatistics(queueCounts.toString());
-        snapshot.setReportGeneratedAt(LocalDateTime.now());
-        return snapshot;
     }
 
     @Transactional(readOnly = true)

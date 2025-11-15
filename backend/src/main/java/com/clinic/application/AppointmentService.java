@@ -104,6 +104,8 @@ public class AppointmentService {
             throw new IllegalArgumentException("Cannot book appointments in the past");
         }
 
+        ensureDoctorSlotAvailable(req.getDoctorId(), appointmentTime, null);
+
         Appointment a = new Appointment();
         a.setPatientId(patientId);
         // If booking a specialist appointment, attach specialistId and leave clinicId
@@ -166,8 +168,11 @@ public class AppointmentService {
             );
         }
     
+        Long updatedDoctorId = req.getDoctorId() != null ? req.getDoctorId() : a.getDoctorId();
+        ensureDoctorSlotAvailable(updatedDoctorId, newDateTime, a.getId());
+
         a.setClinicId(req.getClinicId());
-        a.setDoctorId(req.getDoctorId());
+        a.setDoctorId(updatedDoctorId);
         a.setDateTime(newDateTime);
         a.setStatus(AppointmentStatus.SCHEDULED);
     
@@ -183,9 +188,14 @@ public class AppointmentService {
         }
     
         Appointment a = opt.get();
+        LocalDateTime newDateTime = parseToLocalDateTime(req.getDateTime());
+        Long updatedDoctorId = req.getDoctorId() != null ? req.getDoctorId() : a.getDoctorId();
+
+        ensureDoctorSlotAvailable(updatedDoctorId, newDateTime, a.getId());
+
         a.setClinicId(req.getClinicId());
-        a.setDoctorId(req.getDoctorId());
-        a.setDateTime(parseToLocalDateTime(req.getDateTime()));
+        a.setDoctorId(updatedDoctorId);
+        a.setDateTime(newDateTime);
         a.setStatus(AppointmentStatus.SCHEDULED);
     
         Appointment updated = appointmentRepository.save(a);
@@ -408,6 +418,20 @@ public class AppointmentService {
             } catch (Exception ex) {
                 throw new IllegalArgumentException("Invalid dateTime format: " + s, ex);
             }
+        }
+    }
+
+    private void ensureDoctorSlotAvailable(Long doctorId, LocalDateTime dateTime, Long appointmentIdToExclude) {
+        if (doctorId == null || dateTime == null) {
+            return;
+        }
+
+        boolean conflict = appointmentIdToExclude == null
+                ? appointmentRepository.existsByDoctorIdAndDateTime(doctorId, dateTime)
+                : appointmentRepository.existsByDoctorIdAndDateTimeAndIdNot(doctorId, dateTime, appointmentIdToExclude);
+
+        if (conflict) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Doctor already booked for this time slot");
         }
     }
 }

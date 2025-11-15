@@ -10,7 +10,7 @@ const roleLabels = {
 };
 
 export function AppShell({ user, onLogout, children }) {
-  const activeRole = localStorage.getItem("activeRole")
+  const activeRole = localStorage.getItem('activeRole');
   const displayName = user?.name || user?.email || 'Signed in user';
 
   return (
@@ -18,11 +18,9 @@ export function AppShell({ user, onLogout, children }) {
       <header className="border-b border-slate-200 bg-white/80 backdrop-blur">
         <div className="mx-auto max-w-[1920px] flex flex-col gap-3 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <img src="/public/logo.png" alt="" className="w-16 h-12" />
+            <img src="/logo.png" alt="" className="w-16 h-12" />
             <div>
-              <h1 className="text-2xl font-semibold text-slate-900">
-                SingHealth Clinic System
-              </h1>
+              <h1 className="text-2xl font-semibold text-slate-900">SingHealth Clinic System</h1>
             </div>
           </div>
           <div className="flex flex-col items-start gap-3 sm:items-end">
@@ -36,21 +34,19 @@ export function AppShell({ user, onLogout, children }) {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {activeRole && roleLabels[activeRole] && (
-                  <Badge
+                <Badge
                   variant="secondary"
                   className={
                     {
-                      "System Admin": "bg-blue-500 text-white dark:bg-blue-600",
-                      "Doctor": "bg-green-500 text-white dark:bg-green-600",
-                      "Clinic Staff": "bg-red-500 text-white dark:bg-red-600",
-                    }[roleLabels[activeRole]] || ""
+                      'System Admin': 'bg-blue-500 text-white dark:bg-blue-600',
+                      Doctor: 'bg-green-500 text-white dark:bg-green-600',
+                      'Clinic Staff': 'bg-red-500 text-white dark:bg-red-600',
+                    }[roleLabels[activeRole]] || ''
                   }
                 >
                   {roleLabels[activeRole]}
                 </Badge>
-                
-                
-                )}
+              )}
               <Button
                 type="button"
                 variant="outline"
