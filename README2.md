@@ -94,10 +94,10 @@
     ```
     The executable JAR will be located in `backend/target/`.
 
-    #### Option 2 (Maven)
+    <!-- #### Option 2 (Maven)
     ```
     build.bat
-    ```
+    ``` -->
 
 ## Running the Application
 
@@ -130,12 +130,8 @@ The provided run scripts will start the backend server and the queue display ser
 
     To stop all services, close the terminal window or press `Ctrl+C`.
 
----
 
-## Scripts for Your Reference
 
-Below are the contents of the scripts used in the setup.
+## To Note:
 
-<details>
-<summary><strong>build.sh (for macOS/Linux)</strong></summary>
-
+To test email notifications, please change backend/src/main/java/com/clinic/application/NotificationService.java line 120's return email to desired email.
