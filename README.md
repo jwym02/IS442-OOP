@@ -1,5 +1,7 @@
 # IS442-G2T2 Clinic Appointment & Queue Management System
 
+# Github Repository Link: https://github.com/jwym02/IS442-OOP
+
 ## Key Assumptions Made
 
 - Patients are not allowed to reschedule or cancel appointments within 24 hours of the appointment time. Staff are not restricted to this rule.
@@ -76,37 +78,36 @@
    SENDGRID_FROM_EMAIL=YOUR_SENDGRID_EMAIL
    ```
 
-      <br>
+   <br>
 
-3. **Build the project**
+3. **Build the Backend**
 
-   Run the build script to compile and package the application:
+   Navigate to the backend directory and build the project:
 
    ```bash
-   # macOS / Linux
-   ./build.sh
-
-   # Windows
-   build.bat
-
-   # or
-   ./mvnw.cmd -f backend/pom.xml -DskipTests clean package
+   cd backend
+   ./mvnw.cmd -DskipTests clean package
    ```
 
-   > Executable jar outputs to backend/target
+   > The executable JAR will be created in `backend/target/clinic-system-1.0.0.jar`
 
    <br>
 
-## Running the application
+## Running the Application
 
-### Option 1: Using the build script
+### Option 1: Using Pre-built JAR (Production)
 
-1. **Make sure the MySQL server is running on port 3306.**
-2. **Start the application using the generated JAR file:**
+1. **Ensure MySQL server is running on port 3306**
+
+2. **Start the backend:**
 
    ```bash
-   java -jar backend/target/clinic-*.jar
+   java -jar backend/target/clinic-system-1.0.0.jar
    ```
+
+   - Flyway migrations execute automatically against `clinicdb`
+   - API listens on `http://localhost:8081`
+   - Interactive API docs: `http://localhost:8081/swagger-ui.html`
 
 3. **Start the frontend:**
 
@@ -116,58 +117,61 @@
    npm run dev
    ```
 
-   The Vite dev server listens on `http://localhost:5173` and proxies `http://localhost:8081/api/*`.
+   - Frontend dev server: `http://localhost:5173`
+   - Vite proxies `/api/*` requests to backend on port 8081
 
-4. **WebSocket queue display**
+### Option 2: Using Maven (Development)
 
-   - Endpoint: `ws://localhost:8081/ws/queue`
-   - Payloads: JSON `queue_update` messages with `clinicId`, `total`, `next`, and `queue` arrays.
-   - Triggered automatically when staff start the queue or call the next patient (future work: broadcast on manual status edits).
+1. **Ensure MySQL server is running on port 3306**
 
-5. **Interactive API docs** live at `http://localhost:8081/swagger-ui.html` once the backend is running.
+2. **Start the backend:**
 
-## Option 2: Using Maven Directly
+   ```bash
+   cd backend
+   ./mvnw.cmd spring-boot:run
+   ```
 
-2. **Build & run the API**
+   - API listens on `http://localhost:8081`
+   - Interactive docs: `http://localhost:8081/swagger-ui.html`
 
-```powershell
-cd backend
-./mvnw.cmd -DskipTests clean package
-./mvnw.cmd spring-boot:run
-```
+3. **Start the frontend:**
 
-- Flyway migrations execute automatically against `clinicdb`.
-- The API listens on `http://localhost:8081`.
-- Interactive docs: `http://localhost:8081/swagger-ui.html`.
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
 
-## Frontend Setup
+   - Frontend dev server: `http://localhost:5173`
 
-```powershell
-cd frontend
+### Queue Display Setup
+
+The queue display is a separate WebSocket-powered interface:
+
+```bash
+cd queue_display
 npm install
 npm run dev
-# Frontend dev server: http://localhost:5173
 ```
 
-During development Vite proxies `/api/*` requests to the backend on port 8081 (see `vite.config.js`). For a production build:
+- Queue display: `http://localhost:5174`
+- Connects to WebSocket endpoint: `ws://localhost:8081/ws/queue`
+- Displays real-time queue updates with `clinicId`, `total`, `next`, and `queue` data
 
-```powershell
+### Production Frontend Build
+
+For a production build of the frontend:
+
+```bash
+cd frontend
 npm run build
 npm run preview
 ```
 
 ---
 
-## Clinic Queue Frontend Setup
+## Email Notifications
 
-```powershell
-cd frontend-5174
-npm install
-npm run dev
-# Frontend dev server: http://localhost:5173
-```
+Email notifications are sent via SendGrid. Configure your API key in the `.env` file (see Initial Setup).
 
-
-## To Note:
-
-To test email notifications, please change backend/src/main/java/com/clinic/application/NotificationService.java line 120's return email to desired email.
+> **Note**: To test with a specific email address, update the recipient email in `backend/src/main/java/com/clinic/application/NotificationService.java`.
