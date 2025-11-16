@@ -5,14 +5,14 @@ echo Going to frontend directory...
 cd frontend
 
 echo Installing frontend dependencies...
-npm install
+call npm install
 if errorlevel 1 (
   echo npm install failed for frontend. Exiting.
   exit /b 1
 )
 
 echo Building frontend...
-npm run build
+call npm run build
 if errorlevel 1 (
   echo npm build failed for frontend. Exiting.
   exit /b 1
@@ -29,14 +29,14 @@ echo Going to queue_display directory...
 cd ..\queue_display
 
 echo Installing queue_display dependencies...
-npm install
+call npm install
 if errorlevel 1 (
   echo npm install failed for queue_display. Exiting.
   exit /b 1
 )
 
 echo Building queue display...
-npm run build
+call npm run build
 if errorlevel 1 (
   echo npm build failed for queue_display. Exiting.
   exit /b 1
