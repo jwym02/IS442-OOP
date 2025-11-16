@@ -7,8 +7,6 @@
 
 ## Test Accounts
 
-### Dev Login Bypass available in Development Mode
-
 - **Admin**
   - Username: `alice.admin@demo.clinic`
   - Password: `admintest`
@@ -21,6 +19,8 @@
 - **Patient**
   - Username: `peter.patient@example.com`
   - Password: `patienttest`
+
+### Dev Login Bypass available in Development Mode
 
 ## Architecture Overview
 
@@ -69,7 +69,7 @@
 
 2. **Set Environment Variables**
 
-   Create a `.env` file in `backend/src/main/resources` with the following content:
+   Create a `.env` file in `backend` with the following content:
 
    ```env
    SENDGRID_API_KEY=YOUR_SENDGRID_API_KEY
@@ -78,57 +78,9 @@
 
       <br>
 
-3. **Build the project**
-
-   Run the build script to compile and package the application:
-
-   ```bash
-   # macOS / Linux
-   ./build.sh
-
-   # Windows
-   build.bat
-
-   # or
-   ./mvnw.cmd -f backend/pom.xml -DskipTests clean package
-   ```
-
-   > Executable jar outputs to backend/target
-
-   <br>
-
 ## Running the application
 
-### Option 1: Using the build script
-
-1. **Make sure the MySQL server is running on port 3306.**
-2. **Start the application using the generated JAR file:**
-
-   ```bash
-   java -jar backend/target/clinic-*.jar
-   ```
-
-3. **Start the frontend:**
-
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
-
-   The Vite dev server listens on `http://localhost:5173` and proxies `http://localhost:8081/api/*`.
-
-4. **WebSocket queue display**
-
-   - Endpoint: `ws://localhost:8081/ws/queue`
-   - Payloads: JSON `queue_update` messages with `clinicId`, `total`, `next`, and `queue` arrays.
-   - Triggered automatically when staff start the queue or call the next patient (future work: broadcast on manual status edits).
-
-5. **Interactive API docs** live at `http://localhost:8081/swagger-ui.html` once the backend is running.
-
-## Option 2: Using Maven Directly
-
-2. **Build & run the API**
+## Backend Setup
 
 ```powershell
 cd backend
@@ -155,6 +107,14 @@ During development Vite proxies `/api/*` requests to the backend on port 8081 (s
 npm run build
 npm run preview
 ```
+
+## WebSocket queue display
+
+- Endpoint: `ws://localhost:8081/ws/queue`
+- Payloads: JSON `queue_update` messages with `clinicId`, `total`, `next`, and `queue` arrays.
+- Triggered automatically when staff start the queue or call the next patient (future work: broadcast on manual status edits).
+
+## Interactive API docs live at `http://localhost:8081/swagger-ui.html` once the backend is running.
 
 ---
 
