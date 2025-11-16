@@ -26,17 +26,13 @@ import {
 import { useToast } from '../../context/useToast';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { CalendarIcon } from 'lucide-react'
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select } from '../ui/select';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "../ui/radio-group"
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { cn } from '../../lib/utils';
 
 export default function PatientDashboard({ patientId, userName }) {
@@ -727,12 +723,12 @@ export default function PatientDashboard({ patientId, userName }) {
   const getDoctorName = (doctorId) => doctorMap.get(doctorId)?.fullName || `Doctor #${doctorId}`;
 
   const appointmentStatusStyles = {
-    SCHEDULED: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    CHECKED_IN: 'border-sky-200 bg-sky-50 text-sky-700',
-    IN_PROGRESS: 'border-sky-200 bg-sky-50 text-sky-700',
-    COMPLETED: 'border-slate-200 bg-slate-100 text-slate-600',
-    CANCELLED: 'border-rose-200 bg-rose-50 text-rose-700',
-    NO_SHOW: 'border-rose-200 bg-rose-50 text-rose-700',
+    SCHEDULED: 'border-lime-300 bg-lime-50 text-lime-700',
+    CHECKED_IN: 'border-indigo-300 bg-indigo-50 text-indigo-700',
+    IN_PROGRESS: 'border-amber-300 bg-amber-50 text-amber-700',
+    COMPLETED: 'border-teal-300 bg-teal-50 text-teal-700',
+    CANCELLED: 'border-rose-300 bg-rose-50 text-rose-700',
+    NO_SHOW: 'border-rose-300 bg-rose-50 text-rose-700',
   };
 
   const formatDateTime = (value) => {
@@ -967,8 +963,7 @@ export default function PatientDashboard({ patientId, userName }) {
                       variant="outline"
                       className={cn(
                         'capitalize border',
-                        appointmentStatusStyles[nextAppointment.status] ||
-                          'border-slate-200 bg-slate-100 text-slate-600'
+                        appointmentStatusStyles[nextAppointment.status]
                       )}
                     >
                       {nextAppointment.status.replace(/_/g, ' ').toLowerCase()}
@@ -1117,9 +1112,9 @@ export default function PatientDashboard({ patientId, userName }) {
                   <RadioGroup
                     value={selectionType}
                     onValueChange={(value) => {
-                      setSelectionType(value)
-                      setSelectedClinic('')
-                      setSelectedDoctor('')
+                      setSelectionType(value);
+                      setSelectedClinic('');
+                      setSelectedDoctor('');
                     }}
                   >
                     <div className="space-y-2">
@@ -1196,23 +1191,19 @@ export default function PatientDashboard({ patientId, userName }) {
 
                   {/* Date and Time Slot */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="appointment-date">Date</Label>
-                    <div className="relative">
-                      <Input
-                        id="appointment-date"
-                        type="date"
-                        value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                        min={new Date().toISOString().split("T")[0]}
-                        required
-                        className="pr-10" // ensures space for the icon
-                      />
-                      <CalendarIcon
-                        className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none"
-                      />
+                    <div className="space-y-2">
+                      <Label htmlFor="appointment-date">Date</Label>
+                      <div className="relative">
+                        <Input
+                          id="appointment-date"
+                          type="date"
+                          value={selectedDate}
+                          onChange={(e) => setSelectedDate(e.target.value)}
+                          min={new Date().toISOString().split('T')[0]}
+                          required
+                        />
+                      </div>
                     </div>
-                  </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="appointment-slot">Time Slot</Label>
@@ -1387,9 +1378,8 @@ export default function PatientDashboard({ patientId, userName }) {
                           <Badge
                             variant="outline"
                             className={cn(
-                              'capitalize border self-start',
-                              appointmentStatusStyles[appointment.status] ||
-                                'border-slate-200 bg-slate-100 text-slate-600'
+                              'capitalize border',
+                              appointmentStatusStyles[appointment.status]
                             )}
                           >
                             {appointment.status.replace(/_/g, ' ').toLowerCase()}

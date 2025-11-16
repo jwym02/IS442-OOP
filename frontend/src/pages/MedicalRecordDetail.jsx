@@ -81,7 +81,7 @@ export default function MedicalRecordDetail() {
   }
 
   return (
-    <Card className="mx-auto max-w-3xl">
+    <Card className="mt-4 mx-auto max-w-3xl">
       <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <CardTitle className="flex items-center gap-2 text-2xl">

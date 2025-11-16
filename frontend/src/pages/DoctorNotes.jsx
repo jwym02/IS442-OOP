@@ -14,6 +14,7 @@ import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert';
+import { cn } from '../lib/utils.js';
 
 const editableStatuses = ['IN_PROGRESS', 'COMPLETED', 'SERVED', 'CALLED'];
 
@@ -33,6 +34,12 @@ export default function DoctorNotes() {
   const [filterPatientName, setFilterPatientName] = useState('');
   const [filterDate, setFilterDate] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/login', { replace: true });
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     const loadAppointments = async () => {
@@ -57,6 +64,15 @@ export default function DoctorNotes() {
 
     loadAppointments();
   }, [doctorId, show]);
+
+  const appointmentStatusStyles = {
+    SCHEDULED: 'border-lime-300 bg-lime-50 text-lime-700',
+    CHECKED_IN: 'border-indigo-300 bg-indigo-50 text-indigo-700',
+    IN_PROGRESS: 'border-amber-300 bg-amber-50 text-amber-700',
+    COMPLETED: 'border-teal-300 bg-teal-50 text-teal-700',
+    CANCELLED: 'border-rose-300 bg-rose-50 text-rose-700',
+    NO_SHOW: 'border-rose-300 bg-rose-50 text-rose-700',
+  };
 
   const filteredAppointments = useMemo(() => {
     return appointments.filter((appointment) => {
@@ -152,6 +168,10 @@ export default function DoctorNotes() {
       setLoading(false);
     }
   };
+
+  if (!user) {
+    return null;
+  }
 
   if (!doctorId) {
     return (
@@ -255,8 +275,14 @@ export default function DoctorNotes() {
                           {new Date(appointment.dateTime).toLocaleString()}
                         </p>
                         <p>{appointment.patientName || `Patient #${appointment.patientId}`}</p>
-                        <Badge variant="secondary" className="capitalize">
-                          {String(appointment.status).replace(/_/g, ' ').toLowerCase()}
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            'capitalize border',
+                            appointmentStatusStyles[appointment.status]
+                          )}
+                        >
+                          {appointment.status.replace(/_/g, ' ').toLowerCase()}
                         </Badge>
                       </div>
                       <div className="flex flex-wrap gap-2">

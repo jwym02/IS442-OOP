@@ -605,12 +605,12 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
   };
 
   const appointmentStatusStyles = {
-    SCHEDULED: 'border-blue-200 bg-blue-50 text-blue-700',
-    CHECKED_IN: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    IN_PROGRESS: 'border-sky-200 bg-sky-50 text-sky-700',
-    COMPLETED: 'border-slate-200 bg-slate-100 text-slate-600',
-    CANCELLED: 'border-rose-200 bg-rose-50 text-rose-700',
-    NO_SHOW: 'border-orange-200 bg-orange-50 text-orange-700',
+    SCHEDULED: 'border-lime-300 bg-lime-50 text-lime-700',
+    CHECKED_IN: 'border-indigo-300 bg-indigo-50 text-indigo-700',
+    IN_PROGRESS: 'border-amber-300 bg-amber-50 text-amber-700',
+    COMPLETED: 'border-teal-300 bg-teal-50 text-teal-700',
+    CANCELLED: 'border-rose-300 bg-rose-50 text-rose-700',
+    NO_SHOW: 'border-rose-300 bg-rose-50 text-rose-700',
   };
 
   const queueStatusStyles = {
@@ -889,9 +889,8 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                               <Badge
                                 variant="outline"
                                 className={cn(
-                                  'capitalize border text-xs',
-                                  appointmentStatusStyles[appointment.status] ||
-                                    'border-slate-200 bg-slate-100 text-slate-600'
+                                  'capitalize border',
+                                  appointmentStatusStyles[appointment.status]
                                 )}
                               >
                                 {appointment.status.replace(/_/g, ' ').toLowerCase()}
@@ -1187,8 +1186,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                                 variant="outline"
                                 className={cn(
                                   'capitalize border',
-                                  appointmentStatusStyles[appointment.status] ||
-                                    'border-slate-200 bg-slate-100 text-slate-600'
+                                  appointmentStatusStyles[appointment.status]
                                 )}
                               >
                                 {appointment.status.replace(/_/g, ' ').toLowerCase()}
