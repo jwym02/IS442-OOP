@@ -19,7 +19,7 @@ export default function DoctorsTable({
   const [page, setPage] = useState(1);
   const totalPages = Math.ceil(doctors.length / PAGE_SIZE) || 1;
   const paginated = doctors.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  console.log(paginated)
+  // console.log(paginated)
 
   return (
     <div className="space-y-6">

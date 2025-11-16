@@ -98,7 +98,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                 // Update status to NO_SHOW in backend
                 updatePromises.push(
                   appointmentAPI.updateStatus(appt.id, 'NO_SHOW').catch((err) => {
-                    console.error(`Failed to update appointment ${appt.id} to NO_SHOW:`, err);
+                    // console.error(`Failed to update appointment ${appt.id} to NO_SHOW:`, err);
                     return null;
                   })
                 );
@@ -143,7 +143,7 @@ export default function StaffDashboard({ clinicId, staffProfileId, doctorProfile
                 // Update status to NO_SHOW in backend
                 updatePromises.push(
                   appointmentAPI.updateStatus(appt.id, 'NO_SHOW').catch((err) => {
-                    console.error(`Failed to update appointment ${appt.id} to NO_SHOW:`, err);
+                    // console.error(`Failed to update appointment ${appt.id} to NO_SHOW:`, err);
                     return null;
                   })
                 );

@@ -10,7 +10,7 @@ function connect() {
   socket = new WebSocket(WS_URL);
 
   socket.addEventListener('open', () => {
-    console.log('ws open');
+    // console.log('ws open');
     reconnectTimeout = 1000;
     // optionally notify listeners of open
     emitter.dispatchEvent(new Event('open'));
@@ -29,7 +29,7 @@ function connect() {
 
     try {
       const data = JSON.parse(ev.data);
-      console.log('ws message', data);
+      // console.log('ws message', data);
       // also emit a high-level custom event if code elsewhere uses it
       if (data && data.type) {
         emitter.dispatchEvent(new CustomEvent(data.type, { detail: data }));
@@ -40,14 +40,14 @@ function connect() {
   });
 
   socket.addEventListener('close', (ev) => {
-    console.warn('ws closed', ev.reason || ev);
+    // console.warn('ws closed', ev.reason || ev);
     emitter.dispatchEvent(new CloseEvent('close'));
     setTimeout(connect, reconnectTimeout);
     reconnectTimeout = Math.min(30000, reconnectTimeout * 1.5);
   });
 
   socket.addEventListener('error', (err) => {
-    console.error('ws error', err);
+    // console.error('ws error', err);
     emitter.dispatchEvent(new Event('error'));
     socket?.close();
   });
