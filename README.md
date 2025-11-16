@@ -155,3 +155,6 @@ npm run preview
 ```
 
 ---
+
+## To Note:
+To test email notifications, please change backend/src/main/java/com/clinic/application/NotificationService.java line 120's return email to desired email.
