@@ -33,12 +33,14 @@
 ### Port allocation
 
 - Executable Jar: `http://localhost:8081`
+- Queue Display: `http://localhost:4173`
 - MySQL: `localhost:3306`
 
 #### Development Environment
 
 - Backend API: `http://localhost:8081`
 - Frontend Development Server: `http://localhost:5173` (proxies `/api` to port 8081)
+- Queue Display: `http://localhost:5174`
 - MySQL: `localhost:3306`
 
 <br>
