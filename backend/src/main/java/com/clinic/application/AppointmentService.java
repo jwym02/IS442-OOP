@@ -5,8 +5,6 @@ import com.clinic.api.patients.dto.AppointmentResponse;
 import com.clinic.application.dto.AppointmentDetails;
 import org.springframework.http.HttpStatus;
 import com.clinic.domain.entity.Appointment;
-import com.clinic.domain.entity.DoctorProfile;
-import com.clinic.domain.entity.PatientProfile;
 import com.clinic.domain.enums.AppointmentStatus;
 import com.clinic.infrastructure.persistence.AppointmentRepository;
 import com.clinic.infrastructure.persistence.DoctorProfileRepository;

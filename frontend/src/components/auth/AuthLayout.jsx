@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 
 export function AuthLayout({ title, description, children, footer }) {
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_hsl(221_83%_63%)_0%,_hsl(221_83%_53%)_45%,_hsl(221_83%_48%)_100%)] px-4 py-12">
+    <div className="relative flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,hsl(221_83%_63%)_0%,hsl(221_83%_53%)_45%,hsl(221_83%_48%)_100%)] px-4 py-12">
       <div className="absolute inset-0 bg-black/10 backdrop-blur-[1px]" aria-hidden />
       <div className="relative z-10 grid w-full max-w-5xl gap-10 rounded-3xl bg-white/95 p-6 shadow-2xl ring-1 ring-black/5 backdrop-blur">
         <div className="grid gap-4 text-center md:text-left">

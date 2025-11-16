@@ -14,6 +14,15 @@ echo "Copying frontend build files to backend static resources..."
 # Adjust the source folder depending on your build output (e.g., dist, build)
 cp -r dist/* ../backend/src/main/resources/static/
 
+echo "Going to queue_display directory..."
+cd ../queue_display
+
+echo "Installing queue_display dependencies..."
+npm install
+
+echo "Building queue display..."
+npm run build
+
 echo "Going to backend directory..."
 cd ../backend
 

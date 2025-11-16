@@ -7,20 +7,40 @@ cd frontend
 echo Installing frontend dependencies...
 npm install
 if errorlevel 1 (
-  echo npm install failed. Exiting.
+  echo npm install failed for frontend. Exiting.
   exit /b 1
 )
 
 echo Building frontend...
 npm run build
 if errorlevel 1 (
-  echo npm build failed. Exiting.
+  echo npm build failed for frontend. Exiting.
   exit /b 1
 )
 
 echo Copying frontend build files to backend static resources...
-:: Adjust the source folder if your build output is different (e.g., dist)
 xcopy /E /I /Y dist ..\backend\src\main\resources\static
+if errorlevel 1 (
+  echo xcopy failed for frontend. Exiting.
+  exit /b 1
+)
+
+echo Going to queue_display directory...
+cd ..\queue_display
+
+echo Installing queue_display dependencies...
+npm install
+if errorlevel 1 (
+  echo npm install failed for queue_display. Exiting.
+  exit /b 1
+)
+
+echo Building queue display...
+npm run build
+if errorlevel 1 (
+  echo npm build failed for queue_display. Exiting.
+  exit /b 1
+)
 
 echo Going to backend directory...
 cd ..\backend
