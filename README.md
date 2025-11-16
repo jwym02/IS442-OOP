@@ -7,6 +7,8 @@
 
 ## Test Accounts
 
+### Dev Login Bypass available in Development Mode
+
 - **Admin**
   - Username: `alice.admin@demo.clinic`
   - Password: `admintest`
@@ -167,4 +169,5 @@ npm run dev
 
 
 ## To Note:
+
 To test email notifications, please change backend/src/main/java/com/clinic/application/NotificationService.java line 120's return email to desired email.
