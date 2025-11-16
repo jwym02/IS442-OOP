@@ -156,5 +156,15 @@ npm run preview
 
 ---
 
+## Clinic Queue Frontend Setup
+
+```powershell
+cd frontend-5174
+npm install
+npm run dev
+# Frontend dev server: http://localhost:5173
+```
+
+
 ## To Note:
 To test email notifications, please change backend/src/main/java/com/clinic/application/NotificationService.java line 120's return email to desired email.
